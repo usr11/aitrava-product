@@ -4,7 +4,7 @@
 > El trabajo es **lineal**: se toma el siguiente paso sin marcar del **Plan de trabajo (sección 8)**. Al terminarlo se marca `[x]` con la fecha y quién lo hizo, se actualiza la tabla de progreso (0.1) y se anota en el **Registro de cambios** (sección 11).
 > Si una decisión cambia, se edita aquí primero y después el código.
 
-**Última actualización:** 2026-09-21 · **Paso actual:** 32 (pruebas con usuarios). El 30 y el 34 esperan el despliegue (D1)
+**Última actualización:** 2026-09-21 · **Paso actual:** desplegar siguiendo `docs/DESPLIEGUE.md` → paso 30 (conectar la landing con la URL final) → 32 (pruebas con usuarios)
 
 ---
 
@@ -403,7 +403,7 @@ model Iteration {
 - [x] **27** · Widget de feedback global + banner del modo demo — ✅ 2026-09-21 · Claude (agente)
 - [x] **28** · API admin: `GET /api/admin/metrics` (KPIs, embudo por usuario o anonId único, serie diaria, top de gustos, top de destinos, tasa de acierto, referidos y NPS), `GET /api/admin/feedback`, CRUD `/api/admin/iterations` y `GET /api/admin/export.csv` — ✅ 2026-09-21 · Claude (agente)
 - [x] **29** · `/admin` (KPIs + gráficas en recharts), `/admin/feedback` y `/admin/iteraciones` — ✅ 2026-09-21 · Claude (agente)
-- [ ] **30** · Conectar la landing: los CTA de `AiTrava-landing` apuntan a la app con `utm_source=landing` — ⛔ necesita la URL pública de la app (D1) — ✅ ___
+- [ ] **30** · Conectar la landing: los CTA de `AiTrava-landing` apuntan a la app con `utm_source=landing` — ⏳ desbloqueado: primero desplegar con `docs/DESPLIEGUE.md` y usar la URL de Cloudflare — ✅ ___
 
 ✔ **Chequeo D:** después de hacer el flujo con 2 cuentas y un amigo que adivina, el dashboard muestra el embudo, el NPS y el referido correctamente.
 
@@ -411,7 +411,7 @@ model Iteration {
 - [x] **31** · Poner la app al alcance de usuarios reales. Por ahora: desde el PC con `pnpm dev -H 0.0.0.0` en la misma red (instrucciones en el README). **El despliegue público se decide después (D1).** — ✅ 2026-09-21 · Claude (agente)
 - [ ] **32** · **Iteración v1:** 5–8 pruebas guiadas con personas del segmento (18–30 años), siguiendo **`docs/PRUEBAS-USUARIOS.md`**. Observar dónde se traban, recoger citas y registrar todo en `/admin/iteraciones` — ✅ ___
 - [ ] **33** · Aplicar los cambios de la v1 (2–3 ajustes con base en los datos) — ✅ ___
-- [ ] **34** · Campaña en Instagram/Meta + historias + grupos universitarios, que lleve a la app (requiere D1) — ✅ ___
+- [ ] **34** · Campaña en Instagram/Meta + historias + grupos universitarios, que lleve a la app desplegada (`DEMO_MODE=false` en Railway) — ✅ ___
 - [ ] **35** · **Iteración v2:** analizar el embudo, aplicar cambios (copy, % de comisión, número de pistas, quitar un paso…) y registrar hipótesis → resultado — ✅ ___
 - [ ] **36** · **Iteración v3:** repetir y comparar las métricas antes y después — ✅ ___
 - [ ] **37** · Recolectar 5+ testimonios, capturas y la tabla de métricas final (rellenar la columna "Real" de abajo) — ✅ ___
@@ -446,7 +446,8 @@ model Iteration {
 
 ### 8.1 Notas de implementación (lo que ya existe)
 
-- **Cuentas:** `admin@aitrava.co` y `demo@aitrava.co`, clave `aitrava123` (las crea el seed). `pnpm db:demo` le prepara viajes de ejemplo a la cuenta demo.
+- **Cuentas:** `admin@aitrava.co` y `demo@aitrava.co`, clave `aitrava123` (las crea el seed). En producción la clave del admin sale de la variable `ADMIN_PASSWORD`.
+- **Despliegue:** API + Postgres en Railway (`aitrava-api/railway.json`: build, pre-deploy con migraciones + seed, healthcheck `/api`). App en Cloudflare Workers con OpenNext (`aitrava-app/wrangler.jsonc`, `open-next.config.ts`; scripts `cf:build`, `preview`, `deploy`). `NEXT_PUBLIC_API_URL` se define en las *Build variables* de Cloudflare. Guía: `docs/DESPLIEGUE.md`. Probado en local: build de producción del API y preview de la app en workerd (Worker de ~1 MB comprimido). `pnpm db:demo` le prepara viajes de ejemplo a la cuenta demo.
 - **Modelo de ingresos en el código:** comisión del 10 % en `aitrava-api/src/engine/types.ts` (`COMMISSION_RATE`) y en `aitrava-app/lib/constants.ts`. Máximo 2 re-sorteos gratis por viaje (`MAX_REROLLS`).
 - **Destinos:** 15 en `aitrava-api/prisma/destinations.ts` (tags, precio, cosas a evitar, banco de pistas e itinerario). Para agregar o editar uno: se cambia el archivo y se corre `pnpm db:seed`. `imageUrl` está vacío y la app muestra una postal con degradado; se puede poner una URL de foto real.
 - **Motor:** `aitrava-api/src/engine/engine.service.ts`. Filtra por presupuesto, cosas a evitar y origen; puntúa por gustos + ADN viajero (+ algo de azar). **La IA no es necesaria para elegir el destino**: eso lo hace el algoritmo. Si hay `GROQ_API_KEY`, la IA elige entre el top 5 y escribe pistas, razón e itinerario personalizados (~1,5 s); si falla o no hay key, usa el banco de pistas del catálogo. Probado con la key real el 2026-09-21.
@@ -487,7 +488,7 @@ model Iteration {
 - **IA: Groq** con `openai/gpt-oss-120b`. El algoritmo por puntaje sigue como respaldo.
 
 ### Pendientes (responder aquí)
-- **D1 · Despliegue público** → *se decide después*. Hace falta antes del paso 34 (campaña). Opción sugerida: Vercel + Render + Neon. → ___
+- ~~**D1 · Despliegue público**~~ → **Resuelta (2026-09-21):** monorepo desde GitHub (`usr11/aitrava-product`). **API + Postgres en Railway** (servicio con Root Directory `/aitrava-api`, config en `aitrava-api/railway.json`). **App en Cloudflare Workers** con OpenNext (Root directory `aitrava-app`, config en `aitrava-app/wrangler.jsonc`). Paso a paso en **`docs/DESPLIEGUE.md`**. En local se sigue usando Docker.
 - **D2 · Fecha de entrega y duración de la presentación.** → ___
 - ~~**D3 · Clave de IA**~~ → **Resuelta:** se usa Groq (gratis). La clave está en `aitrava-api/.env`, que no se sube a git; cada compañero crea la suya en console.groq.com o la pide por privado.
 
@@ -501,3 +502,4 @@ model Iteration {
 | 2026-09-21 | Juan Pablo + Claude | El plan de trabajo pasa a ser lineal y con checks (41 pasos). El diseño de la landing se copia a `design/`. El despliegue se pospone. |
 | 2026-09-21 | Claude (agente) | Pasos 01–29 hechos: Docker + Prisma, API completa (auth, motor IA/puntaje, viajes, pistas, apuestas, compartir, feedback, métricas, iteraciones), app completa y responsive (wizard, boarding pass, pago simulado con planes, pistas, sobre, regalo, compartir, perfil con referidos, widget de feedback, NPS, panel admin). Extra: botón "Adelantar el tiempo" en modo demo. Prisma se fijó en la versión 6.19. El paso 30 queda bloqueado por D1. |
 | 2026-09-21 | Claude (agente) | Cambio de modelo de negocio: se quitan los 3 planes, la pista extra paga y el re-sorteo pago; queda una comisión única del 10 % dentro del tope (migración `comision_unica`). IA migrada de Claude a Groq (`openai/gpt-oss-120b`, probado). Pasos 31 y 38 hechos (`pnpm db:demo`). Nuevas guías: `docs/PRUEBAS-USUARIOS.md` y `docs/PRESENTACION.md`. |
+| 2026-09-21 | Claude (agente) | D1 resuelta: configuración de despliegue para el monorepo. API + Postgres en Railway (`railway.json`, Prisma y tsx pasan a dependencias, `postinstall: prisma generate`, se excluye `prisma/` del build de Nest para que `dist/main.js` exista, clave del admin por `ADMIN_PASSWORD`). App en Cloudflare Workers con `@opennextjs/cloudflare` (`wrangler.jsonc`, `open-next.config.ts`, imágenes sin optimizar). Guía paso a paso en `docs/DESPLIEGUE.md`. |

@@ -19,13 +19,17 @@ async function main() {
   }
 
   const passwordHash = await bcrypt.hash('aitrava123', 10);
+  // En producción la clave del admin viene de ADMIN_PASSWORD (la de por defecto está pública en el repo).
+  const adminHash = process.env.ADMIN_PASSWORD
+    ? await bcrypt.hash(process.env.ADMIN_PASSWORD, 10)
+    : passwordHash;
   await prisma.user.upsert({
     where: { email: 'admin@aitrava.co' },
-    update: { role: 'ADMIN' },
+    update: { role: 'ADMIN', passwordHash: adminHash },
     create: {
       email: 'admin@aitrava.co',
       name: 'Equipo AiTrava',
-      passwordHash,
+      passwordHash: adminHash,
       role: 'ADMIN',
       referralCode: 'AITRAVA',
     },
@@ -58,7 +62,7 @@ async function main() {
   }
 
   console.log(
-    `Seed listo: ${destinations.length} destinos, admin@aitrava.co y demo@aitrava.co (clave: aitrava123)`,
+    `Seed listo: ${destinations.length} destinos, admin@aitrava.co (clave: ${process.env.ADMIN_PASSWORD ? 'ADMIN_PASSWORD' : 'aitrava123'}) y demo@aitrava.co (clave: aitrava123)`,
   );
 }
 

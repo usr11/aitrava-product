@@ -11,6 +11,7 @@ Viajes sorpresa personalizados: "Menos planear, más viajar". Prototipo para la 
 | `docker-compose.yml` | Postgres 16 (lo único en Docker) | `localhost:5432` |
 | `design/` | Copia del diseño de la landing (referencia) | — |
 | `docs/ROADMAP.md` | Plan de trabajo con checks | — |
+| `docs/DESPLIEGUE.md` | Paso a paso para publicar (Railway + Cloudflare) | — |
 
 ## Levantar todo
 
