@@ -80,8 +80,10 @@ export class PublicController {
   ) {}
 
   @Get()
-  health() {
-    return { ok: true, name: 'AiTrava API' };
+  /** También verifica la BD: si faltan las tablas responde 500 y el healthcheck de Railway falla. */
+  async health() {
+    const destinations = (await this.trips.destinations()).length;
+    return { ok: true, name: 'AiTrava API', destinations };
   }
 
   @Get('config')

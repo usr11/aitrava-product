@@ -40,8 +40,8 @@ Abre el servicio del API → **Settings**:
 
 Con esto Railway ya sabe (vía `railway.json`):
 - **Build:** `pnpm run build` (el `postinstall` genera el cliente de Prisma).
-- **Pre-deploy:** `prisma migrate deploy` + seed (crea las tablas, los 15 destinos y las cuentas; se puede repetir sin problema).
-- **Start:** `pnpm start:prod` · **Healthcheck:** `/api`.
+- **Start:** `pnpm start` = `prisma migrate deploy` + seed + arranque. Crea las tablas, los 15 destinos y las cuentas; se puede repetir sin problema. Va dentro del start (no en un pre-deploy) para que funcione **aunque Railway no lea `railway.json`**, porque `start` es lo que Railway corre por defecto.
+- **Healthcheck:** `/api`, que también consulta la BD: si faltan las tablas, el deploy falla en vez de quedar "verde" sin tablas.
 - **Watch paths:** solo redespliega cuando cambia algo en `aitrava-api/` (los cambios de la app no lo tocan).
 
 ### 1.3 Variables del API
@@ -68,7 +68,7 @@ Servicio del API → **Settings → Networking → Generate Domain**.
 - Te queda algo como `https://aitrava-api-production.up.railway.app`. **Cópialo.**
 
 ### 1.5 Verificar
-- En el navegador: `https://<tu-dominio-railway>/api` → debe responder `{"ok":true,"name":"AiTrava API"}`.
+- En el navegador: `https://<tu-dominio-railway>/api` → debe responder `{"ok":true,"name":"AiTrava API","destinations":15}`. Si da error 500, no hay tablas: revisa los logs.
 - `https://<tu-dominio-railway>/api/config` → `{"demoMode":true,"aiEnabled":true}`. Si `aiEnabled` es `false`, falta `GROQ_API_KEY`.
 - En **Deployments → View logs** del último deploy deberías ver `All migrations have been successfully applied` y `Seed listo: 15 destinos…`.
 
@@ -134,7 +134,9 @@ Solo `git push` a `main`:
 | :-- | :-- | :-- |
 | Railway: "No start command could be found" o build de la raíz | Falta el Root Directory | 1.2: Root Directory `/aitrava-api` y ruta del config file |
 | Railway: `P1001 Can't reach database` | `DATABASE_URL` mal puesta | Usar `${{Postgres.DATABASE_URL}}` con el nombre exacto del servicio de BD |
-| Railway: healthcheck falla | El API no arrancó | Mira los logs de runtime; casi siempre es una variable faltante |
+| Railway: healthcheck falla | El API no arrancó o no hay tablas | Mira los logs de runtime: deben aparecer `All migrations have been successfully applied` y `Seed listo`; si no, casi siempre es `DATABASE_URL` |
+| La BD de Railway quedó sin tablas (antes del arreglo del 2026-09-21) | La migración `comision_unica` tenía un nombre que la ponía antes de `init` | Ya está arreglado: con el próximo deploy, `pnpm start` limpia el intento fallido y crea todo. No hay que tocar la BD |
+| En tu PC: `migrate` dice que falta la migración `20260921224604_comision_unica` | Tu BD local tiene el nombre viejo | `cd aitrava-api && pnpm db:reset` (borra los datos locales) |
 | La app carga pero no hay datos / "Failed to fetch" | `NEXT_PUBLIC_API_URL` vacío o mal escrito | Revísalo en Build variables y haz **Retry build** |
 | Cloudflare: "Worker name mismatch" | El nombre del proyecto ≠ `name` en `wrangler.jsonc` | Deben ser iguales (`aitrava-app`) |
 | Cloudflare no encuentra `package.json` | Falta el Root directory | Root directory = `aitrava-app` |
