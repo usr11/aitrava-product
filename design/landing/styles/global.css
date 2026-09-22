@@ -1,0 +1,187 @@
+:root {
+	/* Dark theme (docs/desgin.txt) */
+	--bg: #1a1c20;
+	--surface: #25282e;
+	--board: #111316;
+	--flap: #23262b;
+	--line: #2e3137;
+	--line-strong: #3a3e45;
+	--primary: #ffd700;
+	--secondary: #ffb300;
+	--text: #f8f9fa;
+	--text-soft: #d5d9df;
+	--muted: #b9bec6;
+	--muted-2: #9aa0a8;
+	--dim: #6d737c;
+
+	/* Light theme */
+	--light-bg: #f8f9fa;
+	--light-surface: #ffffff;
+	--light-primary: #ffc107;
+	--ink: #1a1c20;
+	--ink-2: #25282e;
+	--ink-muted: #4a4f57;
+	--light-line: #c9cdd3;
+	--gold-text: #8a6a00;
+
+	--gutter: clamp(20px, 4.5vw, 64px);
+	--max-width: 1440px;
+	--radius-pill: 999px;
+
+	color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	scroll-behavior: smooth;
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	background-color: var(--bg);
+	/* Subtle film grain */
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+	color: var(--text);
+	font-family: var(--font-body);
+	font-size: 1rem;
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+	overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+p {
+	margin: 0;
+}
+
+img,
+svg {
+	display: block;
+	max-width: 100%;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+:focus-visible {
+	outline: 3px solid var(--primary);
+	outline-offset: 3px;
+}
+
+::selection {
+	background: var(--primary);
+	color: var(--ink);
+}
+
+.container {
+	width: 100%;
+	max-width: var(--max-width);
+	margin-inline: auto;
+	padding-inline: var(--gutter);
+}
+
+.display {
+	font-family: var(--font-display);
+	font-weight: 900;
+	line-height: 0.88;
+	text-transform: uppercase;
+	text-wrap: balance;
+}
+
+.eyebrow {
+	font-family: var(--font-mono);
+	font-size: clamp(0.6875rem, 0.6rem + 0.3vw, 0.875rem);
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+}
+
+.lead {
+	font-size: clamp(1.0625rem, 0.95rem + 0.45vw, 1.25rem);
+	line-height: 1.5;
+	text-wrap: pretty;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.skip-link {
+	position: absolute;
+	left: 16px;
+	top: -100px;
+	z-index: 100;
+	background: var(--primary);
+	color: var(--ink);
+	padding: 12px 18px;
+	border-radius: var(--radius-pill);
+	font-weight: 700;
+}
+
+.skip-link:focus {
+	top: 16px;
+}
+
+section[id] {
+	scroll-margin-top: 88px;
+}
+
+.section-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: end;
+	gap: 16px 48px;
+}
+
+.section-head__title {
+	font-size: clamp(3.75rem, 7.8vw, 7rem);
+}
+
+.section-head__text {
+	max-width: 420px;
+	color: var(--muted);
+}
+
+@media (max-width: 720px) {
+	.section-head {
+		flex-direction: column;
+		align-items: start;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}

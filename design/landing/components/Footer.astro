@@ -1,0 +1,95 @@
+---
+import { site } from '../data/site';
+import Icon from './Icon.astro';
+import Logo from './Logo.astro';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="container footer">
+	<div class="footer__brand">
+		<Logo size={36} />
+		<span class="footer__tagline">{site.tagline}</span>
+	</div>
+
+	<ul class="footer__social" aria-label="Redes sociales">
+		<li>
+			<a href={site.social.instagram} target="_blank" rel="noopener noreferrer">
+				<Icon name="instagram" size={20} />
+				Instagram
+			</a>
+		</li>
+		<li>
+			<a href={site.social.facebook} target="_blank" rel="noopener noreferrer">
+				<Icon name="facebook" size={20} />
+				Facebook
+			</a>
+		</li>
+	</ul>
+
+	<p class="footer__copy">© {year} AiTrava</p>
+</footer>
+
+<style>
+	.footer {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 24px 40px;
+		padding-block: 64px 48px;
+		color: var(--muted-2);
+	}
+
+	.footer__brand {
+		display: flex;
+		align-items: center;
+		gap: 24px;
+		color: var(--text);
+	}
+
+	.footer__tagline {
+		font-size: 0.9375rem;
+		color: var(--dim);
+	}
+
+	.footer__social {
+		display: flex;
+		gap: 28px;
+		margin-left: auto;
+	}
+
+	.footer__social a {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		min-height: 44px;
+	}
+
+	.footer__social a:hover {
+		color: var(--primary);
+	}
+
+	.footer__copy {
+		font-size: 0.9375rem;
+	}
+
+	@media (max-width: 720px) {
+		.footer {
+			flex-direction: column;
+			align-items: start;
+			padding-block: 36px 40px;
+			gap: 14px;
+		}
+
+		.footer__brand {
+			flex-direction: column;
+			align-items: start;
+			gap: 10px;
+		}
+
+		.footer__social {
+			margin-left: 0;
+		}
+	}
+</style>

@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: aitrava-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aitrava
+      POSTGRES_PASSWORD: aitrava
+      POSTGRES_DB: aitrava
+    ports:
+      - "5432:5432"
+    volumes:
+      - aitrava-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aitrava"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  aitrava-pgdata:

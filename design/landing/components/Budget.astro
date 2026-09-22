@@ -1,0 +1,486 @@
+---
+import { budget, formatCOP, splitBudget } from '../data/site';
+import Icon from './Icon.astro';
+
+const { nights, min, max, step, defaultTotal, travelerOptions, defaultTravelers, items } = budget;
+const amounts = splitBudget(defaultTotal, items.map((item) => item.share));
+const percent = ((defaultTotal - min) / (max - min)) * 100;
+const travelersLabel = (n: number) => `${n} ${n === 1 ? 'persona' : 'personas'}`;
+---
+
+<section id="presupuesto" class="budget" aria-labelledby="budget-title">
+	<div class="container budget__inner">
+		<div class="budget__copy">
+			<p class="eyebrow budget__eyebrow">Presupuesto transparente</p>
+			<h2 id="budget-title" class="display budget__title">
+				La sorpresa es el destino. <mark>Nunca el precio.</mark>
+			</h2>
+			<p class="lead budget__text">
+				Nos dices cuánto quieres gastar y ese número no se toca. Antes de pagar ves el desglose completo. Lo único que no
+				ves es a dónde vas.
+			</p>
+		</div>
+
+		<figure class="ticket" data-budget>
+			<figcaption class="ticket__meta">
+				<span>Arma tu tope</span>
+				<span><span data-travelers-label>{travelersLabel(defaultTravelers)}</span> · {nights} noches</span>
+			</figcaption>
+
+			<div class="ticket__summary">
+				<p class="ticket__total">
+					<output data-total for="budget-range" aria-live="off">{formatCOP(defaultTotal)}</output>
+					<span class="ticket__currency">COP</span>
+				</p>
+				<p class="ticket__per">
+					<span data-per-person>{formatCOP(Math.round(defaultTotal / defaultTravelers))}</span> por persona
+				</p>
+			</div>
+
+			<div class="ticket__slider">
+				<label class="sr-only" for="budget-range">Tope de presupuesto del viaje en pesos colombianos</label>
+				<input
+					id="budget-range"
+					class="range"
+					type="range"
+					min={min}
+					max={max}
+					step={step}
+					value={defaultTotal}
+					aria-valuetext={`${formatCOP(defaultTotal)} pesos`}
+					style={`--pct: ${percent}%`}
+				/>
+				<div class="ticket__scale" aria-hidden="true">
+					<span>{formatCOP(min)}</span>
+					<span>{formatCOP(max)}</span>
+				</div>
+			</div>
+
+			<fieldset class="pax">
+				<legend class="pax__legend">¿Cuántos viajan?</legend>
+				<div class="pax__options">
+					{
+						travelerOptions.map((n) => (
+							<button
+								type="button"
+								class="pax__option"
+								data-travelers={n}
+								aria-pressed={String(n === defaultTravelers)}
+								aria-label={travelersLabel(n)}
+							>
+								{n === travelerOptions.at(-1) ? `${n}+` : n}
+							</button>
+						))
+					}
+				</div>
+			</fieldset>
+
+			<dl class="ticket__list">
+				{
+					items.map((item, index) => (
+						<div class="ticket__row">
+							<dt>
+								<Icon name={item.icon} size={24} />
+								{item.label}
+							</dt>
+							<dd data-amount={index}>{formatCOP(amounts[index])}</dd>
+						</div>
+					))
+				}
+				<div class="ticket__row ticket__row--secret">
+					<dt>
+						<Icon name="mystery" size={24} />
+						Destino
+					</dt>
+					<dd>Clasificado</dd>
+				</div>
+			</dl>
+		</figure>
+	</div>
+</section>
+
+<script>
+	import { budget, formatCOP, splitBudget } from '../data/site';
+
+	const root = document.querySelector<HTMLElement>('[data-budget]');
+	const range = root?.querySelector<HTMLInputElement>('.range');
+
+	if (root && range) {
+		const totalEl = root.querySelector<HTMLOutputElement>('[data-total]')!;
+		const perPersonEl = root.querySelector<HTMLElement>('[data-per-person]')!;
+		const travelersLabelEl = root.querySelector<HTMLElement>('[data-travelers-label]')!;
+		const amountEls = [...root.querySelectorAll<HTMLElement>('[data-amount]')];
+		const travelerButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-travelers]')];
+		const shares = budget.items.map((item) => item.share);
+
+		let travelers: number = budget.defaultTravelers;
+
+		const render = () => {
+			const total = Number(range.value);
+			const percent = ((total - budget.min) / (budget.max - budget.min)) * 100;
+
+			range.style.setProperty('--pct', `${percent}%`);
+			range.setAttribute('aria-valuetext', `${formatCOP(total)} pesos`);
+			totalEl.value = formatCOP(total);
+			perPersonEl.textContent = formatCOP(Math.round(total / travelers));
+			travelersLabelEl.textContent = `${travelers} ${travelers === 1 ? 'persona' : 'personas'}`;
+			splitBudget(total, shares).forEach((amount, index) => {
+				amountEls[index].textContent = formatCOP(amount);
+			});
+		};
+
+		range.addEventListener('input', render);
+
+		travelerButtons.forEach((button) => {
+			button.addEventListener('click', () => {
+				travelers = Number(button.dataset.travelers);
+				travelerButtons.forEach((other) => other.setAttribute('aria-pressed', String(other === button)));
+				render();
+			});
+		});
+	}
+</script>
+
+<style>
+	.budget {
+		background: var(--light-bg);
+		color: var(--ink-2);
+	}
+
+	.budget__inner {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: clamp(28px, 6.5vw, 96px);
+		align-items: center;
+		padding-block: clamp(64px, 9vw, 130px);
+	}
+
+	.budget__copy {
+		display: flex;
+		flex-direction: column;
+		gap: 28px;
+	}
+
+	.budget__eyebrow {
+		color: var(--gold-text);
+	}
+
+	.budget__title {
+		font-size: clamp(3.5rem, 7.2vw, 6.5rem);
+		line-height: 0.94;
+		color: var(--ink);
+	}
+
+	.budget__title mark {
+		background: var(--light-primary);
+		color: inherit;
+		padding: 0 0.1em;
+		box-decoration-break: clone;
+		-webkit-box-decoration-break: clone;
+	}
+
+	.budget__text {
+		max-width: 520px;
+		color: var(--ink-muted);
+	}
+
+	.ticket {
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 30px;
+		padding: clamp(24px, 3vw, 40px);
+		background: var(--light-surface);
+		border-radius: 22px;
+		box-shadow:
+			0 1px 0 #e3e6ea,
+			0 30px 60px -30px rgb(26 28 32 / 0.25);
+	}
+
+	.ticket__meta {
+		display: flex;
+		justify-content: space-between;
+		gap: 12px;
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--dim);
+	}
+
+	.ticket__total {
+		display: flex;
+		align-items: baseline;
+		flex-wrap: wrap;
+		gap: 12px;
+		font-family: var(--font-display);
+		font-weight: 800;
+		font-size: clamp(3.25rem, 2rem + 4vw, 5.5rem);
+		line-height: 1;
+		color: var(--ink);
+	}
+
+	.ticket__currency {
+		font-family: var(--font-mono);
+		font-size: 1rem;
+		font-weight: 600;
+		letter-spacing: 0.14em;
+		color: var(--dim);
+	}
+
+	.ticket__summary {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.ticket__total output {
+		font-variant-numeric: tabular-nums;
+	}
+
+	.ticket__per {
+		font-family: var(--font-mono);
+		font-size: 0.9375rem;
+		color: var(--ink-muted);
+	}
+
+	.ticket__per span {
+		color: var(--ink);
+		font-weight: 600;
+	}
+
+	.ticket__slider {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.ticket__scale {
+		display: flex;
+		justify-content: space-between;
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		color: var(--dim);
+	}
+
+	.range {
+		--track: 10px;
+		--thumb: 30px;
+		width: 100%;
+		height: var(--thumb);
+		margin: 0;
+		background: transparent;
+		appearance: none;
+		cursor: grab;
+		touch-action: pan-y;
+	}
+
+	.range:active {
+		cursor: grabbing;
+	}
+
+	.range:focus-visible {
+		outline: none;
+	}
+
+	.range::-webkit-slider-runnable-track {
+		height: var(--track);
+		border-radius: 99px;
+		background: linear-gradient(to right, var(--ink) var(--pct), #e9ebee var(--pct));
+	}
+
+	.range::-moz-range-track {
+		height: var(--track);
+		border-radius: 99px;
+		background: #e9ebee;
+	}
+
+	.range::-moz-range-progress {
+		height: var(--track);
+		border-radius: 99px;
+		background: var(--ink);
+	}
+
+	.range::-webkit-slider-thumb {
+		width: var(--thumb);
+		height: var(--thumb);
+		margin-top: calc((var(--track) - var(--thumb)) / 2);
+		appearance: none;
+		border: 4px solid var(--ink);
+		border-radius: 50%;
+		background: var(--light-primary);
+		transition: transform 0.15s ease;
+	}
+
+	.range::-moz-range-thumb {
+		width: var(--thumb);
+		height: var(--thumb);
+		box-sizing: border-box;
+		border: 4px solid var(--ink);
+		border-radius: 50%;
+		background: var(--light-primary);
+		transition: transform 0.15s ease;
+	}
+
+	.range:active::-webkit-slider-thumb {
+		transform: scale(1.12);
+	}
+
+	.range:active::-moz-range-thumb {
+		transform: scale(1.12);
+	}
+
+	.range:focus-visible::-webkit-slider-thumb {
+		box-shadow: 0 0 0 4px var(--light-surface), 0 0 0 7px var(--ink);
+	}
+
+	.range:focus-visible::-moz-range-thumb {
+		box-shadow: 0 0 0 4px var(--light-surface), 0 0 0 7px var(--ink);
+	}
+
+	.pax {
+		margin: 0;
+		padding: 0;
+		border: 0;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+	}
+
+	.pax__legend {
+		float: left;
+		font-size: 1.0625rem;
+		font-weight: 600;
+		color: var(--ink);
+	}
+
+	.pax__options {
+		display: flex;
+		gap: 6px;
+		padding: 4px;
+		background: #eef0f2;
+		border-radius: var(--radius-pill);
+	}
+
+	.pax__option {
+		min-width: 48px;
+		height: 44px;
+		padding: 0 12px;
+		border: 0;
+		border-radius: var(--radius-pill);
+		background: transparent;
+		color: var(--ink-muted);
+		font-family: var(--font-mono);
+		font-size: 1rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition:
+			background-color 0.15s ease,
+			color 0.15s ease;
+	}
+
+	.pax__option:hover {
+		color: var(--ink);
+	}
+
+	.pax__option[aria-pressed='true'] {
+		background: var(--ink);
+		color: var(--light-primary);
+	}
+
+	.ticket__list {
+		margin: 0;
+		padding-top: 26px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		border-top: 1px dashed #d5d9df;
+	}
+
+	.ticket__row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 14px;
+	}
+
+	.ticket__row dt {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		font-size: 1.125rem;
+	}
+
+	.ticket__row dd {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 1rem;
+		color: var(--ink-muted);
+	}
+
+	.ticket__row--secret {
+		margin: 6px -14px 0;
+		padding: 14px;
+		background: #fff6d1;
+		border-radius: 10px;
+		color: var(--ink);
+	}
+
+	.ticket__row--secret dt,
+	.ticket__row--secret dd {
+		font-weight: 600;
+		color: var(--ink);
+	}
+
+	.ticket__row--secret dd {
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+
+	@media (max-width: 960px) {
+		.budget__inner {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+
+	@media (max-width: 720px) {
+		.ticket {
+			gap: 18px;
+		}
+
+		.ticket__meta {
+			flex-direction: column;
+			gap: 4px;
+			font-size: 0.6875rem;
+		}
+
+		.ticket__row dt {
+			font-size: 1rem;
+		}
+
+		.pax {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 10px;
+		}
+
+		.pax__options {
+			display: grid;
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+
+		.ticket__row dt :global(svg) {
+			display: none;
+		}
+
+		.ticket__row dd {
+			font-size: 0.9375rem;
+		}
+
+		.ticket__row--secret {
+			margin-inline: -10px;
+			padding: 10px;
+		}
+	}
+</style>

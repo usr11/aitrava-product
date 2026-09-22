@@ -1,0 +1,154 @@
+---
+import { navLinks } from '../data/site';
+import Button from './Button.astro';
+import Icon from './Icon.astro';
+import Logo from './Logo.astro';
+---
+
+<header class="header">
+	<div class="container header__inner">
+		<a href="/" class="header__brand" aria-label="AiTrava, inicio">
+			<Logo size={40} />
+		</a>
+
+		<nav class="header__nav" aria-label="Principal">
+			<ul class="header__links">
+				{navLinks.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+			</ul>
+		</nav>
+
+		<Button href="#descargar" arrow class="header__cta" track={{ event: 'Lead', label: 'header' }}>Quiero mi viaje sorpresa</Button>
+
+		<button class="header__toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Abrir menú">
+			<Icon name="menu" size={20} strokeWidth={2} class="icon-open" />
+			<Icon name="close" size={20} strokeWidth={2} class="icon-close" />
+		</button>
+	</div>
+
+	<div class="mobile-menu" id="mobile-menu" hidden>
+		<ul>
+			{navLinks.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+		</ul>
+		<Button href="#descargar" size="lg" arrow track={{ event: 'Lead', label: 'menu-movil' }}>Planear mi sorpresa</Button>
+	</div>
+</header>
+
+<script>
+	const toggle = document.querySelector<HTMLButtonElement>('.header__toggle');
+	const menu = document.querySelector<HTMLElement>('#mobile-menu');
+
+	if (toggle && menu) {
+		const setOpen = (open: boolean) => {
+			toggle.setAttribute('aria-expanded', String(open));
+			toggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+			menu.hidden = !open;
+		};
+
+		toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+		menu.addEventListener('click', (event) => {
+			if ((event.target as HTMLElement).closest('a')) setOpen(false);
+		});
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') setOpen(false);
+		});
+	}
+</script>
+
+<style>
+	.header {
+		position: sticky;
+		top: 0;
+		z-index: 50;
+		background: rgb(26 28 32 / 0.86);
+		backdrop-filter: blur(12px);
+		border-bottom: 1px solid var(--line);
+	}
+
+	.header__inner {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 24px;
+		min-height: 88px;
+	}
+
+	.header__links {
+		display: flex;
+		gap: 40px;
+		color: var(--muted);
+	}
+
+	.header__links a:hover {
+		color: var(--text);
+	}
+
+	.header__toggle {
+		display: none;
+		width: 44px;
+		height: 44px;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid var(--line-strong);
+		border-radius: 50%;
+		background: transparent;
+		color: var(--text);
+		cursor: pointer;
+	}
+
+	.header__toggle[aria-expanded='true'] :global(.icon-open),
+	.header__toggle[aria-expanded='false'] :global(.icon-close) {
+		display: none;
+	}
+
+	.mobile-menu {
+		padding: 8px var(--gutter) 28px;
+		border-top: 1px solid var(--line);
+	}
+
+	.mobile-menu ul {
+		display: flex;
+		flex-direction: column;
+		margin-bottom: 20px;
+	}
+
+	.mobile-menu li a {
+		display: block;
+		padding: 16px 0;
+		border-bottom: 1px solid var(--line);
+		font-family: var(--font-display);
+		font-weight: 800;
+		font-size: 2rem;
+		text-transform: uppercase;
+	}
+
+	.mobile-menu :global(.btn) {
+		width: 100%;
+	}
+
+	@media (max-width: 1080px) {
+		.header__links {
+			gap: 24px;
+		}
+	}
+
+	@media (max-width: 960px) {
+		.header__inner {
+			min-height: 76px;
+		}
+
+		.header__nav,
+		.header__inner > :global(.header__cta) {
+			display: none;
+		}
+
+		.header__toggle {
+			display: inline-flex;
+		}
+	}
+
+	@media (min-width: 961px) {
+		.mobile-menu {
+			display: none;
+		}
+	}
+</style>

@@ -1,0 +1,27 @@
+Modo Oscuro (Dark Theme)
+
+Esta paleta se mantiene fiel a la esencia del logo, ofreciendo un aspecto premium, moderno y diseñado para reducir la fatiga visual.
+
+    Fondo Principal (Background): #1A1C20 (Un gris carbón muy profundo, casi negro, que da el toque tecnológico).
+
+    Superficies y Tarjetas (Surface): #25282E (Un gris ligeramente más claro para crear profundidad y separar contenedores).
+
+    Acento Principal (Primary): #FFD700 (Amarillo vibrante, ideal para el botón principal de reserva o call to action).
+
+    Acento Secundario (Secondary): #FFB300 (Un tono más dorado/ámbar para estados hover, íconos o rutas del itinerario).
+
+    Texto Principal (Text): #F8F9FA (Blanco roto, asegura excelente legibilidad sin deslumbrar como lo haría un blanco puro).
+
+Modo Claro (Light Theme)
+
+Para el tema claro, invertimos la base hacia tonos limpios y neutros, utilizando el carbón original como color de contraste para mantener la identidad corporativa.
+
+    Fondo Principal (Background): #F8F9FA (Un gris ultra claro/blanco humo, perfecto para una interfaz limpia y minimalista).
+
+    Superficies y Tarjetas (Surface): #FFFFFF (Blanco puro para que las tarjetas de vuelos u hoteles destaquen del fondo).
+
+    Acento Principal (Primary): #FFC107 (Un amarillo ámbar con un poco más de peso visual para que no se pierda en fondos claros).
+
+    Acento Secundario / Contraste: #1A1C20 (El gris carbón del logo original, aplicado aquí a barras de navegación, botones secundarios o bordes).
+
+    Texto Principal (Text): #25282E (Gris oscuro para un contraste óptimo en la lectura).

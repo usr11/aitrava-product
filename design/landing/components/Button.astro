@@ -1,0 +1,89 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+	href: string;
+	variant?: 'primary' | 'dark' | 'outline';
+	size?: 'md' | 'lg';
+	arrow?: boolean;
+	class?: string;
+	/** Evento del Meta Pixel que se envía al hacer clic (p. ej. 'Lead'). `label` identifica qué botón fue. */
+	track?: { event: string; label: string; custom?: boolean };
+}
+
+const { href, variant = 'primary', size = 'md', arrow = false, class: className, track } = Astro.props;
+---
+
+<a
+	href={href}
+	class:list={['btn', `btn--${variant}`, `btn--${size}`, className]}
+	data-meta-event={track?.event}
+	data-meta-label={track?.label}
+	data-meta-custom={track?.custom ? '' : undefined}
+>
+	<slot />
+	{arrow && <Icon name="arrow" size={size === 'lg' ? 20 : 18} strokeWidth={2.2} class="btn__arrow" />}
+</a>
+
+<style>
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 12px;
+		min-height: 48px;
+		padding: 12px 22px;
+		border-radius: var(--radius-pill);
+		font-weight: 700;
+		font-size: 1rem;
+		white-space: nowrap;
+		transition:
+			background-color 0.2s ease,
+			transform 0.2s ease;
+	}
+
+	.btn--lg {
+		min-height: 58px;
+		padding: 16px 28px;
+		font-size: 1.125rem;
+	}
+
+	.btn--primary {
+		background: var(--primary);
+		color: var(--ink);
+	}
+
+	.btn--primary:hover {
+		background: var(--secondary);
+	}
+
+	.btn--dark {
+		background: var(--ink);
+		color: var(--text);
+	}
+
+	.btn--dark :global(.btn__arrow) {
+		color: var(--primary);
+	}
+
+	.btn--dark:hover {
+		background: var(--surface);
+	}
+
+	.btn--outline {
+		border: 2px solid currentColor;
+		font-weight: 600;
+	}
+
+	.btn--outline:hover {
+		background: rgb(26 28 32 / 0.08);
+	}
+
+	.btn :global(.btn__arrow) {
+		transition: transform 0.2s ease;
+	}
+
+	.btn:hover :global(.btn__arrow) {
+		transform: translateX(3px);
+	}
+</style>

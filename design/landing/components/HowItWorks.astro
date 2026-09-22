@@ -1,0 +1,212 @@
+---
+import { steps } from '../data/site';
+import Icon from './Icon.astro';
+
+const total = String(steps.length).padStart(2, '0');
+---
+
+<section id="como-funciona" class="how" aria-labelledby="how-title">
+	<div class="container">
+		<div class="section-head">
+			<h2 id="how-title" class="display section-head__title">Tu pase de<br />abordaje</h2>
+			<p class="lead section-head__text">
+				Cuatro pasos entre “necesito unas vacaciones” y estar en la fila de embarque. Tú haces el primero, nosotros el
+				resto.
+			</p>
+		</div>
+
+		<ol class="pass">
+			{
+				steps.map((step, index) => (
+					<li class="pass__step">
+						<div class="pass__meta">
+							<span>Paso</span>
+							<span>
+								{String(index + 1).padStart(2, '0')} / {total}
+							</span>
+						</div>
+						<Icon name={step.icon} size={44} strokeWidth={1.6} class="pass__icon" />
+						<h3 class="pass__title">{step.title}</h3>
+						<p class="pass__text">{step.text}</p>
+					</li>
+				))
+			}
+			{
+				[25, 50, 75].map((at) => (
+					<>
+						<span class="pass__notch pass__notch--top" style={`--at: ${at}%`} aria-hidden="true" />
+						<span class="pass__notch pass__notch--bottom" style={`--at: ${at}%`} aria-hidden="true" />
+					</>
+				))
+			}
+		</ol>
+	</div>
+</section>
+
+<style>
+	.how {
+		padding-block: clamp(72px, 10vw, 140px) clamp(56px, 8vw, 120px);
+	}
+
+	.pass {
+		position: relative;
+		margin: clamp(32px, 4.5vw, 64px) 0 0;
+		padding: 0;
+		list-style: none;
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		background: var(--light-bg);
+		color: var(--ink-2);
+		border-radius: 20px;
+	}
+
+	.pass__step {
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+		min-height: 360px;
+		padding: 36px 32px 40px;
+		border-right: 2px dashed var(--light-line);
+	}
+
+	.pass__step:first-child {
+		border-radius: 20px 0 0 20px;
+	}
+
+	.pass__step:last-of-type {
+		border-right: 0;
+		border-radius: 0 20px 20px 0;
+		background: var(--primary);
+		color: var(--ink);
+	}
+
+	.pass__meta {
+		display: flex;
+		justify-content: space-between;
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--dim);
+	}
+
+	.pass__step :global(.pass__icon) {
+		color: var(--ink);
+	}
+
+	.pass__title {
+		margin-top: auto;
+		font-family: var(--font-display);
+		font-weight: 800;
+		font-size: 2.5rem;
+		line-height: 0.95;
+		text-transform: uppercase;
+		text-wrap: balance;
+	}
+
+	.pass__text {
+		font-size: 1.0625rem;
+		line-height: 1.5;
+		color: var(--ink-muted);
+	}
+
+	.pass__step:last-of-type .pass__meta,
+	.pass__step:last-of-type .pass__text {
+		color: var(--ink);
+	}
+
+	.pass__notch {
+		position: absolute;
+		left: var(--at);
+		width: 28px;
+		height: 28px;
+		margin-left: -14px;
+		border-radius: 50%;
+		background: var(--bg);
+	}
+
+	.pass__notch--top {
+		top: -14px;
+	}
+
+	.pass__notch--bottom {
+		bottom: -14px;
+	}
+
+	@media (max-width: 1100px) {
+		.pass {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.pass__step {
+			min-height: 300px;
+		}
+
+		.pass__step:nth-child(2) {
+			border-right: 0;
+		}
+
+		.pass__step:nth-child(-n + 2) {
+			border-bottom: 2px dashed var(--light-line);
+		}
+
+		.pass__step:first-child {
+			border-radius: 20px 0 0 0;
+		}
+
+		.pass__step:nth-child(2) {
+			border-radius: 0 20px 0 0;
+		}
+
+		.pass__step:nth-child(3) {
+			border-radius: 0 0 0 20px;
+		}
+
+		.pass__step:last-of-type {
+			border-radius: 0 0 20px 0;
+		}
+
+		.pass__notch {
+			display: none;
+		}
+	}
+
+	@media (max-width: 720px) {
+		.pass {
+			grid-template-columns: minmax(0, 1fr);
+			border-radius: 18px;
+		}
+
+		.pass__step,
+		.pass__step:nth-child(n) {
+			min-height: 0;
+			gap: 8px;
+			padding: 24px 22px;
+			border-right: 0;
+			border-bottom: 2px dashed var(--light-line);
+			border-radius: 0;
+		}
+
+		.pass__step:first-child {
+			border-radius: 18px 18px 0 0;
+		}
+
+		.pass__step:last-of-type {
+			border-bottom: 0;
+			border-radius: 0 0 18px 18px;
+		}
+
+		.pass__step :global(.pass__icon) {
+			display: none;
+		}
+
+		.pass__title {
+			margin-top: 0;
+			font-size: 2rem;
+		}
+
+		.pass__text {
+			font-size: 1rem;
+		}
+	}
+</style>

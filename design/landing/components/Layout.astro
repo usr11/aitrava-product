@@ -1,0 +1,76 @@
+---
+import { Font } from 'astro:assets';
+import { site } from '../data/site';
+import '../styles/global.css';
+
+interface Props {
+	title?: string;
+	description?: string;
+}
+
+const { title = `${site.name} · Viajes sorpresa personalizados`, description = site.description } = Astro.props;
+const ogImage = new URL('/og-image.jpg', Astro.site ?? Astro.url).href;
+const metaPixelId = '1257792940757500';
+---
+
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+		<meta name="theme-color" content="#1A1C20" />
+		<link rel="icon" type="image/png" href="/favicon.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:locale" content="es_CO" />
+		<meta property="og:site_name" content={site.name} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content={ogImage} />
+		<meta name="twitter:card" content="summary_large_image" />
+
+		<Font cssVariable="--font-display" preload />
+		<Font cssVariable="--font-body" preload />
+		<Font cssVariable="--font-mono" />
+		<meta name="generator" content={Astro.generator} />
+
+		<!-- Meta Pixel Code -->
+		<script is:inline define:vars={{ metaPixelId }}>
+			!function(f,b,e,v,n,t,s)
+			{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+			n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+			if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+			n.queue=[];t=b.createElement(e);t.async=!0;
+			t.src=v;s=b.getElementsByTagName(e)[0];
+			s.parentNode.insertBefore(t,s)}(window, document,'script',
+			'https://connect.facebook.net/en_US/fbevents.js');
+			fbq('init', metaPixelId);
+			fbq('track', 'PageView');
+
+			// Botones con data-meta-event (ver Button.astro) envían su evento al hacer clic.
+			document.addEventListener('click', (event) => {
+				const el = event.target.closest('[data-meta-event]');
+				if (!el) return;
+				const params = { content_name: el.dataset.metaLabel };
+				fbq(el.hasAttribute('data-meta-custom') ? 'trackCustom' : 'track', el.dataset.metaEvent, params);
+			});
+		</script>
+		<!-- End Meta Pixel Code -->
+	</head>
+	<body>
+		<noscript>
+			<img
+				height="1"
+				width="1"
+				style="display:none"
+				alt=""
+				src={`https://www.facebook.com/tr?id=${metaPixelId}&ev=PageView&noscript=1`}
+			/>
+		</noscript>
+		<a class="skip-link" href="#contenido">Saltar al contenido</a>
+		<slot />
+	</body>
+</html>

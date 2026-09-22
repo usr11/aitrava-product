@@ -1,0 +1,234 @@
+---
+import Button from './Button.astro';
+import DepartureBoard from './DepartureBoard.astro';
+---
+
+<section class="hero" aria-labelledby="hero-title">
+	<div class="container hero__inner">
+		<p class="eyebrow hero__eyebrow">
+			<span class="hero__dot" aria-hidden="true"></span>
+			Vuelo AT-001 · Destino clasificado
+		</p>
+
+		<h1 id="hero-title" class="display hero__title">
+			<span>Menos planear.</span>
+			<span class="hero__accent">Más viajar.</span>
+		</h1>
+
+		<div class="hero__sticker" aria-hidden="true">
+			<div class="hero__sticker-inner">
+				<span>Destino</span>
+				<strong>???</strong>
+				<span class="hero__sticker-bottom">Sorpresa</span>
+			</div>
+		</div>
+
+		<div class="hero__grid">
+			<div class="hero__copy">
+				<p class="hero__lead">
+					Tú pones el presupuesto y las fechas. Nuestra IA arma un viaje a tu medida: transporte, alojamiento y planes
+					locales. <strong>El destino lo descubres cuando toca.</strong>
+				</p>
+				<div class="hero__actions">
+					<Button href="#descargar" size="lg" arrow track={{ event: 'Lead', label: 'hero' }}>Planear mi sorpresa</Button>
+					<a href="#como-funciona" class="hero__link">Ver cómo funciona</a>
+				</div>
+			</div>
+
+			<DepartureBoard />
+		</div>
+	</div>
+</section>
+
+<style>
+	.hero__inner {
+		position: relative;
+		padding-block: clamp(36px, 5vw, 72px) clamp(48px, 7vw, 96px);
+	}
+
+	.hero__eyebrow {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		color: var(--secondary);
+	}
+
+	.hero__dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		background: var(--primary);
+		animation: blink 1.4s steps(1) infinite;
+	}
+
+	.hero__title {
+		margin-top: clamp(18px, 2vw, 28px);
+		font-size: clamp(5.25rem, 11vw, 10.5rem);
+		line-height: 0.9;
+		letter-spacing: -0.01em;
+	}
+
+	.hero__title span {
+		display: block;
+	}
+
+	.hero__accent {
+		color: var(--primary);
+	}
+
+	.hero__sticker {
+		position: absolute;
+		top: clamp(100px, 8.2vw, 118px);
+		right: calc(var(--gutter) + 24px);
+		width: 184px;
+		aspect-ratio: 1;
+		display: grid;
+		place-items: center;
+		border: 2px dashed var(--primary);
+		border-radius: 50%;
+		transform: rotate(-12deg);
+	}
+
+	.hero__sticker-inner {
+		width: 160px;
+		aspect-ratio: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 2px;
+		border-radius: 50%;
+		background: var(--primary);
+		color: var(--ink);
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		font-weight: 600;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+	}
+
+	.hero__sticker-inner strong {
+		font-family: var(--font-display);
+		font-weight: 900;
+		font-size: 4rem;
+		line-height: 0.9;
+		letter-spacing: 0;
+	}
+
+	.hero__grid {
+		margin-top: clamp(26px, 4vw, 56px);
+		display: grid;
+		grid-template-columns: 440px minmax(0, 1fr);
+		gap: 64px;
+		align-items: start;
+	}
+
+	.hero__copy {
+		display: flex;
+		flex-direction: column;
+		gap: 32px;
+		padding-top: 8px;
+	}
+
+	.hero__lead {
+		font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+		line-height: 1.45;
+		color: var(--text-soft);
+		text-wrap: pretty;
+	}
+
+	.hero__lead strong {
+		color: var(--text);
+		font-weight: 600;
+	}
+
+	.hero__actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 20px;
+	}
+
+	.hero__link {
+		font-size: 1.0625rem;
+		border-bottom: 1px solid #5a5f68;
+		padding-bottom: 3px;
+	}
+
+	.hero__link:hover {
+		border-color: var(--primary);
+	}
+
+	@keyframes blink {
+		0%,
+		60% {
+			opacity: 1;
+		}
+		61%,
+		100% {
+			opacity: 0.25;
+		}
+	}
+
+	@media (max-width: 1180px) {
+		.hero__grid {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 40px;
+		}
+
+		.hero__copy {
+			max-width: 560px;
+		}
+
+		.hero__sticker {
+			top: calc(9.9vw + 110px);
+			width: 150px;
+		}
+
+		.hero__sticker-inner {
+			width: 128px;
+			font-size: 0.5625rem;
+		}
+
+		.hero__sticker-inner strong {
+			font-size: 3rem;
+		}
+	}
+
+	@media (max-width: 720px) {
+		.hero__title span {
+			max-width: 5.5ch;
+		}
+
+		.hero__sticker {
+			top: 214px;
+			right: 22px;
+			width: 108px;
+			border: 0;
+		}
+
+		.hero__sticker-inner {
+			width: 108px;
+			font-size: 0.5625rem;
+			box-shadow:
+				0 0 0 5px var(--bg),
+				0 0 0 6px var(--primary);
+		}
+
+		.hero__sticker-bottom {
+			display: none;
+		}
+
+		.hero__sticker-inner strong {
+			font-size: 2.5rem;
+		}
+
+		.hero__actions :global(.btn) {
+			width: 100%;
+		}
+
+		.hero__link {
+			display: none;
+		}
+	}
+</style>

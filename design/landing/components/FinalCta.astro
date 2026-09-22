@@ -1,0 +1,128 @@
+---
+import { site } from '../data/site';
+import Button from './Button.astro';
+---
+
+<section id="descargar" class="container" aria-labelledby="cta-title">
+	<div class="cta">
+		<svg class="cta__route" width="620" height="460" viewBox="0 0 620 460" fill="none" aria-hidden="true">
+			<path
+				d="M20 420 C 180 420, 300 330, 360 240 S 520 60, 600 40"
+				stroke="currentColor"
+				stroke-width="3"
+				stroke-dasharray="4 14"
+				stroke-linecap="round"></path>
+		</svg>
+
+		<div class="cta__content">
+			<p class="eyebrow cta__eyebrow">Último llamado</p>
+			<h2 id="cta-title" class="display cta__title">¿A dónde<br />vas?</h2>
+			<p class="cta__text">Ni idea. Ese es el plan.</p>
+			<div class="cta__actions">
+				<Button href={site.stores.appStore} variant="dark" size="lg" arrow track={{ event: 'Lead', label: 'cta-final' }}>Planear mi sorpresa</Button>
+				<div class="cta__stores">
+					<Button
+						href={site.stores.appStore}
+						variant="outline"
+						size="lg"
+						track={{ event: 'ClickTienda', label: 'app-store', custom: true }}
+					>App Store</Button>
+					<Button
+						href={site.stores.googlePlay}
+						variant="outline"
+						size="lg"
+						track={{ event: 'ClickTienda', label: 'google-play', custom: true }}
+					>Google Play</Button>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<style>
+	#descargar {
+		margin-top: clamp(12px, 9vw, 140px);
+		scroll-margin-top: 100px;
+	}
+
+	.cta {
+		position: relative;
+		overflow: hidden;
+		padding: clamp(40px, 6vw, 90px) clamp(24px, 5vw, 72px);
+		background: var(--primary);
+		color: var(--ink);
+		border-radius: clamp(22px, 2vw, 28px);
+	}
+
+	.cta__route {
+		position: absolute;
+		right: -40px;
+		top: -30px;
+		opacity: 0.45;
+	}
+
+	.cta__content {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 26px;
+	}
+
+	.cta__eyebrow {
+		font-weight: 600;
+	}
+
+	.cta__title {
+		font-size: clamp(5.25rem, 12.2vw, 11rem);
+		line-height: 1;
+	}
+
+	.cta__text {
+		font-size: clamp(1.25rem, 1rem + 0.8vw, 1.625rem);
+		font-weight: 500;
+	}
+
+	.cta__actions,
+	.cta__stores {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 16px;
+	}
+
+	.cta__actions {
+		margin-top: 16px;
+	}
+
+	@media (max-width: 720px) {
+		.cta__content {
+			gap: 14px;
+		}
+
+		.cta__route {
+			display: none;
+		}
+
+		.cta__actions {
+			margin-top: 10px;
+			gap: 10px;
+		}
+
+		.cta__actions > :global(.btn) {
+			width: 100%;
+		}
+
+		.cta__stores {
+			width: 100%;
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 10px;
+		}
+
+		.cta__stores :global(.btn) {
+			min-height: 48px;
+			padding-inline: 12px;
+			font-size: 0.9375rem;
+		}
+	}
+</style>

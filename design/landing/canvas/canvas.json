@@ -1,0 +1,12 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "Landing · Escritorio", "x": 0, "y": 0, "w": 1440, "h": 6100, "expand": "fit" },
+    { "file": "Mobile.dc.html", "title": "Landing · Móvil", "x": 1560, "y": 0, "w": 390, "h": 5100 },
+    { "file": "HeroSobre.dc.html", "title": "Alternativa · Hero “Sobre sellado” (claro)", "x": 2070, "y": 0, "w": 1440, "h": 900 }
+  ],
+  "annotations": [
+    { "id": "concepto", "x": 2070, "y": 1040, "w": 520, "text": "Dirección principal: tablero de salidas de aeropuerto + pase de abordaje. El destino siempre aparece como ??? — la sorpresa es el concepto visual.\n\nAlternativa: versión clara con un sobre sellado. Si te gusta más, la llevo al resto de la página." },
+    { "id": "pendientes", "x": 2640, "y": 1040, "w": 460, "text": "Por completar: [MONTO] y desglose del presupuesto, links reales de App Store / Google Play, redes sociales.\n\nOjo: el PDF menciona la app como “Swiftrip”; usé AiTrava." }
+  ],
+  "launch": { "view": "canvas" }
+}

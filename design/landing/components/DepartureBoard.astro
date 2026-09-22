@@ -1,0 +1,246 @@
+---
+import Icon from './Icon.astro';
+
+const flights = [
+	{ time: '06:40', letters: 7, gate: 'A7', status: 'Tu sorpresa', variant: 'active' },
+	{ time: '09:15', letters: 5, gate: 'B2', status: 'Pista 3 de 5', variant: 'clue' },
+	{ time: '13:50', letters: 6, gate: 'C4', status: 'Embarcando', variant: 'muted' },
+] as const;
+
+const animatedTiles = [0, 2, 4, 6];
+---
+
+<div class="board" role="img" aria-label="Tablero de salidas: tu destino aparece oculto como una sorpresa">
+	<div class="board__head" aria-hidden="true">
+		<span class="board__title">
+			<Icon name="departures" size={22} strokeWidth={1.8} />
+			Salidas · Departures
+		</span>
+		<span class="board__updated">Actualizado ahora</span>
+	</div>
+
+	<div class="board__row board__labels" aria-hidden="true">
+		<span>Hora</span><span>Destino</span><span class="board__gate">Pta</span><span>Estado</span>
+	</div>
+
+	<div class="board__rows" aria-hidden="true">
+		{
+			flights.map((flight, rowIndex) => (
+				<div class={`board__row board__flight is-${flight.variant}`}>
+					<span class="board__time">{flight.time}</span>
+					<span class="board__tiles">
+						{Array.from({ length: flight.letters }, (_, i) => (
+							<span
+								class:list={['flap', { 'flap--anim': rowIndex === 0 && animatedTiles.includes(i) }]}
+								style={rowIndex === 0 ? `animation-delay: ${i * 0.22}s` : undefined}
+							>
+								?
+							</span>
+						))}
+					</span>
+					<span class="board__gate">{flight.gate}</span>
+					<span class="board__status">{flight.status}</span>
+				</div>
+			))
+		}
+	</div>
+</div>
+
+<style>
+	.board {
+		background: var(--board);
+		border: 1px solid var(--line);
+		border-radius: 14px;
+		padding: 26px 28px 30px;
+		box-shadow: 0 40px 80px -30px rgb(0 0 0 / 0.7);
+		font-family: var(--font-mono);
+	}
+
+	.board__head {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+		padding-bottom: 18px;
+		border-bottom: 1px solid #2a2d33;
+		text-transform: uppercase;
+	}
+
+	.board__title {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		font-size: 0.875rem;
+		letter-spacing: 0.2em;
+		color: var(--primary);
+		font-weight: 600;
+	}
+
+	.board__updated {
+		font-size: 0.8125rem;
+		color: var(--dim);
+		letter-spacing: 0.12em;
+	}
+
+	.board__row {
+		display: grid;
+		grid-template-columns: 96px minmax(0, 1fr) 56px 190px;
+		gap: 16px;
+		align-items: center;
+	}
+
+	.board__labels {
+		padding: 14px 0 10px;
+		font-size: 0.75rem;
+		letter-spacing: 0.16em;
+		color: var(--dim);
+		text-transform: uppercase;
+	}
+
+	.board__rows {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.board__time,
+	.board__flight .board__gate {
+		font-size: 1.375rem;
+	}
+
+	.board__tiles {
+		display: flex;
+		gap: 4px;
+	}
+
+	.flap {
+		position: relative;
+		width: 34px;
+		height: 46px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--flap);
+		border-radius: 4px;
+		font-size: 1.625rem;
+		color: var(--muted);
+	}
+
+	.flap::after {
+		content: '';
+		position: absolute;
+		inset: 50% 0 auto;
+		height: 1px;
+		background: rgb(0 0 0 / 0.55);
+		box-shadow: 0 1px 0 rgb(255 255 255 / 0.04);
+	}
+
+	.flap--anim {
+		animation: flip 3.2s ease-in-out infinite;
+	}
+
+	.is-active .flap {
+		color: var(--primary);
+		font-weight: 600;
+	}
+
+	.is-clue {
+		opacity: 0.72;
+	}
+
+	.is-muted {
+		opacity: 0.45;
+	}
+
+	.board__status {
+		font-size: 0.9375rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+
+	.is-active .board__status {
+		justify-self: start;
+		background: var(--primary);
+		color: var(--ink);
+		padding: 8px 12px;
+		border-radius: 4px;
+		font-weight: 600;
+	}
+
+	.is-clue .board__status {
+		color: var(--secondary);
+	}
+
+	@keyframes flip {
+		0%,
+		100% {
+			transform: rotateX(0);
+		}
+		48% {
+			transform: rotateX(-88deg);
+		}
+		52% {
+			transform: rotateX(88deg);
+		}
+	}
+
+	@media (max-width: 720px) {
+		.board {
+			padding: 16px;
+			border-radius: 12px;
+		}
+
+		.board__title {
+			font-size: 0.625rem;
+		}
+
+		.board__title :global(svg),
+		.board__labels,
+		.board__updated,
+		.is-clue,
+		.is-muted {
+			display: none;
+		}
+
+		.board__head {
+			padding-bottom: 12px;
+		}
+
+		.board__rows {
+			margin-top: 14px;
+		}
+
+		.board__row {
+			grid-template-columns: 1fr auto;
+			gap: 14px;
+		}
+
+		.board__tiles {
+			grid-column: 1 / -1;
+			grid-row: 1;
+			gap: 3px;
+		}
+
+		.flap {
+			flex: 1;
+			width: auto;
+			height: 42px;
+			font-size: 1.375rem;
+		}
+
+		.board__time {
+			font-size: 1.125rem;
+		}
+
+		.board__flight .board__gate {
+			display: none;
+		}
+
+		.is-active .board__status {
+			font-size: 0.75rem;
+			padding: 6px 10px;
+			justify-self: end;
+		}
+	}
+</style>

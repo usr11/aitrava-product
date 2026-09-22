@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TripStatus {
+  GENERATED
+  RESERVED
+  REVEALED
+  COMPLETED
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String
+  passwordHash String
+  role         Role       @default(USER)
+  referralCode String     @unique
+  referredBy   String? // referralCode de quien lo invitó
+  utmSource    String?
+  travelDna    Json? // gustos acumulados (ADN viajero)
+  createdAt    DateTime   @default(now())
+  trips        Trip[]
+}
+
+model Destination {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  region      String
+  tags        String[]
+  avoidTags   String[]
+  minBudgetPP Int // COP por persona, 2 noches
+  imageUrl    String
+  description String
+  clueBank    Json // [{ type, text }]
+  itinerary   Json // [{ day, title, items[] }]
+  trips       Trip[]
+}
+
+model Trip {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  status        TripStatus  @default(GENERATED)
+  originCity    String
+  startDate     DateTime
+  endDate       DateTime
+  travelers     Int
+  budgetTotal   Int
+  preferences   Json
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id])
+  aiReason      String?
+  aiGenerated   Boolean     @default(false)
+  vibes         String[] // pistas de ambiente que se muestran antes de revelar
+  itinerary     Json
+  breakdown     Json
+  plan          String?
+  amountPaid    Int?
+  isGift        Boolean     @default(false)
+  giftTo        String?
+  giftMessage   String?
+  shareCode     String      @unique
+  revealAt      DateTime
+  reservedAt    DateTime?
+  revealedAt    DateTime?
+  rerolls       Int         @default(0)
+  createdAt     DateTime    @default(now())
+  clues         Clue[]
+  guesses       Guess[]
+}
+
+model Clue {
+  id       String   @id @default(cuid())
+  tripId   String
+  trip     Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  order    Int
+  type     String
+  text     String
+  unlockAt DateTime
+  paid     Boolean  @default(false)
+}
+
+model Guess {
+  id          String   @id @default(cuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  guesserName String
+  isOwner     Boolean
+  destination String
+  correct     Boolean
+  createdAt   DateTime @default(now())
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String?
+  anonId    String?
+  props     Json?
+  createdAt DateTime @default(now())
+
+  @@index([name, createdAt])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String?
+  tripId    String?
+  kind      String // widget | nps
+  score     Int?
+  comment   String?
+  page      String?
+  createdAt DateTime @default(now())
+}
+
+model Iteration {
+  id         String   @id @default(cuid())
+  version    String
+  date       DateTime
+  hypothesis String
+  metric     String
+  result     String
+  decision   String
+  change     String
+  createdAt  DateTime @default(now())
+}

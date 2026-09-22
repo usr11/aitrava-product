@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&amp;family=Familjen+Grotesk:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F8F9FA; color: #25282E; font-family: 'Familjen Grotesk', 'Helvetica Neue', Arial, sans-serif; }
+    a { color: #1A1C20; } a:hover { color: #8A6A00; }
+    * { box-sizing: border-box; }
+    h1, p { margin: 0; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 900px; background: #F8F9FA; position: relative; overflow: hidden;">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 28px 64px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <img src="aitrava-mark.jpg" style="width: 40px; height: 40px; border-radius: 10px; display: block;">
+      <span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 800; font-size: 28px; color: #1A1C20;">AiTrava</span>
+    </div>
+    <div style="display: flex; gap: 40px; font-size: 16px; color: #4A4F57;"><span>Cómo funciona</span><span>Presupuesto</span><span>Pistas</span></div>
+    <div style="background: #1A1C20; color: #F8F9FA; padding: 13px 22px; border-radius: 999px; font-weight: 700; font-size: 16px;">Quiero mi viaje sorpresa</div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 600px minmax(0, 1fr); gap: 40px; padding: 60px 64px 0; align-items: center;">
+    <div style="display: flex; flex-direction: column; gap: 28px;">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: .16em; color: #8A6A00;">ABRIR SOLO EL DÍA DE LA REVELACIÓN</span>
+      <h1 style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 900; font-size: 150px; line-height: .84; text-transform: uppercase; color: #1A1C20;">Tu próximo viaje viene sellado</h1>
+      <p style="font-size: 21px; line-height: 1.5; color: #4A4F57; max-width: 500px;">Presupuesto y fechas de tu lado. Destino, del nuestro. Menos planear, más viajar.</p>
+      <div style="display: flex; gap: 20px; align-items: center;">
+        <div style="background: #FFC107; color: #1A1C20; padding: 18px 28px; border-radius: 999px; font-weight: 700; font-size: 18px; box-shadow: 0 0 0 2px #1A1C20;">Planear mi sorpresa</div>
+        <span style="font-size: 17px; border-bottom: 1px solid #1A1C20; padding-bottom: 3px;">Ver cómo funciona</span>
+      </div>
+    </div>
+
+    <!-- Envelope -->
+    <div style="position: relative; height: 620px;">
+      <div style="position: absolute; left: 70px; top: 90px; width: 600px; height: 400px; background: #25282E; border-radius: 10px; transform: rotate(6deg); box-shadow: 0 40px 70px -30px rgba(26,28,32,.5);"></div>
+      <div style="position: absolute; left: 40px; top: 70px; width: 600px; height: 400px; background: #FFFFFF; border: 1px solid #E3E6EA; border-radius: 10px; transform: rotate(-4deg); overflow: hidden; box-shadow: 0 40px 70px -30px rgba(26,28,32,.35);">
+        <svg style="position: absolute; left: 0; top: 0;" width="600" height="400" viewBox="0 0 600 400" fill="none"><path d="M0 0 L300 230 L600 0" stroke="#D5D9DF" stroke-width="2"></path><path d="M0 400 L230 190 M600 400 L370 190" stroke="#E9EBEE" stroke-width="2"></path></svg>
+        <div style="position: absolute; left: 40px; bottom: 36px; display: flex; flex-direction: column; gap: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: .12em; color: #6D737C;">
+          <span>PARA: TI (Y QUIEN TE ACOMPAÑE)</span>
+          <span>DESTINO: ▓▓▓▓▓▓▓▓</span>
+        </div>
+        <div style="position: absolute; right: 30px; top: 26px; width: 92px; height: 112px; border: 2px dashed #1A1C20; padding: 6px; transform: rotate(4deg);">
+          <div style="width: 100%; height: 100%; background: #FFC107; display: flex; align-items: center; justify-content: center; font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 900; font-size: 54px; color: #1A1C20;">?</div>
+        </div>
+      </div>
+      <!-- seal -->
+      <div style="position: absolute; left: 290px; top: 245px; width: 110px; height: 110px; border-radius: 50%; background: #FFD700; box-shadow: 0 0 0 8px rgba(255,215,0,.35), 0 12px 24px -8px rgba(26,28,32,.45); display: flex; align-items: center; justify-content: center; transform: rotate(-10deg);">
+        <img src="aitrava-mark.jpg" style="width: 62px; height: 62px; border-radius: 50%; display: block;">
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

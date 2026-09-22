@@ -1,0 +1,74 @@
+---
+import { trustPoints } from '../data/site';
+import Icon from './Icon.astro';
+---
+
+<section class="container" aria-label="Por qué confiar en AiTrava">
+	<ul class="trust">
+		{
+			trustPoints.map((point) => (
+				<li class="trust__item">
+					<Icon name={point.icon} size={34} strokeWidth={1.6} class="trust__icon" />
+					<h3 class="trust__title">{point.title}</h3>
+					<p class="trust__text">{point.text}</p>
+				</li>
+			))
+		}
+	</ul>
+</section>
+
+<style>
+	.trust {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 56px;
+		padding-block: 64px;
+		border-block: 1px solid var(--line);
+	}
+
+	.trust__item {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+	}
+
+	.trust__item :global(.trust__icon) {
+		color: var(--primary);
+	}
+
+	.trust__title {
+		font-size: 1.5rem;
+		font-weight: 700;
+		line-height: 1.2;
+	}
+
+	.trust__text {
+		font-size: 1.0625rem;
+		color: var(--muted);
+	}
+
+	@media (max-width: 860px) {
+		.trust {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 26px;
+			padding-block: 36px;
+			border-bottom: 0;
+		}
+
+		.trust__item {
+			gap: 6px;
+		}
+
+		.trust__item :global(.trust__icon) {
+			display: none;
+		}
+
+		.trust__title {
+			font-size: 1.25rem;
+		}
+
+		.trust__text {
+			font-size: 1rem;
+		}
+	}
+</style>
