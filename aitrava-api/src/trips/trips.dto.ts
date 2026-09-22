@@ -4,7 +4,6 @@ import {
   IsArray,
   IsBoolean,
   IsDateString,
-  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -32,7 +31,6 @@ export class GenerateTripDto {
 }
 
 export class ReserveDto {
-  @IsIn(['basico', 'plus', 'dorado']) plan: 'basico' | 'plus' | 'dorado';
   @IsOptional() @IsBoolean() deposit?: boolean;
 }
 

@@ -1,7 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { Injectable, Logger } from '@nestjs/common';
 import { Destination } from '@prisma/client';
+import Groq from 'groq-sdk';
 import { z } from 'zod';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -42,8 +41,12 @@ const nightsOf = (p: TripPreferences) =>
 @Injectable()
 export class EngineService {
   private readonly logger = new Logger(EngineService.name);
-  private readonly client = process.env.ANTHROPIC_API_KEY
-    ? new Anthropic()
+  private readonly client = process.env.GROQ_API_KEY
+    ? new Groq({
+        apiKey: process.env.GROQ_API_KEY,
+        timeout: 20_000,
+        maxRetries: 1,
+      })
     : null;
 
   constructor(private prisma: PrismaService) {}
@@ -150,7 +153,7 @@ export class EngineService {
     });
   }
 
-  /** Paso 3: Claude elige entre el top 5 y escribe pistas e itinerario personalizados. */
+  /** Paso 3: la IA (Groq) elige entre el top 5 y escribe pistas e itinerario personalizados. */
   private async planWithAi(
     prefs: TripPreferences,
     candidates: Destination[],
@@ -160,15 +163,10 @@ export class EngineService {
       destinationSlug: z.enum(slugs),
       reason: z.string(),
       vibes: z.array(z.string()),
-      clues: z.array(
-        z.object({
-          type: z.enum(CLUE_ORDER as [string, ...string[]]),
-          text: z.string(),
-        }),
-      ),
+      clues: z.array(z.object({ type: z.string(), text: z.string() })),
       itinerary: z.array(
         z.object({
-          day: z.number(),
+          day: z.coerce.number(),
           title: z.string(),
           items: z.array(z.string()),
         }),
@@ -185,42 +183,50 @@ export class EngineService {
       pistas_ejemplo: c.clueBank,
     }));
 
-    const response = await this.client!.messages.parse(
-      {
-        model: process.env.ANTHROPIC_MODEL || 'claude-opus-5',
-        max_tokens: 4000,
-        output_config: { effort: 'low', format: zodOutputFormat(schema) },
-        system:
-          'Eres el motor de AiTrava, una app colombiana de viajes sorpresa. Eliges UN destino del catálogo para el viajero y escribes en español de Colombia, cercano y con emoción. ' +
-          'Reglas: las pistas NUNCA mencionan el nombre del destino, su departamento ni lugares que lo delaten de inmediato; van de más difícil a más fácil. ' +
-          '"vibes" son 3 frases cortas (máx. 4 palabras) que dan ambiente sin revelar el lugar. "reason" explica en 1–2 frases por qué este destino encaja con la persona (se muestra al revelar).',
-        messages: [
-          {
-            role: 'user',
-            content: JSON.stringify({
-              viajero: {
-                sale_de: prefs.originCity,
-                dias: days,
-                viajeros: prefs.travelers,
-                presupuesto_total_cop: prefs.budgetTotal,
-                le_gusta: prefs.vibes,
-                evitar: prefs.avoid,
-                es_regalo: !!prefs.isGift,
-              },
-              catalogo: catalog,
-              instrucciones: `Devuelve exactamente 5 pistas (una por tipo: ${CLUE_ORDER.join(', ')}) y un itinerario de ${days} días con 3–4 actividades por día.`,
-            }),
-          },
-        ],
-      },
-      { timeout: 45_000 },
-    );
+    const completion = await this.client!.chat.completions.create({
+      model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
+      temperature: 0.8,
+      max_completion_tokens: 4000,
+      reasoning_effort: 'low',
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content:
+            'Eres el motor de AiTrava, una app colombiana de viajes sorpresa. Eliges UN destino del catálogo para el viajero y escribes en español de Colombia, cercano y con emoción. ' +
+            'Reglas: las pistas NUNCA mencionan el nombre del destino, su departamento ni lugares que lo delaten de inmediato; van de más difícil a más fácil. ' +
+            '"vibes" son 3 frases cortas (máx. 4 palabras) que dan ambiente sin revelar el lugar. "reason" explica en 1–2 frases por qué este destino encaja con la persona (se muestra al revelar). ' +
+            'Responde SOLO con un objeto JSON con esta forma exacta: ' +
+            '{"destinationSlug": "<slug del catálogo>", "reason": "...", "vibes": ["...","...","..."], ' +
+            '"clues": [{"type": "empacar|clima|comida|musica|cultura", "text": "..."}], ' +
+            '"itinerary": [{"day": 1, "title": "...", "items": ["...", "..."]}]}',
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({
+            viajero: {
+              sale_de: prefs.originCity,
+              dias: days,
+              viajeros: prefs.travelers,
+              presupuesto_total_cop: prefs.budgetTotal,
+              le_gusta: prefs.vibes,
+              evitar: prefs.avoid,
+              es_regalo: !!prefs.isGift,
+            },
+            catalogo: catalog,
+            instrucciones: `Devuelve exactamente 5 pistas (una por tipo, en este orden: ${CLUE_ORDER.join(', ')}) y un itinerario de ${days} días con 3–4 actividades por día.`,
+          }),
+        },
+      ],
+    });
 
-    const out = response.parsed_output;
-    if (!out)
+    const raw = completion.choices[0]?.message?.content ?? '';
+    const parsed = schema.safeParse(JSON.parse(raw));
+    if (!parsed.success)
       throw new Error(
-        `respuesta sin JSON válido (stop_reason=${response.stop_reason})`,
+        `JSON inválido de la IA: ${parsed.error.message.slice(0, 200)}`,
       );
+    const out = parsed.data;
     const d = candidates.find((c) => c.slug === out.destinationSlug)!;
     const leaks = (t: string) => normalize(t).includes(normalize(d.name));
     const bank = d.clueBank as ClueDraft[];
@@ -234,7 +240,10 @@ export class EngineService {
       destinationId: d.id,
       destinationName: d.name,
       reason: out.reason,
-      vibes: out.vibes.filter((v) => !leaks(v)).slice(0, 3),
+      vibes:
+        out.vibes.filter((v) => !leaks(v)).length >= 2
+          ? out.vibes.filter((v) => !leaks(v)).slice(0, 3)
+          : d.tags.slice(0, 3).map((t) => TAG_LABELS[t] ?? t),
       clues,
       itinerary: out.itinerary.length
         ? out.itinerary.slice(0, 7)

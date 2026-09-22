@@ -14,9 +14,7 @@ import { EngineService } from '../engine/engine.service';
 import {
   computeBreakdown,
   DEPOSIT_AMOUNT,
-  EXTRA_CLUE_PRICE,
-  Plan,
-  REROLL_PRICE,
+  MAX_REROLLS,
   TravelDna,
   TripPreferences,
 } from '../engine/types';
@@ -83,7 +81,6 @@ export class TripsService {
         order: c.order,
         type: c.type,
         unlockAt: c.unlockAt,
-        paid: c.paid,
         locked: !unlocked,
         text: unlocked ? c.text : null,
       };
@@ -112,7 +109,6 @@ export class TripsService {
       travelers: t.travelers,
       budgetTotal: t.budgetTotal,
       breakdown: t.breakdown,
-      plan: t.plan,
       amountPaid: t.amountPaid,
       vibes: t.vibes,
       isGift: t.isGift,
@@ -122,6 +118,7 @@ export class TripsService {
       revealAt: t.revealAt,
       canReveal: t.status === 'RESERVED' && t.revealAt.getTime() <= Date.now(),
       rerolls: t.rerolls,
+      maxRerolls: MAX_REROLLS,
       aiGenerated: t.aiGenerated,
       clues: this.clueView(t, t.clues),
       ownerGuess: ownerGuess
@@ -288,6 +285,10 @@ export class TripsService {
     const trip = await this.findOwned(id, userId);
     if (trip.status !== 'GENERATED')
       throw new BadRequestException('Solo puedes re-sortear antes de reservar');
+    if (trip.rerolls >= MAX_REROLLS)
+      throw new BadRequestException(
+        `Máximo ${MAX_REROLLS} re-sorteos por viaje`,
+      );
     const prefs = trip.preferences as unknown as TripPreferences;
     prefs.excluded = [...(prefs.excluded ?? []), trip.destination.slug];
 
@@ -319,18 +320,17 @@ export class TripsService {
     });
     await this.events.log('trip_reroll', userId, {
       tripId: id,
-      paid: trip.rerolls >= 1,
-      price: trip.rerolls >= 1 ? REROLL_PRICE : 0,
+      number: trip.rerolls + 1,
     });
     return this.get(id, userId);
   }
 
-  async reserve(id: string, userId: string, plan: Plan, deposit = false) {
+  async reserve(id: string, userId: string, deposit = false) {
     const trip = await this.findOwned(id, userId);
     if (trip.status !== 'GENERATED')
       throw new BadRequestException('Este viaje ya está reservado');
 
-    const breakdown = computeBreakdown(trip.budgetTotal, plan);
+    const breakdown = computeBreakdown(trip.budgetTotal);
     const now = new Date();
     const demo = isDemoMode();
     const revealAt = demo
@@ -353,7 +353,6 @@ export class TripsService {
         where: { id },
         data: {
           status: 'RESERVED',
-          plan,
           breakdown,
           amountPaid: deposit ? DEPOSIT_AMOUNT : breakdown.total,
           reservedAt: now,
@@ -363,26 +362,9 @@ export class TripsService {
     ]);
     await this.events.log('reservation', userId, {
       tripId: id,
-      plan,
       deposit,
+      commission: breakdown.comision,
       amount: deposit ? DEPOSIT_AMOUNT : breakdown.total,
-    });
-    return this.get(id, userId);
-  }
-
-  async extraClue(id: string, userId: string) {
-    const trip = await this.findOwned(id, userId);
-    if (trip.status !== 'RESERVED')
-      throw new BadRequestException('Primero reserva tu viaje');
-    const next = trip.clues.find((c) => c.unlockAt.getTime() > Date.now());
-    if (!next) throw new BadRequestException('Ya tienes todas las pistas');
-    await this.prisma.clue.update({
-      where: { id: next.id },
-      data: { unlockAt: new Date(), paid: true },
-    });
-    await this.events.log('extra_clue', userId, {
-      tripId: id,
-      price: EXTRA_CLUE_PRICE,
     });
     return this.get(id, userId);
   }

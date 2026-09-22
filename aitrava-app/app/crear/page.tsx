@@ -255,7 +255,7 @@ export default function CreateTripPage() {
                   ['plane', 'Transporte', split.transporte],
                   ['home', 'Alojamiento', split.alojamiento],
                   ['mountain', 'Experiencias locales', split.experiencias],
-                  ['sparkle', 'Tarifa AiTrava (8 %)', split.tarifa],
+                  ['sparkle', 'Comisión AiTrava (10 %)', split.comision],
                 ].map(([icon, label, value]) => (
                   <li key={label as string} className="flex items-center justify-between border-t border-line pt-2">
                     <span className="flex items-center gap-2 text-muted">
@@ -265,7 +265,7 @@ export default function CreateTripPage() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-4 text-xs text-dim">Transparencia total: nunca pasamos de tu tope. La tarifa ya está incluida.</p>
+              <p className="mt-4 text-xs text-dim">Transparencia total: nunca pasamos de tu tope. Nuestra comisión ya está incluida, sin cobros extra.</p>
             </div>
           </>
         )}

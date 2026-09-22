@@ -38,7 +38,6 @@ export function ClueList({ clues }: { clues: ClueView[] }) {
             <span className={`eyebrow text-[11px] ${c.order === newest ? 'font-semibold text-ink' : 'text-muted-2'}`}>
               Pista {c.order} · {CLUE_LABELS[c.type] ?? c.type}
               {c.order === newest && ' · Nueva'}
-              {c.paid && ' · Extra'}
             </span>
             <p className={`mt-1.5 leading-snug ${c.order === newest ? 'text-lg font-semibold' : 'text-text-soft'}`}>{c.text}</p>
           </li>

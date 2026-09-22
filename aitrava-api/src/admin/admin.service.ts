@@ -102,7 +102,14 @@ export class AdminService {
         trips: trips.length,
         reservations: reserved.length,
         reveals: revealed.length,
-        revenue: reserved.reduce((s, t) => s + (t.amountPaid ?? 0), 0),
+        sales: reserved.reduce((s, t) => s + t.budgetTotal, 0),
+        commission: reserved.reduce(
+          (s, t) => s + ((t.breakdown as { comision?: number }).comision ?? 0),
+          0,
+        ),
+        deposits: reserved.filter(
+          (t) => t.amountPaid != null && t.amountPaid < t.budgetTotal,
+        ).length,
         tripToReservation: pct(reserved.length, trips.length),
         visitorToSignup: pct(
           byEvent.signup?.people ?? 0,
@@ -125,7 +132,6 @@ export class AdminService {
           ownerGuesses.length,
         ),
         aiShare: pct(trips.filter((t) => t.aiGenerated).length, trips.length),
-        extraClues: byEvent.extra_clue?.total ?? 0,
         rerolls: byEvent.trip_reroll?.total ?? 0,
         gifts: trips.filter((t) => t.isGift).length,
       },
@@ -146,7 +152,6 @@ export class AdminService {
         ),
       ).slice(0, 6),
       topDestinations: count(trips.map((t) => t.destination.name)).slice(0, 8),
-      plans: count(reserved.map((t) => t.plan ?? 'basico')),
       utm: utm
         .map((u) => ({ label: u.utmSource ?? 'directo', value: u._count }))
         .sort((a, b) => b.value - a.value),

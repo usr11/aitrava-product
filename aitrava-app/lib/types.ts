@@ -1,17 +1,15 @@
 export type User = { id: string; name: string; email: string; role: 'USER' | 'ADMIN'; referralCode: string };
 
 export type Breakdown = {
-  plan: string;
-  planName: string;
   transporte: number;
   alojamiento: number;
   experiencias: number;
-  tarifa: number;
-  addOn: number;
+  comision: number;
+  commissionRate: number;
   total: number;
 };
 
-export type ClueView = { order: number; type: string; unlockAt: string; paid: boolean; locked: boolean; text: string | null };
+export type ClueView = { order: number; type: string; unlockAt: string; locked: boolean; text: string | null };
 
 export type DestinationView = { slug: string; name: string; region: string; imageUrl: string; description: string };
 
@@ -28,7 +26,6 @@ export type Trip = {
   travelers: number;
   budgetTotal: number;
   breakdown: Breakdown;
-  plan: string | null;
   amountPaid: number | null;
   vibes: string[];
   isGift: boolean;
@@ -38,6 +35,7 @@ export type Trip = {
   revealAt: string;
   canReveal: boolean;
   rerolls: number;
+  maxRerolls: number;
   aiGenerated: boolean;
   clues: ClueView[];
   ownerGuess: { destination: string; correct: boolean | null } | null;

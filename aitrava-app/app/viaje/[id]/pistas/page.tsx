@@ -10,9 +10,7 @@ import { Icon } from '@/components/Icon';
 import { RequireAuth } from '@/components/RequireAuth';
 import { Spinner } from '@/components/Spinner';
 import { api } from '@/lib/api';
-import { EXTRA_CLUE_PRICE } from '@/lib/constants';
 import { useConfig } from '@/lib/hooks';
-import { formatCOP } from '@/lib/format';
 import { shareLink } from '@/lib/share';
 import { track } from '@/lib/track';
 import type { Trip } from '@/lib/types';
@@ -67,11 +65,6 @@ function Clues() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     }
-  };
-
-  const extraClue = async () => {
-    if (!confirm(`Pista extra por ${formatCOP(EXTRA_CLUE_PRICE)} (simulado). ¿La desbloqueamos?`)) return;
-    setTrip(await api<Trip>(`/trips/${id}/extra-clue`, { method: 'POST' }));
   };
 
   const guess = async (slug: string) => {
@@ -156,11 +149,6 @@ function Clues() {
 
         <div>
           <ClueList clues={trip.clues} />
-          {unlocked < trip.clues.length && (
-            <button onClick={extraClue} className="btn btn-ghost mt-3 w-full border border-dashed border-line-strong">
-              <Icon name="bulb" size={18} /> ¿No aguantas? Pista extra · {formatCOP(EXTRA_CLUE_PRICE)}
-            </button>
-          )}
         </div>
       </div>
 

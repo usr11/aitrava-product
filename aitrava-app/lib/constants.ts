@@ -36,35 +36,9 @@ export const CLUE_LABELS: Record<string, string> = {
   cultura: 'Un dato curioso',
 };
 
-export const PLANS = [
-  {
-    id: 'basico',
-    name: 'Básico',
-    feeRate: 0.08,
-    addOn: 0,
-    tagline: 'Todo lo esencial',
-    perks: ['Viaje sorpresa completo', '5 pistas antes de salir', 'Soporte por chat'],
-  },
-  {
-    id: 'plus',
-    name: 'Plus',
-    feeRate: 0.12,
-    addOn: 0,
-    tagline: 'El más elegido',
-    perks: ['Todo lo del Básico', 'Pistas personalizadas con IA', '1 re-sorteo extra gratis', 'Soporte humano 24/7'],
-  },
-  {
-    id: 'dorado',
-    name: 'Sobre Dorado',
-    feeRate: 0.15,
-    addOn: 89_000,
-    tagline: 'Para regalar o celebrar',
-    perks: ['Todo lo del Plus', 'Experiencia exclusiva de un aliado', 'Sobre físico enviado a tu casa', 'Cambio de fechas gratis'],
-  },
-] as const;
-
-export const EXTRA_CLUE_PRICE = 9_900;
-export const REROLL_PRICE = 19_900;
+/** Modelo de ingresos: una sola comisión por viaje, incluida en el tope del cliente. */
+export const COMMISSION_RATE = 0.1;
+export const MAX_REROLLS = 2;
 export const DEPOSIT_AMOUNT = 50_000;
 
 /** Degradados para las "postales" de destino (no dependemos de fotos externas). */

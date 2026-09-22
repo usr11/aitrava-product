@@ -4,7 +4,7 @@
 > El trabajo es **lineal**: se toma el siguiente paso sin marcar del **Plan de trabajo (sección 8)**. Al terminarlo se marca `[x]` con la fecha y quién lo hizo, se actualiza la tabla de progreso (0.1) y se anota en el **Registro de cambios** (sección 11).
 > Si una decisión cambia, se edita aquí primero y después el código.
 
-**Última actualización:** 2026-09-21 · **Paso actual:** 30 (bloqueado por D1) → seguir con 31
+**Última actualización:** 2026-09-21 · **Paso actual:** 32 (pruebas con usuarios). El 30 y el 34 esperan el despliegue (D1)
 
 ---
 
@@ -25,9 +25,9 @@
 | B · Backend núcleo | 07–14 | 8/8 | ✅ |
 | C · Flujo principal (frontend) | 15–24 | 10/10 | ✅ |
 | D · Crecimiento y métricas | 25–30 | 5/6 | 🟡 |
-| E · Validación con usuarios e iteraciones | 31–37 | 0/7 | ⬜ |
-| F · Presentación | 38–41 | 0/4 | ⬜ |
-| **Total** | | **29/41** | |
+| E · Validación con usuarios e iteraciones | 31–37 | 1/7 | 🟡 |
+| F · Presentación | 38–41 | 1/4 | 🟡 |
+| **Total** | | **31/41** | |
 
 Estados: ⬜ sin empezar · 🟡 en curso · ✅ terminada
 
@@ -55,7 +55,7 @@ Esta tabla es **la razón de ser de cada feature**. Si una feature no aparece aq
 | 1 | **Diferenciadores e innovación difíciles de copiar** | (a) **Motor de sorpresa:** IA + catálogo curado que elige el destino a partir del "ADN viajero" y lo esconde. (b) **Gamificación de la espera:** pistas por día + adivinanza en grupo + sobre digital. (c) **ADN viajero:** cada viaje, pista, adivinanza y calificación alimenta el perfil, y eso mejora la siguiente recomendación (efecto de red de datos). (d) **Inventario opaco:** los aliados venden cupos sin bajar su precio público porque el cliente no sabe a dónde va. | Demo en vivo del flujo completo. Diapositiva de "barreras de imitación": datos propios, red de aliados, mecánica de juego y marca. |
 | 2 | **Prototipo funcional e iterativo, validado con usuarios** | App web completa y responsive: registro → quiz → viaje generado → reserva (simulada) → pistas → adivinanza → revelación → feedback. **Widget de feedback** en todas las pantallas, **encuesta NPS** después de la revelación y **registro de iteraciones** (v1 → v2 → v3). | `/admin/iteraciones`, línea de tiempo de versiones con el cambio de cada una, capturas y testimonios de las pruebas con usuarios. |
 | 3 | **Respuesta sostenida del público y conversiones que orientaron cambios** | **Tracking propio de eventos** en la BD (embudo completo) + Meta Pixel. **Dashboard `/admin`** con el embudo, las tasas de conversión, el NPS, los gustos más elegidos y los referidos. Campañas en Instagram/Meta que llevan de la landing a la app. Cada cambio del modelo queda ligado a un dato. | Gráfica del embudo, tabla semanal de métricas y 3+ aprendizajes del tipo "vimos X → cambiamos Y → resultó Z". |
-| 4 | **Modelo altamente innovador que redefine cómo se crea/captura valor** | La app **cobra por la anticipación, no solo por la reserva**: planes (Básico, Plus, Sobre Dorado), **modo regalo**, **pista extra** y **re-sorteo** pagos, y comisión de aliados por el inventario opaco. Todo visible en el checkout. | Diapositiva del modelo: de dónde viene cada peso. Comparación con una agencia tradicional o con Booking. |
+| 4 | **Modelo altamente innovador que redefine cómo se crea/captura valor** | **Una sola comisión por viaje (10 %), incluida dentro del tope del cliente**: el cliente nunca paga de más y ve exactamente cuánto gana AiTrava. El margen crece por el **inventario opaco**: como el destino es secreto, los aliados dan tarifas más bajas sin quemar su precio público. El **modo regalo** abre un mercado nuevo (quien paga no es quien viaja). Todo visible en el checkout. | Diapositiva del modelo: de dónde viene cada peso. Comparación con una agencia tradicional o con Booking. |
 | 5 | **Presentación estructurada, fluida y en tiempo** | **Modo demo** (las pistas se desbloquean cada 30 s), datos semilla realistas y cuenta demo lista. Guion (sección 9). | Ensayo cronometrado. |
 
 ---
@@ -66,8 +66,8 @@ Esta tabla es **la razón de ser de cada feature**. Si una feature no aparece aq
 - App web **responsive, pensada primero para móvil** (en el celular debe sentirse como una app).
 - Registro e inicio de sesión simple (email + contraseña).
 - Wizard "Crear mi viaje" con desglose del presupuesto en vivo.
-- Generación del viaje con **IA (Claude API)** sobre un **catálogo curado de destinos en Colombia**. Si no hay API key, usa un algoritmo por puntaje como respaldo, así la demo nunca falla.
-- Boarding pass con destino `???`, desglose y reserva **simulada** (checkout falso con planes).
+- Generación del viaje con **IA (Groq)** sobre un **catálogo curado de destinos en Colombia**. Si no hay API key, usa un algoritmo por puntaje como respaldo, así la demo nunca falla.
+- Boarding pass con destino `???`, desglose y reserva **simulada** (checkout falso, comisión única del 10 %).
 - Pistas que se desbloquean por fecha, adivinanza (propia y de amigos) y revelación animada.
 - Link para compartir el viaje: los amigos adivinan y hay un CTA para que creen el suyo (referido).
 - Modo regalo.
@@ -92,7 +92,7 @@ Esta tabla es **la razón de ser de cada feature**. Si una feature no aparece aq
 | Backend | **NestJS 11** + TypeScript | `aitrava-api/` (ya creada). |
 | ORM | **Prisma** | `aitrava-api/prisma/` |
 | Base de datos | **PostgreSQL 16 en Docker** (lo **único** en Docker) | `docker-compose.yml` en la raíz. |
-| IA | **Claude API** (`@anthropic-ai/sdk`) | Por defecto `claude-opus-5` con `effort: low` (rápido); se cambia con `ANTHROPIC_MODEL` (p. ej. `claude-haiku-4-5` si se quiere más barato). Respaldo sin IA si no hay key. |
+| IA | **Groq** (`groq-sdk`, gratis) | Modelo `openai/gpt-oss-120b` en modo JSON (~1,5 s por viaje); se cambia con `GROQ_MODEL`. Si no hay key o falla, usa el motor por puntaje. |
 | Gráficas | `recharts` | Solo en `/admin`. |
 | Animaciones | CSS (+ `framer-motion` opcional) | Sobre digital y tablero de salidas. |
 | Paquetes | **pnpm** | |
@@ -128,8 +128,8 @@ cd aitrava-app && pnpm i && pnpm dev
 # aitrava-api/.env
 DATABASE_URL="postgresql://aitrava:aitrava@localhost:5432/aitrava"
 JWT_SECRET="cambia-esto"
-ANTHROPIC_API_KEY=""            # vacío = usa el respaldo sin IA
-ANTHROPIC_MODEL="claude-opus-5"
+GROQ_API_KEY=""                 # vacío = usa el motor por puntaje sin IA
+GROQ_MODEL="openai/gpt-oss-120b"
 DEMO_MODE="true"                # pistas cada 30 s en vez de cada día
 APP_URL="http://localhost:3000" # CORS
 PORT=4000
@@ -189,7 +189,7 @@ La landing se diseñó en claude.ai/design (los archivos `.dc.html` en `design/l
 ```text
 Landing ──CTA──▶ /registro ─▶ /crear (wizard) ─▶ /crear/generando ─▶ /viaje/[id] (boarding pass ???)
                                                                           │
-                                         /viaje/[id]/pago (planes, simulado) ◀┘
+                                         /viaje/[id]/pago (comisión única, simulado) ◀┘
                                                    │
                          /viaje/[id]/pistas (cuenta regresiva + pistas + adivinar) ──compartir──▶ /s/[code] (amigos adivinan → CTA "crea el tuyo")
                                                    │
@@ -202,9 +202,9 @@ Landing ──CTA──▶ /registro ─▶ /crear (wizard) ─▶ /crear/genera
 | `/registro`, `/login` | Formulario simple. Acepta `?ref=CODIGO` y `?utm_*`. | `signup` |
 | `/crear` | Wizard de 5 pasos con barra de progreso: **1.** Origen y fechas · **2.** Presupuesto y viajeros (slider + desglose en vivo, tarjetas PAX) · **3.** Qué te mueve (chips: playa, montaña, comida, fiesta, cultura, naturaleza, silencio, aventura) · **4.** Cosas a evitar (avión, frío, caminatas largas…) · **5.** ¿Para ti o es un regalo? | `quiz_start`, `quiz_step`, `quiz_complete` |
 | `/crear/generando` | Tablero de salidas animado mientras responde la IA. | — |
-| `/viaje/[id]` | **Boarding pass**: origen → `???`, fechas, PAX, desglose en COP, 3 "pistas de ambiente" (sin revelar el lugar) y CTA "Reservar mi sorpresa". Botón "Re-sortear" (1 gratis). | `trip_generated`, `trip_reroll` |
-| `/viaje/[id]/pago` | 3 planes (sección 7), resumen y checkout **simulado**. Aviso: *"Prototipo: no se hace ningún cobro"*. Opción "Apartar con $50.000". | `checkout_view`, `plan_selected`, `reservation` |
-| `/viaje/[id]/pistas` | Cuenta regresiva, progreso, pista nueva en amarillo, anteriores y bloqueadas. **Adivinar**, **Compartir con mis acompañantes** y "Pista extra". | `clue_view`, `guess`, `share`, `extra_clue` |
+| `/viaje/[id]` | **Boarding pass**: origen → `???`, fechas, PAX, desglose en COP, 3 "pistas de ambiente" (sin revelar el lugar) y CTA "Reservar mi sorpresa". Botón "Re-sortear" (2 gratis por viaje). | `trip_generated`, `trip_reroll` |
+| `/viaje/[id]/pago` | Resumen con la comisión del 10 % incluida y checkout **simulado**. Aviso: *"Prototipo: no se hace ningún cobro"*. Opción "Apartar con $50.000". | `checkout_view`, `reservation` |
+| `/viaje/[id]/pistas` | Cuenta regresiva, progreso, pista nueva en amarillo, anteriores y bloqueadas. **Adivinar**, **Compartir con mis acompañantes** y (en modo demo) "Adelantar el tiempo". | `clue_view`, `guess`, `share` |
 | `/viaje/[id]/revelacion` | Animación del **sobre digital** → destino, foto, por qué lo eligió la IA e itinerario día por día. Muestra si adivinaste. Luego la encuesta NPS con 2 preguntas. | `reveal`, `nps_submit` |
 | `/s/[code]` | Página pública del viaje de un amigo: pistas desbloqueadas, adivinar (solo el nombre) y CTA "Quiero mi viaje sorpresa" → `/registro?ref=`. | `share_view`, `friend_guess`, `referral_click` |
 | `/regalo/[code]` | Lo que ve quien recibe un viaje regalado: mensaje, cuenta regresiva y pistas. | `gift_open` |
@@ -218,19 +218,20 @@ Landing ──CTA──▶ /registro ─▶ /crear (wizard) ─▶ /crear/genera
 
 ## 7. Modelo de negocio dentro del producto (criterio 4)
 
-| Plan | Precio (ejemplo) | Qué incluye |
-| :-- | :-- | :-- |
-| **Básico** | 8 % de tarifa de servicio sobre el presupuesto | Viaje sorpresa, 5 pistas y soporte por chat. |
-| **Plus** | 12 % | Básico + pistas personalizadas por IA, 1 re-sorteo extra y soporte 24/7. |
-| **Sobre Dorado** | 15 % + $89.000 | Plus + experiencia exclusiva de un aliado, kit físico con el sobre y cambio de fechas gratis. |
+**Decisión (2026-09-21):** una sola **comisión por viaje del 10 %**, incluida dentro del presupuesto que pone el cliente. No hay planes, ni pistas pagas, ni cobro por re-sortear.
 
-**Otras fuentes de ingreso visibles en la app:**
-- **Modo regalo:** quien regala paga y quien recibe vive la sorpresa. Abre el mercado de cumpleaños, aniversarios y amor y amistad.
-- **Micro-pagos de la espera:** pista extra ($9.900) y re-sorteo ($19.900). Esto es cobrar por la anticipación.
-- **Comisión de aliados (10–15 %)** por vender inventario que no se ocupa sin bajar su precio público (inventario opaco).
+| Cómo ganamos | Detalle |
+| :-- | :-- |
+| **Comisión por viaje (10 %)** | Sale del tope del cliente y se muestra desglosada en el checkout ("Así ganamos"). Ejemplo: en un viaje de $2.800.000 son $280.000. |
+| **Margen por inventario opaco** | Como el cliente no elige el hotel ni el vuelo, los aliados nos dan tarifas más bajas para llenar cupos vacíos sin bajar su precio público. La diferencia amplía nuestro margen sin cobrarle más al cliente. |
+| **Abono para apartar ($50.000)** | No es otro cobro: adelanta la caja y mide la intención de compra real. |
+
+**Lo que amplía el mercado (sin cobros extra):**
+- **Modo regalo:** quien paga no es quien viaja. Abre el mercado de cumpleaños, aniversarios y amor y amistad.
+- **Links para compartir y referidos:** cada viaje trae a los amigos que apuestan. El costo de adquisición baja.
 - **Futuro:** suscripción "Club Sorpresa" (1 escapada por trimestre) y B2B (integraciones sorpresa para empresas).
 
-**Por qué es innovador:** una agencia tradicional cobra por reservar lo que el cliente ya eligió. AiTrava convierte **la incertidumbre en el producto**. El cliente paga por no tener que decidir y por la emoción de la espera, y el aliado paga por llenar cupos sin quemar su precio.
+**Por qué es innovador:** una agencia tradicional cobra por reservar lo que el cliente ya eligió. AiTrava convierte **la incertidumbre en el producto**: el cliente paga por no tener que decidir, y esa misma sorpresa es la que nos deja negociar mejores tarifas. Todo con una comisión transparente y dentro del tope.
 
 ---
 
@@ -374,7 +375,7 @@ model Iteration {
 - [x] **07** · Auth: `POST /api/auth/register` y `/login` (bcrypt + JWT), `GET /api/auth/me`, guard JWT y guard de admin. El registro guarda `referredBy` y `utmSource` — ✅ 2026-09-21 · Claude (agente)
 - [x] **08** · Seed (`prisma/seed.ts`): 12–15 destinos colombianos con tags, precio, imagen (Unsplash), banco de pistas e itinerario base. Por ejemplo: Santa Marta, Cartagena, San Andrés, Salento, Villa de Leyva, Guatapé, Minca, Barichara, San Gil, Palomino, Jardín, Tatacoa, Capurganá, Leticia y Popayán. También una cuenta demo (`demo@aitrava.co`), una cuenta admin (`admin@aitrava.co`) y 3 iteraciones de ejemplo — ✅ 2026-09-21 · Claude (agente)
 - [x] **09** · Motor de recomendación **sin IA** (`ai/`): filtra por presupuesto por persona y cosas a evitar, puntúa por coincidencia de tags con los gustos + ADN viajero y arma el itinerario y las pistas desde el `clueBank` — ✅ 2026-09-21 · Claude (agente)
-- [x] **10** · Motor **con IA**: si hay `ANTHROPIC_API_KEY`, se le pasan a Claude el top 5 del paso 09 y el perfil. Se le pide JSON `{destinationId, reason, itinerary[], clues[5]}` con pistas personalizadas que **no mencionen el nombre del lugar**. Si falla, se usa el paso 09 (cargar antes el skill `claude-api`) — ✅ 2026-09-21 · Claude (agente)
+- [x] **10** · Motor **con IA** (Groq): si hay `GROQ_API_KEY`, se le pasan a la IA el top 5 del paso 09 y el perfil. Se le pide JSON `{destinationId, reason, itinerary[], clues[5]}` con pistas personalizadas que **no mencionen el nombre del lugar**. Si falla, se usa el paso 09 — ✅ 2026-09-21 · Claude (agente)
 - [x] **11** · `POST /api/trips/generate`: usa el motor, calcula el desglose (39/32/29 + tarifa), crea las pistas con `unlockAt` y el `shareCode`, y actualiza el ADN viajero — ✅ 2026-09-21 · Claude (agente)
 - [x] **12** · `GET /api/trips` y `GET /api/trips/:id`: **nunca** devuelven el destino ni las pistas bloqueadas antes de `revealAt` (se oculta en el backend). `POST /api/trips/:id/reroll` — ✅ 2026-09-21 · Claude (agente)
 - [x] **13** · `POST /api/trips/:id/reserve` (plan, simulado → `RESERVED`), `/extra-clue`, `/reveal`, `/guess`. Públicos: `GET /api/share/:code` y `POST /api/share/:code/guess` — ✅ 2026-09-21 · Claude (agente)
@@ -389,8 +390,8 @@ model Iteration {
 - [x] **18** · Wizard `/crear` · pasos 3–5 (gustos, cosas a evitar, para mí o regalo) — ✅ 2026-09-21 · Claude (agente)
 - [x] **19** · `/crear/generando` con el tablero de salidas animado — ✅ 2026-09-21 · Claude (agente)
 - [x] **20** · `/viaje/[id]`: boarding pass con `???` y re-sortear — ✅ 2026-09-21 · Claude (agente)
-- [x] **21** · `/viaje/[id]/pago`: 3 planes y checkout simulado — ✅ 2026-09-21 · Claude (agente)
-- [x] **22** · `/viaje/[id]/pistas`: cuenta regresiva, pistas, adivinar, compartir (Web Share API; si no existe, copiar el link) y pista extra — ✅ 2026-09-21 · Claude (agente)
+- [x] **21** · `/viaje/[id]/pago`: checkout simulado con comisión única (antes eran 3 planes, cambiado el 2026-09-21) — ✅ 2026-09-21 · Claude (agente)
+- [x] **22** · `/viaje/[id]/pistas`: cuenta regresiva, pistas, adivinar, compartir (Web Share API; si no existe, copiar el link) y botón de demo "Adelantar el tiempo" (la pista extra paga se quitó) — ✅ 2026-09-21 · Claude (agente)
 - [x] **23** · `/viaje/[id]/revelacion`: animación del sobre, destino, razón de la IA, itinerario, "¿adivinaste?" y encuesta NPS — ✅ 2026-09-21 · Claude (agente)
 - [x] **24** · `/mis-viajes` + revisión responsive completa a 390 px, 768 px y 1440 px — ✅ 2026-09-21 · Claude (agente)
 
@@ -407,11 +408,11 @@ model Iteration {
 ✔ **Chequeo D:** después de hacer el flujo con 2 cuentas y un amigo que adivina, el dashboard muestra el embudo, el NPS y el referido correctamente.
 
 ### Etapa E · Validación con usuarios e iteraciones
-- [ ] **31** · Poner la app al alcance de usuarios reales. Por ahora: desde el PC con `pnpm dev -H 0.0.0.0` en la misma red. **El despliegue público se decide después (D1).** — ✅ ___
-- [ ] **32** · **Iteración v1:** 5–8 pruebas guiadas con personas del segmento (18–30 años). Observar dónde se traban, recoger citas y registrar todo en `/admin/iteraciones` — ✅ ___
+- [x] **31** · Poner la app al alcance de usuarios reales. Por ahora: desde el PC con `pnpm dev -H 0.0.0.0` en la misma red (instrucciones en el README). **El despliegue público se decide después (D1).** — ✅ 2026-09-21 · Claude (agente)
+- [ ] **32** · **Iteración v1:** 5–8 pruebas guiadas con personas del segmento (18–30 años), siguiendo **`docs/PRUEBAS-USUARIOS.md`**. Observar dónde se traban, recoger citas y registrar todo en `/admin/iteraciones` — ✅ ___
 - [ ] **33** · Aplicar los cambios de la v1 (2–3 ajustes con base en los datos) — ✅ ___
 - [ ] **34** · Campaña en Instagram/Meta + historias + grupos universitarios, que lleve a la app (requiere D1) — ✅ ___
-- [ ] **35** · **Iteración v2:** analizar el embudo, aplicar cambios (copy, precio de los planes, número de pistas, quitar un paso…) y registrar hipótesis → resultado — ✅ ___
+- [ ] **35** · **Iteración v2:** analizar el embudo, aplicar cambios (copy, % de comisión, número de pistas, quitar un paso…) y registrar hipótesis → resultado — ✅ ___
 - [ ] **36** · **Iteración v3:** repetir y comparar las métricas antes y después — ✅ ___
 - [ ] **37** · Recolectar 5+ testimonios, capturas y la tabla de métricas final (rellenar la columna "Real" de abajo) — ✅ ___
 
@@ -436,8 +437,8 @@ model Iteration {
 > **v2 · fecha** — *Hipótesis:* "El paso de restricciones hace que la gente abandone". *Métrica:* abandono en `quiz_step=4` = 45 %. *Decisión:* hacerlo opcional. *Resultado:* el abandono bajó a 18 %.
 
 ### Etapa F · Presentación
-- [ ] **38** · Datos de la demo: una cuenta con un viaje a punto de revelarse y otra con pistas a medias — ✅ ___
-- [ ] **39** · Diapositivas (sección 9) con capturas del dashboard real — ✅ ___
+- [x] **38** · Datos de la demo: `pnpm db:demo` (en `aitrava-api/`) deja a `demo@aitrava.co` con un viaje listo para abrir (Cartagena, 2 amigos apostaron) y otro con pistas a medias (Salento). Correrlo justo antes de presentar — ✅ 2026-09-21 · Claude (agente)
+- [ ] **39** · Diapositivas con capturas del dashboard real. Contenido diapositiva por diapositiva en **`docs/PRESENTACION.md`** — ✅ ___
 - [ ] **40** · Grabar un video de la demo como plan B — ✅ ___
 - [ ] **41** · Ensayo cronometrado ×2 — ✅ ___
 
@@ -445,11 +446,12 @@ model Iteration {
 
 ### 8.1 Notas de implementación (lo que ya existe)
 
-- **Cuentas:** `admin@aitrava.co` y `demo@aitrava.co`, clave `aitrava123` (las crea el seed).
+- **Cuentas:** `admin@aitrava.co` y `demo@aitrava.co`, clave `aitrava123` (las crea el seed). `pnpm db:demo` le prepara viajes de ejemplo a la cuenta demo.
+- **Modelo de ingresos en el código:** comisión del 10 % en `aitrava-api/src/engine/types.ts` (`COMMISSION_RATE`) y en `aitrava-app/lib/constants.ts`. Máximo 2 re-sorteos gratis por viaje (`MAX_REROLLS`).
 - **Destinos:** 15 en `aitrava-api/prisma/destinations.ts` (tags, precio, cosas a evitar, banco de pistas e itinerario). Para agregar o editar uno: se cambia el archivo y se corre `pnpm db:seed`. `imageUrl` está vacío y la app muestra una postal con degradado; se puede poner una URL de foto real.
-- **Motor:** `aitrava-api/src/engine/engine.service.ts`. Filtra por presupuesto, cosas a evitar y origen; puntúa por gustos + ADN viajero (+ algo de azar). Si hay `ANTHROPIC_API_KEY`, Claude elige entre el top 5 y escribe las pistas y el itinerario; si falla, usa el catálogo. ⚠️ El camino con IA está escrito pero **no se ha probado con una key real** (D3).
+- **Motor:** `aitrava-api/src/engine/engine.service.ts`. Filtra por presupuesto, cosas a evitar y origen; puntúa por gustos + ADN viajero (+ algo de azar). **La IA no es necesaria para elegir el destino**: eso lo hace el algoritmo. Si hay `GROQ_API_KEY`, la IA elige entre el top 5 y escribe pistas, razón e itinerario personalizados (~1,5 s); si falla o no hay key, usa el banco de pistas del catálogo. Probado con la key real el 2026-09-21.
 - **Modo demo:** `DEMO_MODE=true` → pistas cada 30 s, revelación a los 3 min de reservar y botón "⏩ Adelantar el tiempo" en la pantalla de pistas (para la presentación). **Para usuarios reales poner `DEMO_MODE=false`.**
-- **Eventos del embudo.** Los registra el backend: `signup`, `trip_generated`, `trip_reroll`, `reservation`, `extra_clue`, `guess`, `friend_guess`, `reveal`, `nps_submit`, `feedback_submit`. Los registra el frontend (`lib/track.ts`, también al Meta Pixel): `page_view`, `cta_click`, `quiz_start`, `quiz_step`, `quiz_complete`, `checkout_view`, `plan_selected`, `share`, `share_view`, `gift_open`, `referral_click`, `clue_view`. Al registrarse, los eventos anónimos pasan a ser del usuario.
+- **Eventos del embudo.** Los registra el backend: `signup`, `trip_generated`, `trip_reroll`, `reservation`, `guess`, `friend_guess`, `reveal`, `nps_submit`, `feedback_submit`. Los registra el frontend (`lib/track.ts`, también al Meta Pixel): `page_view`, `cta_click`, `quiz_start`, `quiz_step`, `quiz_complete`, `checkout_view`, `share`, `share_view`, `gift_open`, `referral_click`, `clue_view`. Al registrarse, los eventos anónimos pasan a ser del usuario.
 - **El wizard se puede llenar sin cuenta.** El registro se pide al final (mejor conversión) y el borrador se guarda en `sessionStorage`.
 - **Antes de las pruebas con usuarios reales:** borrar los datos de prueba con `pnpm db:reset` (en `aitrava-api/`, **borra todo**) para que el dashboard muestre solo datos reales.
 - **Probado:** flujo completo en Chrome headless a 390 px y 1440 px (registro → wizard → generar → re-sortear → pagar → pistas → apostar → amigo/regalo apuesta → adelantar → abrir sobre → NPS → admin). Los builds de producción de ambos proyectos compilan y el lint pasa.
@@ -466,7 +468,7 @@ model Iteration {
 4. **Innovación y barreras de imitación** (45 s): motor de sorpresa, gamificación de la espera, ADN viajero e inventario opaco.
 5. **Evidencia** (1 min): dashboard real con embudo, conversiones, NPS y testimonios.
 6. **Iteraciones** (45 s): v1 → v2 → v3, "vimos X → cambiamos Y".
-7. **Modelo de negocio** (45 s): planes, regalo, micro-pagos y aliados.
+7. **Modelo de negocio** (45 s): comisión única del 10 % dentro del tope, margen por inventario opaco y modo regalo.
 8. **Cierre** (15 s): siguiente paso y el tagline.
 
 ---
@@ -481,11 +483,13 @@ model Iteration {
 - El destino se oculta **en el backend**.
 - Equipo de 3 personas con **trabajo lineal**: un paso a la vez, en orden.
 - Sin diseño previo en Claude Design: se construye directo con los estilos de la landing (`design/`).
+- **Modelo de ingresos: comisión única del 10 % por viaje.** Sin planes, sin pistas pagas, re-sorteos gratis (máx. 2).
+- **IA: Groq** con `openai/gpt-oss-120b`. El algoritmo por puntaje sigue como respaldo.
 
 ### Pendientes (responder aquí)
 - **D1 · Despliegue público** → *se decide después*. Hace falta antes del paso 34 (campaña). Opción sugerida: Vercel + Render + Neon. → ___
 - **D2 · Fecha de entrega y duración de la presentación.** → ___
-- **D3 · ¿Hay API key de Anthropic?** Si no, se usa el respaldo sin IA. Hace falta antes del paso 10. → ___
+- ~~**D3 · Clave de IA**~~ → **Resuelta:** se usa Groq (gratis). La clave está en `aitrava-api/.env`, que no se sube a git; cada compañero crea la suya en console.groq.com o la pide por privado.
 
 ---
 
@@ -496,3 +500,4 @@ model Iteration {
 | 2026-09-21 | Juan Pablo + Claude | Se crea el roadmap. |
 | 2026-09-21 | Juan Pablo + Claude | El plan de trabajo pasa a ser lineal y con checks (41 pasos). El diseño de la landing se copia a `design/`. El despliegue se pospone. |
 | 2026-09-21 | Claude (agente) | Pasos 01–29 hechos: Docker + Prisma, API completa (auth, motor IA/puntaje, viajes, pistas, apuestas, compartir, feedback, métricas, iteraciones), app completa y responsive (wizard, boarding pass, pago simulado con planes, pistas, sobre, regalo, compartir, perfil con referidos, widget de feedback, NPS, panel admin). Extra: botón "Adelantar el tiempo" en modo demo. Prisma se fijó en la versión 6.19. El paso 30 queda bloqueado por D1. |
+| 2026-09-21 | Claude (agente) | Cambio de modelo de negocio: se quitan los 3 planes, la pista extra paga y el re-sorteo pago; queda una comisión única del 10 % dentro del tope (migración `comision_unica`). IA migrada de Claude a Groq (`openai/gpt-oss-120b`, probado). Pasos 31 y 38 hechos (`pnpm db:demo`). Nuevas guías: `docs/PRUEBAS-USUARIOS.md` y `docs/PRESENTACION.md`. |

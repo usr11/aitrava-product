@@ -8,7 +8,6 @@ import { Icon } from '@/components/Icon';
 import { RequireAuth } from '@/components/RequireAuth';
 import { Spinner } from '@/components/Spinner';
 import { api } from '@/lib/api';
-import { REROLL_PRICE } from '@/lib/constants';
 import { formatCOP } from '@/lib/format';
 import type { Trip } from '@/lib/types';
 import { useTrip } from '@/lib/useTrip';
@@ -30,8 +29,6 @@ function TripView() {
   if (!trip) return <Spinner full />;
 
   const reroll = async () => {
-    const paid = trip.rerolls >= 1;
-    if (paid && !confirm(`El primer re-sorteo es gratis. Este cuesta ${formatCOP(REROLL_PRICE)} (simulado). ¿Seguimos?`)) return;
     setRerolling(true);
     try {
       setTrip(await api<Trip>(`/trips/${id}/reroll`, { method: 'POST' }));
@@ -45,9 +42,8 @@ function TripView() {
     ['plane', 'Transporte ida y vuelta', b.transporte],
     ['home', 'Alojamiento', b.alojamiento],
     ['mountain', 'Experiencias locales', b.experiencias],
-    ['sparkle', `Tarifa AiTrava · ${b.planName}`, b.tarifa],
+    ['sparkle', `Comisión AiTrava (${Math.round(b.commissionRate * 100)} %)`, b.comision],
   ];
-  if (b.addOn) rows.push(['gift', 'Extra Sobre Dorado', b.addOn]);
 
   return (
     <div className="container-app max-w-5xl py-6 md:py-12">
@@ -91,9 +87,9 @@ function TripView() {
               <Link href={`/viaje/${id}/pago`} className="btn btn-primary btn-lg mt-6 w-full">
                 Reservar mi sorpresa <Icon name="arrow" size={20} strokeWidth={2.2} />
               </Link>
-              <button onClick={reroll} disabled={rerolling} className="btn btn-dark mt-3 w-full">
+              <button onClick={reroll} disabled={rerolling || trip.rerolls >= trip.maxRerolls} className="btn btn-dark mt-3 w-full">
                 <Icon name="refresh" size={18} />
-                {rerolling ? 'Sorteando otro destino…' : trip.rerolls === 0 ? 'Re-sortear destino (gratis)' : `Re-sortear (${formatCOP(REROLL_PRICE)})`}
+                {rerolling ? 'Sorteando otro destino…' : trip.rerolls >= trip.maxRerolls ? 'Ya usaste tus re-sorteos' : `Re-sortear destino (${trip.maxRerolls - trip.rerolls} gratis)`}
               </button>
               <p className="mt-3 text-center text-xs text-dim">¿Presientes que no te va a gustar? Re-sortea sin ver el destino.</p>
             </>

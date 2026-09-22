@@ -49,12 +49,7 @@ export class TripsController {
     @Param('id') id: string,
     @Body() dto: ReserveDto,
   ) {
-    return this.trips.reserve(id, user.sub, dto.plan, dto.deposit);
-  }
-
-  @Post(':id/extra-clue')
-  extraClue(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.trips.extraClue(id, user.sub);
+    return this.trips.reserve(id, user.sub, dto.deposit);
   }
 
   @Post(':id/guess')

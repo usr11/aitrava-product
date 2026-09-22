@@ -50,9 +50,10 @@ Desde el celular: `http://<IP-de-tu-PC>:3000`. Para ver tu IP: `hostname -I`. Si
 | :-- | :-- |
 | `pnpm db:seed` | Vuelve a cargar destinos y cuentas (no borra nada) |
 | `pnpm db:reset` | ⚠️ **Borra todos los datos**, recrea las tablas y corre el seed |
+| `pnpm db:demo` | Prepara la cuenta demo con 2 viajes de ejemplo (correr antes de presentar) |
 | `pnpm db:studio` | Abre Prisma Studio para ver y editar la BD en el navegador |
 
 ## Modo demo e IA
 
 - `DEMO_MODE="true"` en `aitrava-api/.env`: las pistas se desbloquean cada 30 s, el sobre se puede abrir a los 3 min de reservar y aparece el botón "⏩ Adelantar el tiempo". Para usuarios reales ponlo en `false`: las pistas se reparten hasta un día antes del viaje.
-- `ANTHROPIC_API_KEY`: si está vacío, el destino lo elige el motor por puntaje (funciona igual). Con key, Claude elige entre los 5 mejores destinos y escribe pistas e itinerario personalizados. El modelo se cambia con `ANTHROPIC_MODEL`.
+- `GROQ_API_KEY` (gratis en console.groq.com → API Keys): si está vacío, el destino lo elige el motor por puntaje y funciona igual. Con key, la IA elige entre los 5 mejores destinos y escribe pistas, razón e itinerario personalizados. El modelo se cambia con `GROQ_MODEL`. **Nunca subas la clave a git**: va solo en `aitrava-api/.env`.

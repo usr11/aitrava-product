@@ -6,7 +6,7 @@ import { Icon } from '@/components/Icon';
 import { RequireAuth } from '@/components/RequireAuth';
 import { Spinner } from '@/components/Spinner';
 import { api } from '@/lib/api';
-import { DEPOSIT_AMOUNT, PLANS } from '@/lib/constants';
+import { DEPOSIT_AMOUNT } from '@/lib/constants';
 import { formatCOP } from '@/lib/format';
 import { pixel, track } from '@/lib/track';
 import { useTrip } from '@/lib/useTrip';
@@ -23,7 +23,6 @@ function Payment() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { trip, error } = useTrip(id);
-  const [plan, setPlan] = useState<string>('plus');
   const [deposit, setDeposit] = useState(false);
   const [paying, setPaying] = useState(false);
   const [card, setCard] = useState({ number: '4242 4242 4242 4242', name: '', exp: '12/28', cvc: '123' });
@@ -40,16 +39,19 @@ function Payment() {
   if (error) return <p className="container-app py-20 text-center text-muted">{error}</p>;
   if (!trip) return <Spinner full />;
 
-  const selected = PLANS.find((p) => p.id === plan)!;
-  const fee = Math.round((trip.budgetTotal * selected.feeRate) / 10_000) * 10_000;
-  const total = trip.budgetTotal + selected.addOn;
-  const charge = deposit ? DEPOSIT_AMOUNT : total;
+  const b = trip.breakdown;
+  const charge = deposit ? DEPOSIT_AMOUNT : b.total;
+  const rows: [string, string, number][] = [
+    ['plane', 'Transporte ida y vuelta', b.transporte],
+    ['home', 'Alojamiento', b.alojamiento],
+    ['mountain', 'Experiencias locales', b.experiencias],
+  ];
 
   const pay = async (e: React.FormEvent) => {
     e.preventDefault();
     setPaying(true);
     await new Promise((r) => setTimeout(r, 1400)); // simula la pasarela
-    await api(`/trips/${id}/reserve`, { json: { plan, deposit } });
+    await api(`/trips/${id}/reserve`, { json: { deposit } });
     pixel('Purchase', { value: charge, currency: 'COP' });
     router.push(`/viaje/${id}/pistas?nuevo=1`);
   };
@@ -57,52 +59,35 @@ function Payment() {
   return (
     <div className="container-app max-w-5xl py-6 md:py-12">
       <p className="eyebrow text-secondary">Último paso</p>
-      <h1 className="display mt-3 text-5xl sm:text-6xl">Elige cómo vivir la sorpresa</h1>
+      <h1 className="display mt-3 text-5xl sm:text-6xl">Reserva tu sorpresa</h1>
+      <p className="mt-3 max-w-xl text-muted">Un solo pago y todo queda listo: transporte, alojamiento y planes. Sin planes que elegir ni cobros escondidos.</p>
 
-      <div className="mt-8 grid gap-3 md:grid-cols-3">
-        {PLANS.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => {
-              setPlan(p.id);
-              track('plan_selected', { plan: p.id });
-            }}
-            aria-pressed={plan === p.id}
-            className={`relative rounded-3xl border p-5 text-left transition ${
-              plan === p.id ? 'border-primary bg-primary/10 ring-2 ring-primary' : 'border-line-strong bg-surface hover:border-muted-2'
-            }`}
-          >
-            {p.id === 'plus' && (
-              <span className="absolute -top-3 right-4 rounded-full bg-primary px-3 py-1 text-xs font-bold text-ink">Recomendado</span>
-            )}
-            <p className="eyebrow text-muted-2">{p.tagline}</p>
-            <h2 className="display mt-2 text-4xl">{p.name}</h2>
-            <p className="mt-1 font-mono text-sm text-secondary">
-              Tarifa {Math.round(p.feeRate * 100)} %{p.addOn ? ` + ${formatCOP(p.addOn)}` : ''}
-            </p>
-            <ul className="mt-4 space-y-2 text-sm text-text-soft">
-              {p.perks.map((perk) => (
-                <li key={perk} className="flex gap-2">
-                  <Icon name="check" size={18} className="shrink-0 text-primary" strokeWidth={2.4} /> {perk}
-                </li>
-              ))}
-            </ul>
-          </button>
-        ))}
-      </div>
-
-      <form onSubmit={pay} className="mt-8 grid gap-6 md:grid-cols-[1fr_1fr]">
+      <form onSubmit={pay} className="mt-8 grid gap-6 md:grid-cols-2">
         <div className="card p-5 sm:p-6">
           <p className="eyebrow text-muted-2">Resumen</p>
-          <ul className="mt-4 space-y-2 text-sm">
-            <li className="flex justify-between"><span className="text-muted">Viaje completo (tope)</span><span className="font-mono">{formatCOP(trip.budgetTotal)}</span></li>
-            <li className="flex justify-between"><span className="text-muted">↳ incluye tarifa {selected.name}</span><span className="font-mono text-muted">{formatCOP(fee)}</span></li>
-            {selected.addOn > 0 && <li className="flex justify-between"><span className="text-muted">Extra Sobre Dorado</span><span className="font-mono">{formatCOP(selected.addOn)}</span></li>}
+          <ul className="mt-4 space-y-3 text-sm">
+            {rows.map(([icon, label, value]) => (
+              <li key={label} className="flex items-center justify-between gap-3 border-b border-line pb-3">
+                <span className="flex items-center gap-2.5 text-text-soft">
+                  <Icon name={icon as 'plane'} size={18} className="text-secondary" /> {label}
+                </span>
+                <span className="font-mono">{formatCOP(value)}</span>
+              </li>
+            ))}
+            <li className="flex items-center justify-between gap-3 border-b border-line pb-3">
+              <span className="flex items-center gap-2.5 text-text-soft">
+                <Icon name="sparkle" size={18} className="text-secondary" /> Comisión AiTrava ({Math.round(b.commissionRate * 100)} %)
+              </span>
+              <span className="font-mono">{formatCOP(b.comision)}</span>
+            </li>
           </ul>
-          <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
-            <span className="font-semibold">Total del viaje</span>
-            <span className="display text-4xl">{formatCOP(total)}</span>
+          <div className="mt-4 flex items-baseline justify-between">
+            <span className="font-semibold">Total (tu tope)</span>
+            <span className="display text-4xl text-primary">{formatCOP(b.total)}</span>
           </div>
+          <p className="mt-3 rounded-xl bg-board px-4 py-3 text-xs text-muted">
+            <strong className="text-text-soft">Así ganamos:</strong> una comisión por viaje, ya incluida en tu presupuesto. Nunca pagas más de lo que pusiste.
+          </p>
           <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-line-strong p-4">
             <input type="checkbox" className="mt-1 size-5 accent-primary" checked={deposit} onChange={(e) => setDeposit(e.target.checked)} />
             <span>

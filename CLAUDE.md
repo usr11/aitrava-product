@@ -11,5 +11,6 @@
 - Estructura: `aitrava-app/` (Next.js 16 + Tailwind 4), `aitrava-api/` (NestJS 11 + Prisma). Solo Postgres corre en Docker (`docker-compose.yml`). Se usa pnpm.
 - **Diseño:** la referencia está en `design/` (copia de la landing: tokens, copy, componentes, diseños de Claude Design). Lee `design/README.md`. La app tiene que verse como hermana de la landing.
 - Todo el texto de la interfaz va en español de Colombia.
-- Antes de escribir código que use la Claude API, carga el skill `claude-api`.
+- La IA usa **Groq** (`groq-sdk`) en `aitrava-api/src/engine/engine.service.ts`. La clave va solo en `aitrava-api/.env`; nunca la escribas en código ni en docs.
+- Modelo de negocio: **comisión única del 10 % por viaje**. No agregues planes ni cobros extra sin que el equipo lo decida en el roadmap.
 - `aitrava-app/AGENTS.md`: Next 16 trae cambios, así que consulta la documentación en `node_modules/next/dist/docs/` antes de usar APIs de Next.

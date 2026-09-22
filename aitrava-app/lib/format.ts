@@ -7,14 +7,14 @@ export const formatDate = (iso: string, opts: Intl.DateTimeFormatOptions = { day
 export const nightsBetween = (a: string, b: string) =>
   Math.max(1, Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000));
 
-/** Reparte el total por rubro igual que el backend (39/32/29 del neto tras la tarifa del plan). */
-export const splitBudget = (total: number, feeRate = 0.08) => {
+/** Reparte el total por rubro igual que el backend (39/32/29 del neto tras la comisión del 10 %). */
+export const splitBudget = (total: number, rate = 0.1) => {
   const round = (n: number) => Math.round(n / 10_000) * 10_000;
-  const tarifa = round(total * feeRate);
-  const net = total - tarifa;
+  const comision = round(total * rate);
+  const net = total - comision;
   const transporte = round(net * 0.39);
   const alojamiento = round(net * 0.32);
-  return { transporte, alojamiento, experiencias: net - transporte - alojamiento, tarifa };
+  return { transporte, alojamiento, experiencias: net - transporte - alojamiento, comision };
 };
 
 /** Código tipo vuelo a partir del id del viaje: AT-4821 */

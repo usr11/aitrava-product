@@ -17,13 +17,11 @@ type Metrics = {
   topVibes: Item[];
   topAvoid: Item[];
   topDestinations: Item[];
-  plans: Item[];
   utm: Item[];
   budgets: Item[];
 };
 
 const vibeLabel = (id: string) => VIBES.find((v) => v.id === id)?.label ?? id;
-const PLAN_LABEL: Record<string, string> = { basico: 'Básico', plus: 'Plus', dorado: 'Sobre Dorado' };
 
 function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
@@ -79,7 +77,7 @@ export default function AdminMetrics() {
         <Stat label="Viajes generados" value={k.trips ?? 0} hint={`${k.aiShare} % con IA`} />
         <Stat label="Reservas" value={k.reservations ?? 0} hint={`${k.tripToReservation} % de los viajes`} />
         <Stat label="NPS" value={k.nps ?? '—'} hint={`${k.npsResponses} respuestas`} />
-        <Stat label="Ingresos simulados" value={formatCOP(k.revenue ?? 0)} />
+        <Stat label="Comisiones (simuladas)" value={formatCOP(k.commission ?? 0)} hint={`sobre ${formatCOP(k.sales ?? 0)} en viajes vendidos`} />
         <Stat label="Apuestas de amigos" value={k.friendGuesses ?? 0} hint={`${k.shares} veces compartido`} />
         <Stat label="Registros por referido" value={k.referred ?? 0} />
         <Stat label="Acierto de apuestas" value={`${k.guessAccuracy} %`} hint={`${k.reveals} sobres abiertos`} />
@@ -107,18 +105,15 @@ export default function AdminMetrics() {
         <Panel title="Destinos asignados">
           <BarList data={m.topDestinations} />
         </Panel>
-        <Panel title="Planes elegidos">
-          <BarList data={m.plans.map((p) => ({ ...p, label: PLAN_LABEL[p.label] ?? p.label }))} />
-        </Panel>
         <Panel title="Presupuesto por persona">
           <BarList data={m.budgets} />
         </Panel>
         <Panel title="Origen de los usuarios (utm)">
           <BarList data={m.utm} />
         </Panel>
-        <Panel title="Monetización de la espera" className="lg:col-span-2">
+        <Panel title="Comportamiento de compra" className="lg:col-span-2">
           <div className="grid grid-cols-3 gap-3 text-center">
-            <div><p className="display text-4xl text-primary">{k.extraClues}</p><p className="text-xs text-muted">pistas extra compradas</p></div>
+            <div><p className="display text-4xl text-primary">{k.deposits}</p><p className="text-xs text-muted">reservas solo con abono</p></div>
             <div><p className="display text-4xl text-primary">{k.rerolls}</p><p className="text-xs text-muted">re-sorteos</p></div>
             <div><p className="display text-4xl text-primary">{k.gifts}</p><p className="text-xs text-muted">viajes de regalo</p></div>
           </div>
