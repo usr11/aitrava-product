@@ -35,18 +35,20 @@ Con el celular proyectado y la cuenta `demo@aitrava.co` (correr `pnpm db:demo` a
 
 **6 · Validación con usuarios** (1 min) **[C3]**
 - Captura del embudo de `/admin`: visitantes {n} → registros {n} → viajes generados {n} → reservas {n}.
-- NPS {n} · {n} personas apartarían con $50.000 · {n} apuestas de amigos · {n} registros por referido.
+- NPS {n} · {n} personas apartaron con el abono del 20 % · {n} apuestas de amigos · {n} registros por referido.
 - 2 citas textuales.
 
 **7 · Lo que aprendimos y cambiamos** (45 s) **[C3]**
 Línea de tiempo desde `/admin/iteraciones`:
 - **v1 → v2:** "Vimos {dato} → cambiamos {cambio} → resultado {métrica antes/después}."
 - **v2 → v3:** ídem.
-- **Cambio de modelo:** empezamos con 3 planes y cobros por pistas extra; los usuarios {feedback} → pasamos a **una sola comisión del 10 % incluida en el tope**.
+- **Cambio de modelo:** empezamos con 3 planes y cobros por pistas extra; los usuarios {feedback} → pasamos a **una tarifa fija de $50.000 y a ganar del lado de los aliados**.
 
 **8 · Modelo de negocio** (45 s) **[C4]**
-- **Una comisión del 10 % por viaje, dentro del presupuesto del cliente.** Nunca paga más de lo que puso y ve cuánto ganamos.
-- **El margen crece con el inventario opaco:** los aliados nos dan mejores tarifas para llenar cupos sin quemar su precio público.
+- **Al viajero le cobramos poquísimo:** una tarifa fija de $50.000 por viaje, dentro de su presupuesto y a la vista en el checkout.
+- **Ganamos del lado de los aliados:** transporte, alojamiento y experiencias nos pagan comisión por llevarles clientes y gestionarles la reserva (4–20 % según el rubro).
+- **El inventario opaco lo hace posible:** como el cliente no elige, los aliados llenan cupos vacíos sin bajar su precio público.
+- Mostrar el desglose real de un viaje de $2.800.000: ≈ $359.000 de ingreso (tabla de la sección 7 del roadmap).
 - **El modo regalo abre un mercado nuevo:** quien paga no es quien viaja.
 - **Referidos:** cada viaje trae amigos, así que adquirir clientes cuesta menos.
 - Comparación en una tabla: agencia tradicional / Booking vs AiTrava (quién decide, cómo se cobra, qué pasa con la espera).

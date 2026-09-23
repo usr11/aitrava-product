@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { destinations } from './destinations';
+import { providers } from './providers';
 
 const prisma = new PrismaClient();
 
@@ -8,6 +9,7 @@ async function main() {
   for (const d of destinations) {
     const data = {
       ...d,
+      providers: providers[d.slug],
       imageUrl: '',
       itinerary: d.itinerary.map((it, i) => ({ day: i + 1, ...it })),
     };

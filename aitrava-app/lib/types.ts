@@ -5,7 +5,6 @@ export type Breakdown = {
   alojamiento: number;
   experiencias: number;
   comision: number;
-  commissionRate: number;
   total: number;
 };
 
@@ -14,6 +13,14 @@ export type ClueView = { order: number; type: string; unlockAt: string; locked: 
 export type DestinationView = { slug: string; name: string; region: string; imageUrl: string; description: string };
 
 export type ItineraryDay = { day: number; title: string; items: string[] };
+
+export type BookedProvider = { name: string; detail: string; amount: number };
+
+export type Booking = {
+  transporte: BookedProvider;
+  alojamiento: BookedProvider;
+  experiencias: BookedProvider[];
+};
 
 export type TripStatus = 'GENERATED' | 'RESERVED' | 'REVEALED' | 'COMPLETED';
 
@@ -42,6 +49,7 @@ export type Trip = {
   friendGuesses: { name: string; destination: string | null; correct: boolean | null }[];
   destination: DestinationView | null;
   itinerary: ItineraryDay[] | null;
+  booking: Booking | null;
   aiReason: string | null;
   createdAt: string;
 };

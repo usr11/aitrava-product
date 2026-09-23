@@ -4,8 +4,11 @@ import Groq from 'groq-sdk';
 import { z } from 'zod';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  Booking,
   ClueDraft,
+  computeBreakdown,
   ItineraryDay,
+  Provider,
   TravelDna,
   TripPlan,
   TripPreferences,
@@ -96,6 +99,46 @@ export class EngineService {
       .sort((a, b) => b.score - a.score);
   }
 
+  /**
+   * Elige los aliados concretos del viaje y reparte el presupuesto entre ellos.
+   * Si el viajero no quiere volar, se prefiere el transporte terrestre.
+   */
+  buildBooking(d: Destination, prefs: TripPreferences): Booking {
+    const catalog = d.providers as {
+      transporte: Provider[];
+      alojamiento: Provider[];
+      experiencias: Provider[];
+    };
+    const pick = <T>(list: T[]) =>
+      list[Math.floor(Math.random() * list.length)];
+    const flights = (p: Provider) => p.detail.startsWith('Vuelo');
+    const terrestres = catalog.transporte.filter((p) => !flights(p));
+    const transporte =
+      prefs.avoid.includes('avion') && terrestres.length
+        ? pick(terrestres)
+        : pick(catalog.transporte);
+
+    const b = computeBreakdown(prefs.budgetTotal);
+    const experiencias = [...catalog.experiencias]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, Math.min(3, catalog.experiencias.length));
+    const each =
+      Math.round(b.experiencias / experiencias.length / 1_000) * 1_000;
+
+    return {
+      transporte: { ...transporte, amount: b.transporte },
+      alojamiento: { ...pick(catalog.alojamiento), amount: b.alojamiento },
+      experiencias: experiencias.map((e, i) => ({
+        ...e,
+        // La última absorbe el redondeo para que la suma cuadre.
+        amount:
+          i === experiencias.length - 1
+            ? b.experiencias - each * (experiencias.length - 1)
+            : each,
+      })),
+    };
+  }
+
   async plan(prefs: TripPreferences, dna: TravelDna | null): Promise<TripPlan> {
     const ranked = await this.rank(prefs, dna);
     if (this.client) {
@@ -136,6 +179,7 @@ export class EngineService {
         d.itinerary as ItineraryDay[],
         nightsOf(prefs) + 1,
       ),
+      booking: this.buildBooking(d, prefs),
       aiGenerated: false,
     };
   }
@@ -248,6 +292,7 @@ export class EngineService {
       itinerary: out.itinerary.length
         ? out.itinerary.slice(0, 7)
         : this.fitItinerary(d.itinerary as ItineraryDay[], days),
+      booking: this.buildBooking(d, prefs),
       aiGenerated: true,
     };
   }

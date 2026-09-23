@@ -77,7 +77,11 @@ export default function AdminMetrics() {
         <Stat label="Viajes generados" value={k.trips ?? 0} hint={`${k.aiShare} % con IA`} />
         <Stat label="Reservas" value={k.reservations ?? 0} hint={`${k.tripToReservation} % de los viajes`} />
         <Stat label="NPS" value={k.nps ?? '—'} hint={`${k.npsResponses} respuestas`} />
-        <Stat label="Comisiones (simuladas)" value={formatCOP(k.commission ?? 0)} hint={`sobre ${formatCOP(k.sales ?? 0)} en viajes vendidos`} />
+        <Stat
+          label="Ingresos (simulados)"
+          value={formatCOP((k.commission ?? 0) + (k.partnerCommission ?? 0))}
+          hint={`${formatCOP(k.commission ?? 0)} de tarifa fija + ${formatCOP(k.partnerCommission ?? 0)} de aliados · sobre ${formatCOP(k.sales ?? 0)} vendidos`}
+        />
         <Stat label="Apuestas de amigos" value={k.friendGuesses ?? 0} hint={`${k.shares} veces compartido`} />
         <Stat label="Registros por referido" value={k.referred ?? 0} />
         <Stat label="Acierto de apuestas" value={`${k.guessAccuracy} %`} hint={`${k.reveals} sobres abiertos`} />

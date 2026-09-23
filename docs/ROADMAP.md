@@ -55,7 +55,7 @@ Esta tabla es **la razón de ser de cada feature**. Si una feature no aparece aq
 | 1 | **Diferenciadores e innovación difíciles de copiar** | (a) **Motor de sorpresa:** IA + catálogo curado que elige el destino a partir del "ADN viajero" y lo esconde. (b) **Gamificación de la espera:** pistas por día + adivinanza en grupo + sobre digital. (c) **ADN viajero:** cada viaje, pista, adivinanza y calificación alimenta el perfil, y eso mejora la siguiente recomendación (efecto de red de datos). (d) **Inventario opaco:** los aliados venden cupos sin bajar su precio público porque el cliente no sabe a dónde va. | Demo en vivo del flujo completo. Diapositiva de "barreras de imitación": datos propios, red de aliados, mecánica de juego y marca. |
 | 2 | **Prototipo funcional e iterativo, validado con usuarios** | App web completa y responsive: registro → quiz → viaje generado → reserva (simulada) → pistas → adivinanza → revelación → feedback. **Widget de feedback** en todas las pantallas, **encuesta NPS** después de la revelación y **registro de iteraciones** (v1 → v2 → v3). | `/admin/iteraciones`, línea de tiempo de versiones con el cambio de cada una, capturas y testimonios de las pruebas con usuarios. |
 | 3 | **Respuesta sostenida del público y conversiones que orientaron cambios** | **Tracking propio de eventos** en la BD (embudo completo) + Meta Pixel. **Dashboard `/admin`** con el embudo, las tasas de conversión, el NPS, los gustos más elegidos y los referidos. Campañas en Instagram/Meta que llevan de la landing a la app. Cada cambio del modelo queda ligado a un dato. | Gráfica del embudo, tabla semanal de métricas y 3+ aprendizajes del tipo "vimos X → cambiamos Y → resultó Z". |
-| 4 | **Modelo altamente innovador que redefine cómo se crea/captura valor** | **Una sola comisión por viaje (10 %), incluida dentro del tope del cliente**: el cliente nunca paga de más y ve exactamente cuánto gana AiTrava. El margen crece por el **inventario opaco**: como el destino es secreto, los aliados dan tarifas más bajas sin quemar su precio público. El **modo regalo** abre un mercado nuevo (quien paga no es quien viaja). Todo visible en el checkout. | Diapositiva del modelo: de dónde viene cada peso. Comparación con una agencia tradicional o con Booking. |
+| 4 | **Modelo altamente innovador que redefine cómo se crea/captura valor** | **Le cobramos muy poco al viajero y ganamos del lado de los aliados:** tarifa fija de $50.000 por viaje (dentro del tope del cliente, a la vista en el checkout) + comisión de transporte, alojamiento y experiencias por llevarles clientes y gestionarles la reserva. Como el destino es secreto (**inventario opaco**), los aliados llenan cupos sin quemar su precio público. El **modo regalo** abre un mercado nuevo (quien paga no es quien viaja). | Diapositiva del modelo: de dónde viene cada peso. Comparación con una agencia tradicional o con Booking. |
 | 5 | **Presentación estructurada, fluida y en tiempo** | **Modo demo** (las pistas se desbloquean cada 30 s), datos semilla realistas y cuenta demo lista. Guion (sección 9). | Ensayo cronometrado. |
 
 ---
@@ -67,7 +67,7 @@ Esta tabla es **la razón de ser de cada feature**. Si una feature no aparece aq
 - Registro e inicio de sesión simple (email + contraseña).
 - Wizard "Crear mi viaje" con desglose del presupuesto en vivo.
 - Generación del viaje con **IA (Groq)** sobre un **catálogo curado de destinos en Colombia**. Si no hay API key, usa un algoritmo por puntaje como respaldo, así la demo nunca falla.
-- Boarding pass con destino `???`, desglose y reserva **simulada** (checkout falso, comisión única del 10 %).
+- Boarding pass con destino `???`, desglose y reserva **simulada** (checkout falso, tarifa fija de $50.000) y aliados reales por destino.
 - Pistas que se desbloquean por fecha, adivinanza (propia y de amigos) y revelación animada.
 - Link para compartir el viaje: los amigos adivinan y hay un CTA para que creen el suyo (referido).
 - Modo regalo.
@@ -189,7 +189,7 @@ La landing se diseñó en claude.ai/design (los archivos `.dc.html` en `design/l
 ```text
 Landing ──CTA──▶ /registro ─▶ /crear (wizard) ─▶ /crear/generando ─▶ /viaje/[id] (boarding pass ???)
                                                                           │
-                                         /viaje/[id]/pago (comisión única, simulado) ◀┘
+                                         /viaje/[id]/pago (tarifa fija, simulado)    ◀┘
                                                    │
                          /viaje/[id]/pistas (cuenta regresiva + pistas + adivinar) ──compartir──▶ /s/[code] (amigos adivinan → CTA "crea el tuyo")
                                                    │
@@ -203,7 +203,7 @@ Landing ──CTA──▶ /registro ─▶ /crear (wizard) ─▶ /crear/genera
 | `/crear` | Wizard de 5 pasos con barra de progreso: **1.** Origen y fechas · **2.** Presupuesto y viajeros (slider + desglose en vivo, tarjetas PAX) · **3.** Qué te mueve (chips: playa, montaña, comida, fiesta, cultura, naturaleza, silencio, aventura) · **4.** Cosas a evitar (avión, frío, caminatas largas…) · **5.** ¿Para ti o es un regalo? | `quiz_start`, `quiz_step`, `quiz_complete` |
 | `/crear/generando` | Tablero de salidas animado mientras responde la IA. | — |
 | `/viaje/[id]` | **Boarding pass**: origen → `???`, fechas, PAX, desglose en COP, 3 "pistas de ambiente" (sin revelar el lugar) y CTA "Reservar mi sorpresa". Botón "Re-sortear" (2 gratis por viaje). | `trip_generated`, `trip_reroll` |
-| `/viaje/[id]/pago` | Resumen con la comisión del 10 % incluida y checkout **simulado**. Aviso: *"Prototipo: no se hace ningún cobro"*. Opción "Apartar con $50.000". | `checkout_view`, `reservation` |
+| `/viaje/[id]/pago` | Resumen con la tarifa fija de $50.000 incluida y checkout **simulado**. Aviso: *"Prototipo: no se hace ningún cobro"*. Opción "Apartar con el 20 %". | `checkout_view`, `reservation` |
 | `/viaje/[id]/pistas` | Cuenta regresiva, progreso, pista nueva en amarillo, anteriores y bloqueadas. **Adivinar**, **Compartir con mis acompañantes** y (en modo demo) "Adelantar el tiempo". | `clue_view`, `guess`, `share` |
 | `/viaje/[id]/revelacion` | Animación del **sobre digital** → destino, foto, por qué lo eligió la IA e itinerario día por día. Muestra si adivinaste. Luego la encuesta NPS con 2 preguntas. | `reveal`, `nps_submit` |
 | `/s/[code]` | Página pública del viaje de un amigo: pistas desbloqueadas, adivinar (solo el nombre) y CTA "Quiero mi viaje sorpresa" → `/registro?ref=`. | `share_view`, `friend_guess`, `referral_click` |
@@ -218,20 +218,31 @@ Landing ──CTA──▶ /registro ─▶ /crear (wizard) ─▶ /crear/genera
 
 ## 7. Modelo de negocio dentro del producto (criterio 4)
 
-**Decisión (2026-09-21):** una sola **comisión por viaje del 10 %**, incluida dentro del presupuesto que pone el cliente. No hay planes, ni pistas pagas, ni cobro por re-sortear.
+**Decisión (2026-09-23):** dos fuentes de ingreso, las dos visibles en el producto. No hay planes, ni pistas pagas, ni cobro por re-sortear.
 
 | Cómo ganamos | Detalle |
 | :-- | :-- |
-| **Comisión por viaje (10 %)** | Sale del tope del cliente y se muestra desglosada en el checkout ("Así ganamos"). Ejemplo: en un viaje de $2.800.000 son $280.000. |
-| **Margen por inventario opaco** | Como el cliente no elige el hotel ni el vuelo, los aliados nos dan tarifas más bajas para llenar cupos vacíos sin bajar su precio público. La diferencia amplía nuestro margen sin cobrarle más al cliente. |
-| **Abono para apartar ($50.000)** | No es otro cobro: adelanta la caja y mide la intención de compra real. |
+| **1. Tarifa fija de $50.000 por viaje** | Sale del tope que pone el cliente y se muestra desglosada en el wizard y en el checkout ("Así ganamos"). Es fija: da igual si el viaje cuesta $1.200.000 o $5.000.000, y por eso el cliente sabe exactamente cuánto ganamos. |
+| **2. Comisión de los aliados** | Transporte, alojamiento y experiencias nos pagan por promoverlos y gestionarles toda la reserva. Rangos de mercado que usamos: transporte 4–6 %, alojamiento 10–15 %, experiencias 12–20 %. Cada aliado tiene su `rate` en `aitrava-api/prisma/providers.ts` y el sistema calcula lo que deja cada viaje. |
+| **Abono para apartar (20 %)** | No es otro cobro: adelanta la caja y mide la intención de compra real. |
+
+**Ejemplo real de la app** (viaje de $2.800.000 a Cartagena, 2 personas):
+
+| Rubro | Valor | Aliado | Nos deja |
+| :-- | --: | :-- | --: |
+| Transporte | $1.070.000 | Wingo (5 %) | $53.500 |
+| Alojamiento | $880.000 | Viajero Cartagena Hostel (12 %) | $105.600 |
+| Experiencias | $800.000 | Islas del Rosario, Cartagena Connections, Bazurto (18–20 %) | ~$150.000 |
+| Tarifa fija AiTrava | $50.000 | — | $50.000 |
+| **Total que paga el cliente** | **$2.800.000** | | **≈ $359.000 de ingreso** |
 
 **Lo que amplía el mercado (sin cobros extra):**
 - **Modo regalo:** quien paga no es quien viaja. Abre el mercado de cumpleaños, aniversarios y amor y amistad.
 - **Links para compartir y referidos:** cada viaje trae a los amigos que apuestan. El costo de adquisición baja.
-- **Futuro:** suscripción "Club Sorpresa" (1 escapada por trimestre) y B2B (integraciones sorpresa para empresas).
+- **Inventario opaco:** como el cliente no elige el hotel ni el vuelo, los aliados pueden darnos mejores tarifas para llenar cupos vacíos sin bajar su precio público.
+- **Futuro:** suscripción "Club Sorpresa" (1 escapada por trimestre) y B2B (viajes sorpresa para equipos de empresas).
 
-**Por qué es innovador:** una agencia tradicional cobra por reservar lo que el cliente ya eligió. AiTrava convierte **la incertidumbre en el producto**: el cliente paga por no tener que decidir, y esa misma sorpresa es la que nos deja negociar mejores tarifas. Todo con una comisión transparente y dentro del tope.
+**Por qué es innovador:** una agencia tradicional cobra un porcentaje sobre lo que el cliente ya eligió. AiTrava cobra **poquísimo al viajero** (una tarifa fija y transparente) y gana de verdad **del lado de los aliados**, porque les lleva clientes que no eligieron el destino: cupos que de otra forma se quedarían vacíos. La incertidumbre es el producto y es justo lo que hace valioso el inventario.
 
 ---
 
@@ -427,7 +438,7 @@ model Iteration {
 | Quiz completado / registros | ≥ 60 % | |
 | Viajes generados | 50 | |
 | Reservas simuladas (intención de compra) | 15 | |
-| "Apartar con $50.000" o lista de espera con pago | 3 | |
+| Reservas con abono (20 %) o lista de espera con pago | 3 | |
 | Adivinanzas de amigos (viralidad) | 30 | |
 | Registros por referido | 10 | |
 | NPS | ≥ 40 | |
@@ -448,7 +459,8 @@ model Iteration {
 
 - **Cuentas:** `admin@aitrava.co` y `demo@aitrava.co`, clave `aitrava123` (las crea el seed). En producción la clave del admin sale de la variable `ADMIN_PASSWORD`.
 - **Despliegue:** API + Postgres en Railway (`aitrava-api/railway.json`; `pnpm start` corre migraciones + seed + arranque; healthcheck `/api` consulta la BD). App en Cloudflare Workers con OpenNext (`aitrava-app/wrangler.jsonc`, `open-next.config.ts`; scripts `cf:build`, `preview`, `deploy`). `NEXT_PUBLIC_API_URL` se define en las *Build variables* de Cloudflare. Guía: `docs/DESPLIEGUE.md`. Probado en local: build de producción del API y preview de la app en workerd (Worker de ~1 MB comprimido). `pnpm db:demo` le prepara viajes de ejemplo a la cuenta demo.
-- **Modelo de ingresos en el código:** comisión del 10 % en `aitrava-api/src/engine/types.ts` (`COMMISSION_RATE`) y en `aitrava-app/lib/constants.ts`. Máximo 2 re-sorteos gratis por viaje (`MAX_REROLLS`).
+- **Modelo de ingresos en el código:** `COMMISSION_FIXED` ($50.000) y `partnerCommissionOf()` en `aitrava-api/src/engine/types.ts`; en el frontend, `aitrava-app/lib/constants.ts`. Máximo 2 re-sorteos gratis (`MAX_REROLLS`) y abono del 20 % (`DEPOSIT_RATE`).
+- **Aliados:** `aitrava-api/prisma/providers.ts` tiene, por destino, 2 opciones de transporte, 2 de alojamiento y 3 experiencias, con su comisión. Son **empresas reales del mercado, no aliados firmados**: hay que confirmarlos antes de usarlos comercialmente. Al generar el viaje se elige un aliado de cada tipo (si el viajero no quiere volar, se usa el transporte terrestre) y se guarda en `Trip.booking`; la comisión de aliados queda en `Trip.partnerCommission` y se ve en `/admin`. El cliente los conoce **solo al abrir el sobre**.
 - **Destinos:** 15 en `aitrava-api/prisma/destinations.ts` (tags, precio, cosas a evitar, banco de pistas e itinerario). Para agregar o editar uno: se cambia el archivo y se corre `pnpm db:seed`. `imageUrl` está vacío y la app muestra una postal con degradado; se puede poner una URL de foto real.
 - **Motor:** `aitrava-api/src/engine/engine.service.ts`. Filtra por presupuesto, cosas a evitar y origen; puntúa por gustos + ADN viajero (+ algo de azar). **La IA no es necesaria para elegir el destino**: eso lo hace el algoritmo. Si hay `GROQ_API_KEY`, la IA elige entre el top 5 y escribe pistas, razón e itinerario personalizados (~1,5 s); si falla o no hay key, usa el banco de pistas del catálogo. Probado con la key real el 2026-09-21.
 - **Modo demo:** `DEMO_MODE=true` → pistas cada 30 s, revelación a los 3 min de reservar y botón "⏩ Adelantar el tiempo" en la pantalla de pistas (para la presentación). **Para usuarios reales poner `DEMO_MODE=false`.**
@@ -469,7 +481,7 @@ model Iteration {
 4. **Innovación y barreras de imitación** (45 s): motor de sorpresa, gamificación de la espera, ADN viajero e inventario opaco.
 5. **Evidencia** (1 min): dashboard real con embudo, conversiones, NPS y testimonios.
 6. **Iteraciones** (45 s): v1 → v2 → v3, "vimos X → cambiamos Y".
-7. **Modelo de negocio** (45 s): comisión única del 10 % dentro del tope, margen por inventario opaco y modo regalo.
+7. **Modelo de negocio** (45 s): tarifa fija de $50.000 + comisión de aliados, inventario opaco y modo regalo.
 8. **Cierre** (15 s): siguiente paso y el tagline.
 
 ---
@@ -484,7 +496,7 @@ model Iteration {
 - El destino se oculta **en el backend**.
 - Equipo de 3 personas con **trabajo lineal**: un paso a la vez, en orden.
 - Sin diseño previo en Claude Design: se construye directo con los estilos de la landing (`design/`).
-- **Modelo de ingresos: comisión única del 10 % por viaje.** Sin planes, sin pistas pagas, re-sorteos gratis (máx. 2).
+- **Modelo de ingresos: tarifa fija de $50.000 por viaje + comisión de los aliados.** Sin planes, sin pistas pagas, re-sorteos gratis (máx. 2).
 - **IA: Groq** con `openai/gpt-oss-120b`. El algoritmo por puntaje sigue como respaldo.
 
 ### Pendientes (responder aquí)
@@ -504,3 +516,4 @@ model Iteration {
 | 2026-09-21 | Claude (agente) | Cambio de modelo de negocio: se quitan los 3 planes, la pista extra paga y el re-sorteo pago; queda una comisión única del 10 % dentro del tope (migración `comision_unica`). IA migrada de Claude a Groq (`openai/gpt-oss-120b`, probado). Pasos 31 y 38 hechos (`pnpm db:demo`). Nuevas guías: `docs/PRUEBAS-USUARIOS.md` y `docs/PRESENTACION.md`. |
 | 2026-09-21 | Claude (agente) | D1 resuelta: configuración de despliegue para el monorepo. API + Postgres en Railway (`railway.json`, Prisma y tsx pasan a dependencias, `postinstall: prisma generate`, se excluye `prisma/` del build de Nest para que `dist/main.js` exista, clave del admin por `ADMIN_PASSWORD`). App en Cloudflare Workers con `@opennextjs/cloudflare` (`wrangler.jsonc`, `open-next.config.ts`, imágenes sin optimizar). Guía paso a paso en `docs/DESPLIEGUE.md`. |
 | 2026-09-21 | Claude (agente) | Arreglo: en Railway no se creaban tablas. La migración `comision_unica` tenía un nombre con la hora local que la ordenaba antes de `init`, así que en una BD vacía fallaba. Se renombró a `20260922034604_comision_unica` (hora UTC). `pnpm start` ahora corre `db:deploy` (limpia el intento fallido viejo + migra + seed) antes de arrancar, y el healthcheck `/api` consulta la BD. Probado con una BD vacía y con una BD en el estado roto. Si alguien tiene la BD local con el nombre viejo: `pnpm db:reset`. |
+| 2026-09-23 | Claude (agente) | Modelo de ingresos: la comisión del cliente pasa de 10 % a **tarifa fija de $50.000**, y se suma la **comisión de los aliados** (transporte, alojamiento y experiencias) por promover el viaje y gestionar la reserva. Nuevo repertorio de aliados reales por destino (`prisma/providers.ts`, migración `aliados`): al revelar, el viajero ve con quién viaja, dónde duerme y qué experiencias tiene, con precios. `/admin` muestra ingresos separados (tarifa fija vs aliados). El abono para apartar pasa a ser 20 % del viaje. Rediseño del sobre digital (SVG, sin puntas mal cortadas). |

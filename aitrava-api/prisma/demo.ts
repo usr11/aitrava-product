@@ -10,9 +10,11 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 const CLUE_ORDER = ['empacar', 'clima', 'comida', 'musica', 'cultura'];
 
+type Prov = { name: string; detail: string; rate: number };
+
 const breakdown = (total: number) => {
   const round = (n: number) => Math.round(n / 10_000) * 10_000;
-  const comision = round(total * 0.1);
+  const comision = 50_000; // tarifa fija de AiTrava
   const net = total - comision;
   const transporte = round(net * 0.39);
   const alojamiento = round(net * 0.32);
@@ -21,9 +23,34 @@ const breakdown = (total: number) => {
     alojamiento,
     experiencias: net - transporte - alojamiento,
     comision,
-    commissionRate: 0.1,
     total,
   };
+};
+
+/** Arma la reserva con los aliados del destino (los primeros del catálogo, para que la demo sea igual siempre). */
+const bookingFor = (providers: unknown, b: ReturnType<typeof breakdown>) => {
+  const cat = providers as {
+    transporte: Prov[];
+    alojamiento: Prov[];
+    experiencias: Prov[];
+  };
+  const exp = cat.experiencias.slice(0, 3);
+  const each = Math.round(b.experiencias / exp.length / 1_000) * 1_000;
+  const booking = {
+    transporte: { ...cat.transporte[0], amount: b.transporte },
+    alojamiento: { ...cat.alojamiento[0], amount: b.alojamiento },
+    experiencias: exp.map((e, i) => ({
+      ...e,
+      amount:
+        i === exp.length - 1 ? b.experiencias - each * (exp.length - 1) : each,
+    })),
+  };
+  const partnerCommission = Math.round(
+    booking.transporte.amount * booking.transporte.rate +
+      booking.alojamiento.amount * booking.alojamiento.rate +
+      booking.experiencias.reduce((sum, e) => sum + e.amount * e.rate, 0),
+  );
+  return { booking, partnerCommission };
 };
 
 async function createTrip(opts: {
@@ -46,6 +73,8 @@ async function createTrip(opts: {
   const now = Date.now();
   const start = new Date(now + 14 * 86_400_000);
   const revealAt = new Date(now + opts.revealInMinutes * 60_000);
+  const b = breakdown(opts.budget);
+  const { booking, partnerCommission } = bookingFor(d.providers, b);
   const trip = await prisma.trip.create({
     data: {
       userId: opts.userId,
@@ -61,7 +90,9 @@ async function createTrip(opts: {
       aiGenerated: true,
       vibes: opts.vibeLabels,
       itinerary: d.itinerary as object,
-      breakdown: breakdown(opts.budget),
+      breakdown: b,
+      booking,
+      partnerCommission,
       amountPaid: opts.budget,
       shareCode: opts.code,
       reservedAt: new Date(now - 60 * 60_000),

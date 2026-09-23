@@ -6,7 +6,7 @@ import { Icon } from '@/components/Icon';
 import { RequireAuth } from '@/components/RequireAuth';
 import { Spinner } from '@/components/Spinner';
 import { api } from '@/lib/api';
-import { DEPOSIT_AMOUNT } from '@/lib/constants';
+import { depositFor } from '@/lib/constants';
 import { formatCOP } from '@/lib/format';
 import { pixel, track } from '@/lib/track';
 import { useTrip } from '@/lib/useTrip';
@@ -40,7 +40,8 @@ function Payment() {
   if (!trip) return <Spinner full />;
 
   const b = trip.breakdown;
-  const charge = deposit ? DEPOSIT_AMOUNT : b.total;
+  const deposito = depositFor(b.total);
+  const charge = deposit ? deposito : b.total;
   const rows: [string, string, number][] = [
     ['plane', 'Transporte ida y vuelta', b.transporte],
     ['home', 'Alojamiento', b.alojamiento],
@@ -76,7 +77,7 @@ function Payment() {
             ))}
             <li className="flex items-center justify-between gap-3 border-b border-line pb-3">
               <span className="flex items-center gap-2.5 text-text-soft">
-                <Icon name="sparkle" size={18} className="text-secondary" /> Comisión AiTrava ({Math.round(b.commissionRate * 100)} %)
+                <Icon name="sparkle" size={18} className="text-secondary" /> Tarifa fija AiTrava
               </span>
               <span className="font-mono">{formatCOP(b.comision)}</span>
             </li>
@@ -86,12 +87,12 @@ function Payment() {
             <span className="display text-4xl text-primary">{formatCOP(b.total)}</span>
           </div>
           <p className="mt-3 rounded-xl bg-board px-4 py-3 text-xs text-muted">
-            <strong className="text-text-soft">Así ganamos:</strong> una comisión por viaje, ya incluida en tu presupuesto. Nunca pagas más de lo que pusiste.
+            <strong className="text-text-soft">Así ganamos:</strong> una tarifa fija de {formatCOP(b.comision)} por viaje, ya incluida en tu presupuesto, más la comisión que nos dejan los aliados por llevarles el cliente. Nunca pagas más de lo que pusiste.
           </p>
           <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-line-strong p-4">
             <input type="checkbox" className="mt-1 size-5 accent-primary" checked={deposit} onChange={(e) => setDeposit(e.target.checked)} />
             <span>
-              <span className="font-semibold">Solo apartar con {formatCOP(DEPOSIT_AMOUNT)}</span>
+              <span className="font-semibold">Solo apartar con {formatCOP(deposito)}</span>
               <span className="block text-sm text-muted">Congela tu cupo y paga el resto hasta 15 días antes.</span>
             </span>
           </label>

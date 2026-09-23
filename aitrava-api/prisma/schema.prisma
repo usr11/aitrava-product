@@ -43,6 +43,7 @@ model Destination {
   minBudgetPP Int // COP por persona, 2 noches
   imageUrl    String
   description String
+  providers   Json // { transporte[], alojamiento[], experiencias[] } (prisma/providers.ts)
   clueBank    Json // [{ type, text }]
   itinerary   Json // [{ day, title, items[] }]
   trips       Trip[]
@@ -66,6 +67,8 @@ model Trip {
   vibes         String[] // pistas de ambiente que se muestran antes de revelar
   itinerary     Json
   breakdown     Json
+  booking       Json? // aliados reservados (transporte, alojamiento, experiencias)
+  partnerCommission Int  @default(0) // comisión que nos dejan los aliados
   amountPaid    Int?
   isGift        Boolean     @default(false)
   giftTo        String?

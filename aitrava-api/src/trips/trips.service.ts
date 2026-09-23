@@ -12,8 +12,10 @@ import {
 } from '../common/config';
 import { EngineService } from '../engine/engine.service';
 import {
+  Booking,
   computeBreakdown,
-  DEPOSIT_AMOUNT,
+  depositFor,
+  partnerCommissionOf,
   MAX_REROLLS,
   TravelDna,
   TripPreferences,
@@ -136,6 +138,7 @@ export class TripsService {
         })),
       destination: revealed ? this.destinationView(t.destination) : null,
       itinerary: revealed ? t.itinerary : null,
+      booking: revealed ? t.booking : null,
       aiReason: revealed ? t.aiReason : null,
       createdAt: t.createdAt,
     };
@@ -242,6 +245,7 @@ export class TripsService {
         aiGenerated: plan.aiGenerated,
         vibes: plan.vibes,
         itinerary: plan.itinerary,
+        booking: plan.booking,
         breakdown: computeBreakdown(dto.budgetTotal),
         isGift: !!dto.isGift,
         giftTo: dto.giftTo,
@@ -307,6 +311,7 @@ export class TripsService {
         aiGenerated: plan.aiGenerated,
         vibes: plan.vibes,
         itinerary: plan.itinerary,
+        booking: plan.booking,
         rerolls: { increment: 1 },
         clues: {
           create: plan.clues.map((c, i) => ({
@@ -354,7 +359,10 @@ export class TripsService {
         data: {
           status: 'RESERVED',
           breakdown,
-          amountPaid: deposit ? DEPOSIT_AMOUNT : breakdown.total,
+          amountPaid: deposit ? depositFor(breakdown.total) : breakdown.total,
+          partnerCommission: partnerCommissionOf(
+            trip.booking as unknown as Booking,
+          ),
           reservedAt: now,
           revealAt,
         },
@@ -364,7 +372,10 @@ export class TripsService {
       tripId: id,
       deposit,
       commission: breakdown.comision,
-      amount: deposit ? DEPOSIT_AMOUNT : breakdown.total,
+      amount: deposit ? depositFor(breakdown.total) : breakdown.total,
+      partnerCommission: partnerCommissionOf(
+        trip.booking as unknown as Booking,
+      ),
     });
     return this.get(id, userId);
   }

@@ -107,6 +107,10 @@ export class AdminService {
           (s, t) => s + ((t.breakdown as { comision?: number }).comision ?? 0),
           0,
         ),
+        partnerCommission: reserved.reduce(
+          (s, t) => s + t.partnerCommission,
+          0,
+        ),
         deposits: reserved.filter(
           (t) => t.amountPaid != null && t.amountPaid < t.budgetTotal,
         ).length,

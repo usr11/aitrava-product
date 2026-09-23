@@ -31,18 +31,18 @@ Objetivo: tener **evidencia real** de que la gente entiende, quiere y usaría Ai
 4. "Intenta adivinar a dónde vas." *(Usar "Adelantar el tiempo" si hace falta.)*
 5. "Abre el sobre." → luego responde la encuesta NPS de la app.
 
-**Qué observar (anotar sin interrumpir):** en qué paso duda o se devuelve, qué lee en voz alta, si mira el desglose del presupuesto y la comisión, si re-sortea (señal de desconfianza), su reacción al abrir el sobre (cara, comentario).
+**Qué observar (anotar sin interrumpir):** en qué paso duda o se devuelve, qué lee en voz alta, si mira el desglose del presupuesto y la tarifa fija, si re-sortea (señal de desconfianza), su reacción al abrir el sobre (cara, comentario).
 
 **4. Preguntas finales (4 min)**
 - Del 1 al 10, ¿qué tan confiado te sentirías pagando esto de verdad? ¿Qué te falta para ponerle un 10?
-- ¿La comisión del 10 % incluida te parece justa? ¿Pagarías **$50.000 hoy para apartar** un viaje así? *(Si dice que sí → es la conversión más fuerte que podemos mostrar.)*
+- ¿Te parece justo que nuestra tarifa sean $50.000 fijos incluidos en tu presupuesto? ¿Pagarías **el abono del 20 % hoy para apartar** un viaje así? *(Si dice que sí → es la conversión más fuerte que podemos mostrar.)*
 - ¿Se lo regalarías a alguien? ¿A quién y para qué ocasión?
 - ¿Qué le quitarías y qué le agregarías?
 - ¿Te podemos escribir cuando esté lista de verdad? *(Anotar su contacto → lista de espera.)*
 
 ## Plantilla de notas (una fila por persona)
 
-| # | Edad / con quién viaja | Se trabó en… | Cita textual | Confianza 1–10 | ¿Apartaría con $50k? | ¿Regalaría? | Idea / queja principal |
+| # | Edad / con quién viaja | Se trabó en… | Cita textual | Confianza 1–10 | ¿Apartaría con el 20 %? | ¿Regalaría? | Idea / queja principal |
 | :-: | :-- | :-- | :-- | :-: | :-: | :-: | :-- |
 | 1 | | | | | | | |
 | 2 | | | | | | | |
@@ -58,7 +58,7 @@ Objetivo: tener **evidencia real** de que la gente entiende, quiere y usaría Ai
    - Si dudan en el paso de presupuesto → mostrar ejemplos ("con $1.500.000 p/p te puede tocar Cartagena o Salento").
    - Si no confían en pagar → agregar garantía o testimonios en el pago.
    - Si nadie comparte → cambiar el texto del botón o mostrarlo antes.
-   - Si el 10 % les parece mucho → probar 8 % y medir otra vez.
+   - Si la tarifa fija les parece alta → probar $35.000 y medir otra vez.
 4. Hacer el cambio (pedírselo al agente citando el hallazgo), marcar el paso en el roadmap y hacer otra ronda. **Comparar las métricas antes y después**: eso es lo que da puntos.
 
 ## Evidencia que hay que guardar para la presentación

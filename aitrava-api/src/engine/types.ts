@@ -20,6 +20,19 @@ export type TravelDna = {
 export type ClueDraft = { type: string; text: string };
 export type ItineraryDay = { day: number; title: string; items: string[] };
 
+export type Provider = {
+  name: string;
+  detail: string;
+  /** Comisión que nos paga el aliado por llevarle el cliente y gestionar la reserva. */
+  rate: number;
+};
+
+export type Booking = {
+  transporte: Provider & { amount: number };
+  alojamiento: Provider & { amount: number };
+  experiencias: (Provider & { amount: number })[];
+};
+
 export type TripPlan = {
   destinationId: string;
   destinationName: string;
@@ -27,18 +40,27 @@ export type TripPlan = {
   vibes: string[];
   clues: ClueDraft[];
   itinerary: ItineraryDay[];
+  booking: Booking;
   aiGenerated: boolean;
 };
 
-/** Modelo de ingresos: una comisión por viaje, incluida dentro del tope del cliente (transparente). */
-export const COMMISSION_RATE = 0.1;
+/**
+ * Modelo de ingresos (decidido el 2026-09-23):
+ *  1. Tarifa fija de $50.000 por viaje, que sale del tope que pone el cliente.
+ *  2. Comisión de los aliados (transporte, alojamiento y experiencias) por promover el destino
+ *     y gestionar toda la reserva. Cada aliado tiene su `rate` en el catálogo.
+ */
+export const COMMISSION_FIXED = 50_000;
+export const DEPOSIT_RATE = 0.2; // "apartar" = 20 % del viaje
 export const MAX_REROLLS = 2;
-export const DEPOSIT_AMOUNT = 50_000;
 
-/** Mismo reparto que la landing: 39 % transporte, 32 % alojamiento, 29 % experiencias (sobre el neto después de la comisión). */
+export const depositFor = (total: number) =>
+  Math.round((total * DEPOSIT_RATE) / 10_000) * 10_000;
+
+/** Mismo reparto que la landing: 39 % transporte, 32 % alojamiento, 29 % experiencias (sobre el neto tras la tarifa fija). */
 export const computeBreakdown = (budgetTotal: number) => {
   const round = (n: number) => Math.round(n / 10_000) * 10_000;
-  const comision = round(budgetTotal * COMMISSION_RATE);
+  const comision = COMMISSION_FIXED;
   const net = budgetTotal - comision;
   const transporte = round(net * 0.39);
   const alojamiento = round(net * 0.32);
@@ -48,7 +70,14 @@ export const computeBreakdown = (budgetTotal: number) => {
     alojamiento,
     experiencias,
     comision,
-    commissionRate: COMMISSION_RATE,
     total: budgetTotal,
   };
 };
+
+/** Lo que nos dejan los aliados por el viaje, según lo que se reserva con cada uno. */
+export const partnerCommissionOf = (booking: Booking) =>
+  Math.round(
+    booking.transporte.amount * booking.transporte.rate +
+      booking.alojamiento.amount * booking.alojamiento.rate +
+      booking.experiencias.reduce((sum, e) => sum + e.amount * e.rate, 0),
+  );

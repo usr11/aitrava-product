@@ -36,10 +36,14 @@ export const CLUE_LABELS: Record<string, string> = {
   cultura: 'Un dato curioso',
 };
 
-/** Modelo de ingresos: una sola comisión por viaje, incluida en el tope del cliente. */
-export const COMMISSION_RATE = 0.1;
+/**
+ * Modelo de ingresos: tarifa fija por viaje (dentro del tope del cliente)
+ * + comisión que nos dejan los aliados de transporte, alojamiento y experiencias.
+ */
+export const COMMISSION_FIXED = 50_000;
+export const DEPOSIT_RATE = 0.2;
 export const MAX_REROLLS = 2;
-export const DEPOSIT_AMOUNT = 50_000;
+export const depositFor = (total: number) => Math.round((total * DEPOSIT_RATE) / 10_000) * 10_000;
 
 /** Degradados para las "postales" de destino (no dependemos de fotos externas). */
 export const POSTCARD_GRADIENTS = [

@@ -7,10 +7,10 @@ export const formatDate = (iso: string, opts: Intl.DateTimeFormatOptions = { day
 export const nightsBetween = (a: string, b: string) =>
   Math.max(1, Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000));
 
-/** Reparte el total por rubro igual que el backend (39/32/29 del neto tras la comisión del 10 %). */
-export const splitBudget = (total: number, rate = 0.1) => {
+/** Reparte el total por rubro igual que el backend (39/32/29 del neto tras la tarifa fija). */
+export const splitBudget = (total: number, comisionFija = 50_000) => {
   const round = (n: number) => Math.round(n / 10_000) * 10_000;
-  const comision = round(total * rate);
+  const comision = comisionFija;
   const net = total - comision;
   const transporte = round(net * 0.39);
   const alojamiento = round(net * 0.32);

@@ -42,7 +42,7 @@ function TripView() {
     ['plane', 'Transporte ida y vuelta', b.transporte],
     ['home', 'Alojamiento', b.alojamiento],
     ['mountain', 'Experiencias locales', b.experiencias],
-    ['sparkle', `Comisión AiTrava (${Math.round(b.commissionRate * 100)} %)`, b.comision],
+    ['sparkle', 'Tarifa fija AiTrava', b.comision],
   ];
 
   return (

@@ -10,7 +10,7 @@ import { Postcard } from '@/components/Postcard';
 import { RequireAuth } from '@/components/RequireAuth';
 import { Spinner } from '@/components/Spinner';
 import { api } from '@/lib/api';
-import { formatDate } from '@/lib/format';
+import { formatCOP, formatDate } from '@/lib/format';
 import type { Trip } from '@/lib/types';
 import { useTrip } from '@/lib/useTrip';
 
@@ -49,7 +49,7 @@ function Reveal() {
       <div className="container-app grid min-h-[75dvh] place-items-center py-10 text-center">
         <div className="w-full max-w-lg">
           <p className="eyebrow text-secondary">Llegó el momento</p>
-          <h1 className="display mt-3 mb-10 text-6xl sm:text-7xl">Abre tu sobre</h1>
+          <h1 className="display mt-3 mb-24 text-6xl sm:text-7xl">Abre tu sobre</h1>
           <Envelope opening={opening} onOpen={open} />
           <p className="mt-10 text-muted">{opening ? 'Rompiendo el sello…' : 'Toca el sobre para descubrir a dónde vas'}</p>
         </div>
@@ -80,6 +80,37 @@ function Reveal() {
               </p>
             )}
           </div>
+
+          {trip.booking && (
+            <div className="card p-5 sm:p-6">
+              <p className="eyebrow text-muted-2">Tu reserva · todo ya está pago</p>
+              <ul className="mt-4 space-y-4">
+                {[
+                  { icon: 'plane' as const, label: 'Transporte', items: [trip.booking.transporte] },
+                  { icon: 'home' as const, label: 'Alojamiento', items: [trip.booking.alojamiento] },
+                  { icon: 'mountain' as const, label: 'Experiencias', items: trip.booking.experiencias },
+                ].map((group) => (
+                  <li key={group.label}>
+                    <p className="eyebrow flex items-center gap-2 text-[10px] text-secondary">
+                      <Icon name={group.icon} size={16} /> {group.label}
+                    </p>
+                    <ul className="mt-2 space-y-2">
+                      {group.items.map((it) => (
+                        <li key={it.name} className="flex items-start justify-between gap-3 border-b border-line pb-2 last:border-0">
+                          <span>
+                            <span className="font-semibold">{it.name}</span>
+                            <span className="block text-sm text-muted">{it.detail}</span>
+                          </span>
+                          <span className="shrink-0 font-mono text-sm text-text-soft">{formatCOP(it.amount)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-xs text-dim">Los aliados nos dejan una comisión por llevarles el cliente y gestionar la reserva; por eso tú pagas lo mismo.</p>
+            </div>
+          )}
 
           <div>
             <h2 className="display text-4xl">Tu itinerario</h2>
