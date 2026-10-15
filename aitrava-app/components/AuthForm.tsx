@@ -11,7 +11,7 @@ import type { User } from '@/lib/types';
 export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const router = useRouter();
   const { signIn, user } = useAuth();
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '', idNumber: '', phone: '', password: '' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [next, setNext] = useState('/crear');
@@ -59,10 +59,31 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         )}
         <div className="mt-6 space-y-4">
           {mode === 'register' && (
-            <label className="block">
-              <span className="field-label">Nombre</span>
-              <input className="input" required minLength={2} autoComplete="name" value={form.name} onChange={set('name')} placeholder="¿Cómo te llamas?" />
-            </label>
+            <>
+              <label className="block">
+                <span className="field-label">Nombre completo</span>
+                <input className="input" required minLength={2} autoComplete="name" value={form.name} onChange={set('name')} placeholder="Como aparece en tu cédula" />
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="field-label">Cédula</span>
+                  <input
+                    className="input"
+                    required
+                    inputMode="numeric"
+                    pattern="\d{6,12}"
+                    autoComplete="off"
+                    value={form.idNumber}
+                    onChange={(e) => setForm({ ...form, idNumber: e.target.value.replace(/\D/g, '') })}
+                    placeholder="1012345678"
+                  />
+                </label>
+                <label className="block">
+                  <span className="field-label">Celular</span>
+                  <input className="input" required inputMode="tel" autoComplete="tel" value={form.phone} onChange={set('phone')} placeholder="300 123 4567" />
+                </label>
+              </div>
+            </>
           )}
           <label className="block">
             <span className="field-label">Correo</span>

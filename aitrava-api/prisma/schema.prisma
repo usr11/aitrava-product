@@ -24,6 +24,8 @@ model User {
   email        String     @unique
   name         String
   passwordHash String
+  idNumber     String? // cédula, para la factura
+  phone        String? // celular, para que el asesor contacte
   role         Role       @default(USER)
   referralCode String     @unique
   referredBy   String? // referralCode de quien lo invitó
@@ -70,6 +72,7 @@ model Trip {
   booking       Json? // aliados reservados (transporte, alojamiento, experiencias)
   partnerCommission Int  @default(0) // comisión que nos dejan los aliados
   amountPaid    Int?
+  paymentType   String? // reserva | completo
   isGift        Boolean     @default(false)
   giftTo        String?
   giftMessage   String?

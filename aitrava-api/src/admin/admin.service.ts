@@ -111,9 +111,25 @@ export class AdminService {
           (s, t) => s + t.partnerCommission,
           0,
         ),
-        deposits: reserved.filter(
-          (t) => t.amountPaid != null && t.amountPaid < t.budgetTotal,
-        ).length,
+        // Pagos: cuántos apartaron con la tarifa fija y cuántos pagaron todo
+        reservas: reserved.filter((t) => t.paymentType === 'reserva').length,
+        // Los viajes anteriores a la opción de apartar quedaron pagos completos.
+        pagosCompletos: reserved.filter((t) => t.paymentType !== 'reserva')
+          .length,
+        recaudado: reserved.reduce((s, t) => s + (t.amountPaid ?? 0), 0),
+        porCobrar: reserved.reduce(
+          (s, t) => s + Math.max(0, t.budgetTotal - (t.amountPaid ?? 0)),
+          0,
+        ),
+        // ¿Cuántos de los que entraron a la página terminaron comprando?
+        visitorToPurchase: pct(
+          byEvent.reservation?.people ?? 0,
+          byEvent.page_view?.people ?? 0,
+        ),
+        // Flujo completo = reservó y además abrió el sobre
+        flujoCompleto: revealed.length,
+        flujoCompletoPct: pct(revealed.length, reserved.length),
+        whatsappClicks: byEvent.whatsapp_click?.total ?? 0,
         tripToReservation: pct(reserved.length, trips.length),
         visitorToSignup: pct(
           byEvent.signup?.people ?? 0,
@@ -172,6 +188,31 @@ export class AdminService {
         }),
       ),
     };
+  }
+
+  /** Quién apartó y quién pagó completo (solo para el panel del equipo). */
+  async payments() {
+    const trips = await this.prisma.trip.findMany({
+      where: { status: { not: 'GENERATED' } },
+      orderBy: { reservedAt: 'desc' },
+      take: 200,
+      include: {
+        user: { select: { name: true, email: true, utmSource: true } },
+      },
+    });
+    return trips.map((t) => ({
+      id: t.id,
+      nombre: t.user.name,
+      email: t.user.email,
+      fuente: t.user.utmSource ?? 'directo',
+      tipo: t.paymentType ?? 'completo',
+      pagado: t.amountPaid ?? 0,
+      total: t.budgetTotal,
+      porCobrar: Math.max(0, t.budgetTotal - (t.amountPaid ?? 0)),
+      esRegalo: t.isGift,
+      abrioElSobre: t.status === 'REVEALED' || t.status === 'COMPLETED',
+      fecha: t.reservedAt ?? t.createdAt,
+    }));
   }
 
   feedback() {

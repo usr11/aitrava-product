@@ -23,6 +23,8 @@ export const publicUser = (u: User) => ({
   email: u.email,
   role: u.role,
   referralCode: u.referralCode,
+  idNumber: u.idNumber,
+  phone: u.phone,
 });
 
 @Injectable()
@@ -55,6 +57,8 @@ export class AuthService {
         name: dto.name.trim(),
         email,
         passwordHash: await bcrypt.hash(dto.password, 10),
+        idNumber: dto.idNumber.trim(),
+        phone: dto.phone.trim(),
         referralCode: makeReferralCode(dto.name),
         referredBy: referrer?.referralCode,
         utmSource: dto.utmSource,

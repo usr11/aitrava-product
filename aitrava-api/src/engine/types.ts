@@ -51,11 +51,15 @@ export type TripPlan = {
  *     y gestionar toda la reserva. Cada aliado tiene su `rate` en el catálogo.
  */
 export const COMMISSION_FIXED = 50_000;
-export const DEPOSIT_RATE = 0.2; // "apartar" = 20 % del viaje
+/** Apartar el viaje: tarifa fija de reserva que se abona al total. */
+export const RESERVATION_FEE = 39_900;
 export const MAX_REROLLS = 2;
 
-export const depositFor = (total: number) =>
-  Math.round((total * DEPOSIT_RATE) / 10_000) * 10_000;
+export type PaymentType = 'reserva' | 'completo';
+
+/** Lo que se cobra hoy según la opción elegida. */
+export const chargeFor = (total: number, payment: PaymentType) =>
+  payment === 'reserva' ? RESERVATION_FEE : total;
 
 /** Mismo reparto que la landing: 39 % transporte, 32 % alojamiento, 29 % experiencias (sobre el neto tras la tarifa fija). */
 export const computeBreakdown = (budgetTotal: number) => {

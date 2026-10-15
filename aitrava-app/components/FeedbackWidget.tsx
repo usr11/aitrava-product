@@ -35,7 +35,7 @@ export function FeedbackWidget() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className={`fixed right-4 bottom-24 z-40 ${crowded ? 'hidden md:flex' : 'flex'} items-center gap-2 rounded-full border border-line-strong bg-surface px-4 py-2.5 text-sm font-semibold text-text-soft shadow-lg shadow-black/40 transition hover:border-primary md:bottom-6`}
+        className={`fixed left-4 bottom-24 z-40 ${crowded ? 'hidden md:flex' : 'flex'} items-center gap-2 rounded-full border border-line-strong bg-surface px-4 py-2.5 text-sm font-semibold text-text-soft shadow-lg shadow-black/40 transition hover:border-primary md:bottom-6`}
         aria-label="Danos tu opinión"
       >
         <Icon name="message" size={18} /> <span className="hidden sm:inline">¿Qué le cambiarías?</span>

@@ -4,6 +4,7 @@ import { Analytics } from '@/components/Analytics';
 import { AppShell } from '@/components/AppShell';
 import { DemoBanner } from '@/components/DemoBanner';
 import { FeedbackWidget } from '@/components/FeedbackWidget';
+import { WhatsAppFloating } from '@/components/WhatsAppCta';
 import { AuthProvider } from '@/lib/auth';
 import './globals.css';
 
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           <DemoBanner />
           <AppShell>{children}</AppShell>
           <FeedbackWidget />
+          <WhatsAppFloating />
           <Analytics />
         </AuthProvider>
       </body>

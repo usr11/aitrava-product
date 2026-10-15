@@ -21,15 +21,19 @@ async function main() {
   }
 
   const passwordHash = await bcrypt.hash('aitrava123', 10);
-  // En producción la clave del admin viene de ADMIN_PASSWORD (la de por defecto está pública en el repo).
+  // Usuario y clave del admin: en producción vienen de ADMIN_EMAIL y ADMIN_PASSWORD
+  // (los de por defecto están públicos en el repo, así que solo sirven en local).
+  const adminEmail = (process.env.ADMIN_EMAIL ?? 'admin@aitrava.co')
+    .toLowerCase()
+    .trim();
   const adminHash = process.env.ADMIN_PASSWORD
     ? await bcrypt.hash(process.env.ADMIN_PASSWORD, 10)
     : passwordHash;
   await prisma.user.upsert({
-    where: { email: 'admin@aitrava.co' },
+    where: { email: adminEmail },
     update: { role: 'ADMIN', passwordHash: adminHash },
     create: {
-      email: 'admin@aitrava.co',
+      email: adminEmail,
       name: 'Equipo AiTrava',
       passwordHash: adminHash,
       role: 'ADMIN',
@@ -64,7 +68,7 @@ async function main() {
   }
 
   console.log(
-    `Seed listo: ${destinations.length} destinos, admin@aitrava.co (clave: ${process.env.ADMIN_PASSWORD ? 'ADMIN_PASSWORD' : 'aitrava123'}) y demo@aitrava.co (clave: aitrava123)`,
+    `Seed listo: ${destinations.length} destinos, ${adminEmail} (clave: ${process.env.ADMIN_PASSWORD ? 'la de ADMIN_PASSWORD' : 'aitrava123'}) y demo@aitrava.co (clave: aitrava123)`,
   );
 }
 

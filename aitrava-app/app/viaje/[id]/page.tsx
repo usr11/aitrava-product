@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { BoardingPass } from '@/components/BoardingPass';
 import { Icon } from '@/components/Icon';
+import { WhatsAppCard } from '@/components/WhatsAppCta';
 import { RequireAuth } from '@/components/RequireAuth';
 import { Spinner } from '@/components/Spinner';
 import { api } from '@/lib/api';
@@ -104,6 +105,34 @@ function TripView() {
               Ver itinerario completo <Icon name="arrow" size={20} />
             </Link>
           )}
+          {trip.status !== 'GENERATED' && trip.amountPaid != null && (
+            <p className="mt-4 rounded-xl bg-board px-4 py-3 text-sm">
+              {trip.paymentType === 'reserva' ? (
+                <>
+                  <strong className="text-primary">Cupo apartado.</strong>{' '}
+                  <span className="text-muted">
+                    Pagaste {formatCOP(trip.amountPaid)} y quedan {formatCOP(b.total - trip.amountPaid)} por pagar hasta 15 días antes.
+                  </span>
+                </>
+              ) : (
+                <>
+                  <strong className="text-primary">Viaje pago al 100 %.</strong>{' '}
+                  <span className="text-muted">No tienes que pagar nada más.</span>
+                </>
+              )}
+            </p>
+          )}
+
+          {trip.status !== 'GENERATED' && (
+            <Link href={`/viaje/${id}/factura`} className="btn btn-dark mt-3 w-full">
+              <Icon name="ticket" size={18} /> Ver mi factura
+            </Link>
+          )}
+
+          <div className="mt-6">
+            <WhatsAppCard where="viaje" title="¿Dudas con tu viaje?" text="Escríbele al asesor y te responde una persona real." />
+          </div>
+
           <ul className="mt-6 space-y-2 text-sm text-muted">
             <li className="flex gap-2"><Icon name="headset" size={18} className="shrink-0 text-secondary" /> Una persona real te responde si algo cambia.</li>
             <li className="flex gap-2"><Icon name="shield" size={18} className="shrink-0 text-secondary" /> Aliados verificados de transporte y alojamiento.</li>

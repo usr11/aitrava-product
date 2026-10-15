@@ -1,4 +1,12 @@
-export type User = { id: string; name: string; email: string; role: 'USER' | 'ADMIN'; referralCode: string };
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: 'USER' | 'ADMIN';
+  referralCode: string;
+  idNumber: string | null;
+  phone: string | null;
+};
 
 export type Breakdown = {
   transporte: number;
@@ -34,6 +42,8 @@ export type Trip = {
   budgetTotal: number;
   breakdown: Breakdown;
   amountPaid: number | null;
+  paymentType: 'reserva' | 'completo' | null;
+  reservedAt: string | null;
   vibes: string[];
   isGift: boolean;
   giftTo: string | null;

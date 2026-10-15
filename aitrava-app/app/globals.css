@@ -310,6 +310,25 @@ body {
   animation: wiggle 0.6s ease-in-out infinite;
 }
 
+/* Al imprimir la factura: solo el documento, sobre fondo blanco. */
+@media print {
+  header,
+  nav,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    background-image: none !important;
+    color: #1a1c20 !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

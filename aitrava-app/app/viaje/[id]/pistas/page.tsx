@@ -77,6 +77,9 @@ function Clues() {
         <div className="animate-pop mb-6 rounded-2xl bg-primary px-5 py-4 text-ink">
           <p className="font-bold">¡Reserva confirmada! 🎉</p>
           <p className="text-sm text-ink/80">Todo está listo. Ahora empieza lo mejor: la espera. Cada pista te acerca al destino.</p>
+          <Link href={`/viaje/${id}/factura`} className="mt-3 inline-flex items-center gap-2 text-sm font-bold underline">
+            <Icon name="ticket" size={16} /> Ver mi factura
+          </Link>
         </div>
       )}
       <div className="grid gap-8 md:grid-cols-[1fr_1.1fr]">

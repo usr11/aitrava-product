@@ -9,6 +9,20 @@ import { VIBES } from '@/lib/constants';
 import { formatCOP } from '@/lib/format';
 
 type Item = { label: string; value: number };
+type Payment = {
+  id: string;
+  nombre: string;
+  email: string;
+  fuente: string;
+  tipo: 'reserva' | 'completo';
+  pagado: number;
+  total: number;
+  porCobrar: number;
+  esRegalo: boolean;
+  abrioElSobre: boolean;
+  fecha: string;
+};
+
 type Metrics = {
   kpis: Record<string, number | null>;
   funnel: Item[];
@@ -44,9 +58,13 @@ function Panel({ title, children, className = '' }: { title: string; children: R
 
 export default function AdminMetrics() {
   const [m, setM] = useState<Metrics | null>(null);
+  const [payments, setPayments] = useState<Payment[]>([]);
 
   useEffect(() => {
-    const load = () => api<Metrics>('/admin/metrics').then(setM).catch(() => {});
+    const load = () => {
+      api<Metrics>('/admin/metrics').then(setM).catch(() => {});
+      api<Payment[]>('/admin/payments').then(setPayments).catch(() => {});
+    };
     load();
     const t = setInterval(load, 15_000);
     return () => clearInterval(t);
@@ -87,6 +105,67 @@ export default function AdminMetrics() {
         <Stat label="Acierto de apuestas" value={`${k.guessAccuracy} %`} hint={`${k.reveals} sobres abiertos`} />
       </div>
 
+      {/* Lo que pidió el equipo: cuánta gente entra, cuánta compra y cuánta termina todo el flujo */}
+      <section className="rounded-3xl border border-primary/30 bg-primary/5 p-5 sm:p-6">
+        <h2 className="display text-4xl">Pagos y reservas</h2>
+        <p className="mt-1 text-sm text-muted">Quién apartó su cupo, quién pagó el viaje completo y cuántos llegaron hasta el final.</p>
+
+        <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Stat
+            label="Apartaron ($39.900)"
+            value={k.reservas ?? 0}
+            hint={`${formatCOP((k.reservas ?? 0) * 39_900)} recibidos · ${formatCOP(k.porCobrar ?? 0)} por cobrar`}
+          />
+          <Stat
+            label="Pagaron completo"
+            value={k.pagosCompletos ?? 0}
+            hint={`${k.reservations ? Math.round(((k.pagosCompletos ?? 0) / k.reservations) * 100) : 0} % de las compras`}
+          />
+          <Stat label="Visitantes que compran" value={`${k.visitorToPurchase ?? 0} %`} hint="del total de personas que entraron" />
+          <Stat label="Completaron todo el flujo" value={k.flujoCompleto ?? 0} hint={`${k.flujoCompletoPct ?? 0} % de los que compraron abrieron el sobre`} />
+          <Stat label="Recaudado (simulado)" value={formatCOP(k.recaudado ?? 0)} hint={`sobre ${formatCOP(k.sales ?? 0)} en viajes vendidos`} />
+          <Stat label="Clics al asesor de WhatsApp" value={k.whatsappClicks ?? 0} />
+          <Stat label="Viajes de regalo" value={k.gifts ?? 0} />
+          <Stat label="Re-sorteos" value={k.rerolls ?? 0} />
+        </div>
+
+        {payments.length > 0 && (
+          <div className="mt-5 overflow-x-auto rounded-2xl border border-line">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="border-b border-line text-muted-2">
+                <tr>
+                  {['Persona', 'Tipo', 'Pagó hoy', 'Total del viaje', 'Por cobrar', 'Abrió el sobre', 'Fuente', 'Fecha'].map((h) => (
+                    <th key={h} className="eyebrow px-4 py-3 text-[10px] font-normal">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {payments.map((p) => (
+                  <tr key={p.id} className="border-b border-line/60 last:border-0">
+                    <td className="px-4 py-3">
+                      <span className="font-semibold">{p.nombre}</span>
+                      <span className="block text-xs text-muted">{p.email}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${p.tipo === 'completo' ? 'bg-ok/20 text-ok' : 'bg-primary/20 text-primary'}`}>
+                        {p.tipo === 'completo' ? 'Pago completo' : 'Apartó'}
+                      </span>
+                      {p.esRegalo && <span className="ml-2 text-xs text-secondary">regalo</span>}
+                    </td>
+                    <td className="px-4 py-3 font-mono">{formatCOP(p.pagado)}</td>
+                    <td className="px-4 py-3 font-mono text-muted">{formatCOP(p.total)}</td>
+                    <td className="px-4 py-3 font-mono text-muted">{p.porCobrar ? formatCOP(p.porCobrar) : '—'}</td>
+                    <td className="px-4 py-3">{p.abrioElSobre ? '✅' : '⏳'}</td>
+                    <td className="px-4 py-3 text-muted">{p.fuente}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-dim">{new Date(p.fecha).toLocaleDateString('es-CO')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel title="Embudo de conversión (personas únicas)">
           <Funnel data={m.funnel} />
@@ -114,13 +193,6 @@ export default function AdminMetrics() {
         </Panel>
         <Panel title="Origen de los usuarios (utm)">
           <BarList data={m.utm} />
-        </Panel>
-        <Panel title="Comportamiento de compra" className="lg:col-span-2">
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div><p className="display text-4xl text-primary">{k.deposits}</p><p className="text-xs text-muted">reservas solo con abono</p></div>
-            <div><p className="display text-4xl text-primary">{k.rerolls}</p><p className="text-xs text-muted">re-sorteos</p></div>
-            <div><p className="display text-4xl text-primary">{k.gifts}</p><p className="text-xs text-muted">viajes de regalo</p></div>
-          </div>
         </Panel>
       </div>
     </div>

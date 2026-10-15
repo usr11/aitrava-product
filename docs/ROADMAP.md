@@ -4,7 +4,7 @@
 > El trabajo es **lineal**: se toma el siguiente paso sin marcar del **Plan de trabajo (sección 8)**. Al terminarlo se marca `[x]` con la fecha y quién lo hizo, se actualiza la tabla de progreso (0.1) y se anota en el **Registro de cambios** (sección 11).
 > Si una decisión cambia, se edita aquí primero y después el código.
 
-**Última actualización:** 2026-09-21 · **Paso actual:** desplegar siguiendo `docs/DESPLIEGUE.md` → paso 30 (conectar la landing con la URL final) → 32 (pruebas con usuarios)
+**Última actualización:** 2026-10-15 · **Paso actual:** 30 (conectar la landing con la URL de Cloudflare) y 32 (pruebas con usuarios)
 
 ---
 
@@ -27,7 +27,8 @@
 | D · Crecimiento y métricas | 25–30 | 5/6 | 🟡 |
 | E · Validación con usuarios e iteraciones | 31–37 | 1/7 | 🟡 |
 | F · Presentación | 38–41 | 1/4 | 🟡 |
-| **Total** | | **31/41** | |
+| G · Ajustes post-despliegue | 42–47 | 6/6 | ✅ |
+| **Total** | | **37/47** | |
 
 Estados: ⬜ sin empezar · 🟡 en curso · ✅ terminada
 
@@ -199,20 +200,21 @@ Landing ──CTA──▶ /registro ─▶ /crear (wizard) ─▶ /crear/genera
 | Ruta | Qué muestra | Eventos |
 | :-- | :-- | :-- |
 | `/` | Hero corto con el tagline, CTA "Crear mi viaje sorpresa" y cómo funciona en 4 pasos. Si hay sesión, va a "Mis viajes". | `page_view`, `cta_click` |
-| `/registro`, `/login` | Formulario simple. Acepta `?ref=CODIGO` y `?utm_*`. | `signup` |
+| `/registro`, `/login` | Registro con nombre, correo, **cédula**, **teléfono** y contraseña (la cédula y el teléfono se usan en la factura y para que el asesor contacte). Acepta `?ref=CODIGO` y `?utm_*`. | `signup` |
 | `/crear` | Wizard de 5 pasos con barra de progreso: **1.** Origen y fechas · **2.** Presupuesto y viajeros (slider + desglose en vivo, tarjetas PAX) · **3.** Qué te mueve (chips: playa, montaña, comida, fiesta, cultura, naturaleza, silencio, aventura) · **4.** Cosas a evitar (avión, frío, caminatas largas…) · **5.** ¿Para ti o es un regalo? | `quiz_start`, `quiz_step`, `quiz_complete` |
 | `/crear/generando` | Tablero de salidas animado mientras responde la IA. | — |
 | `/viaje/[id]` | **Boarding pass**: origen → `???`, fechas, PAX, desglose en COP, 3 "pistas de ambiente" (sin revelar el lugar) y CTA "Reservar mi sorpresa". Botón "Re-sortear" (2 gratis por viaje). | `trip_generated`, `trip_reroll` |
-| `/viaje/[id]/pago` | Resumen con la tarifa fija de $50.000 incluida y checkout **simulado**. Aviso: *"Prototipo: no se hace ningún cobro"*. Opción "Apartar con el 20 %". | `checkout_view`, `reservation` |
-| `/viaje/[id]/pistas` | Cuenta regresiva, progreso, pista nueva en amarillo, anteriores y bloqueadas. **Adivinar**, **Compartir con mis acompañantes** y (en modo demo) "Adelantar el tiempo". | `clue_view`, `guess`, `share` |
+| `/viaje/[id]/pago` | Resumen con la tarifa fija de $50.000 incluida, **dos opciones de pago (apartar por $39.900 o pagar todo)** y checkout **simulado**. Aviso: *"Prototipo: no se hace ningún cobro"*.  | `checkout_view`, `reservation` |
+| `/viaje/[id]/pistas` | Cuenta regresiva, progreso, pista nueva en amarillo, anteriores y bloqueadas. **Adivinar**, **Compartir con mis acompañantes** y (en modo demo) "Adelantar el tiempo". | `clue_view`, `guess`, `share`, `whatsapp_click`, `payment_option` |
 | `/viaje/[id]/revelacion` | Animación del **sobre digital** → destino, foto, por qué lo eligió la IA e itinerario día por día. Muestra si adivinaste. Luego la encuesta NPS con 2 preguntas. | `reveal`, `nps_submit` |
 | `/s/[code]` | Página pública del viaje de un amigo: pistas desbloqueadas, adivinar (solo el nombre) y CTA "Quiero mi viaje sorpresa" → `/registro?ref=`. | `share_view`, `friend_guess`, `referral_click` |
 | `/regalo/[code]` | Lo que ve quien recibe un viaje regalado: mensaje, cuenta regresiva y pistas. | `gift_open` |
+| `/viaje/[id]/factura` | **Factura** del viaje: logo, consecutivo, datos del cliente (nombre, cédula, teléfono, correo), desglose, forma de pago, lo pagado y el saldo. Botón para imprimir o guardar en PDF. | — |
 | `/mis-viajes` | Viajes del usuario con su estado. | — |
 | `/admin` | **Dashboard**: KPIs (usuarios, viajes, reservas, conversión, NPS), embudo, eventos por día, top de gustos, top de destinos, tasa de acierto y referidos. | — |
 | `/admin/feedback` | Comentarios, NPS y respuestas del widget. | — |
 | `/admin/iteraciones` | **Registro de aprendizajes** (CRUD): versión, fecha, hipótesis, métrica, resultado, decisión, cambio. | — |
-| Global | **Widget de feedback** flotante (1–5 caritas + texto) y banner del modo demo. | `feedback_submit` |
+| Global | **Widget de feedback** flotante (1–5 caritas + texto, abajo a la izquierda), **botón de WhatsApp con un asesor de ventas** (abajo a la derecha) y banner del modo demo. | `feedback_submit`, `whatsapp_click` |
 
 ---
 
@@ -224,7 +226,7 @@ Landing ──CTA──▶ /registro ─▶ /crear (wizard) ─▶ /crear/genera
 | :-- | :-- |
 | **1. Tarifa fija de $50.000 por viaje** | Sale del tope que pone el cliente y se muestra desglosada en el wizard y en el checkout ("Así ganamos"). Es fija: da igual si el viaje cuesta $1.200.000 o $5.000.000, y por eso el cliente sabe exactamente cuánto ganamos. |
 | **2. Comisión de los aliados** | Transporte, alojamiento y experiencias nos pagan por promoverlos y gestionarles toda la reserva. Rangos de mercado que usamos: transporte 4–6 %, alojamiento 10–15 %, experiencias 12–20 %. Cada aliado tiene su `rate` en `aitrava-api/prisma/providers.ts` y el sistema calcula lo que deja cada viaje. |
-| **Abono para apartar (20 %)** | No es otro cobro: adelanta la caja y mide la intención de compra real. |
+| **Dos formas de pagar** | **Apartar por $39.900** (tarifa fija de reserva, se abona al total; el resto se paga hasta 15 días antes) o **pagar todo de una**. La reserva baja la barrera de entrada, adelanta caja y mide intención de compra real: es la conversión que medimos en `/admin`. |
 
 **Ejemplo real de la app** (viaje de $2.800.000 a Cartagena, 2 personas):
 
@@ -455,6 +457,17 @@ model Iteration {
 
 ✔ **Chequeo F:** la presentación cabe en el tiempo y la demo funciona de principio a fin.
 
+### Etapa G · Ajustes pedidos después del despliegue (2026-10-15)
+- [x] **42** · Checkout con dos opciones: **apartar por $39.900** (tarifa fija, se abona al total) o **pagar todo**. Guardar cuál eligió cada quien — ✅ 2026-10-15 · Claude (agente)
+- [x] **43** · Panel `/admin`: tablero de **pagos y reservas** (quién apartó, quién pagó completo, cuánto se recaudó, % de visitantes que compran y cuántos completan todo el flujo hasta abrir el sobre). Solo visible en admin — ✅ 2026-10-15 · Claude (agente)
+- [x] **44** · **Asesor de ventas por WhatsApp** (https://wa.me/qr/EUC6OFUW7XOIK1?s=p) destacado en la app, con su métrica de clics — ✅ 2026-10-15 · Claude (agente)
+
+- [x] **45** · Registro con **cédula y teléfono** (datos para facturar y para que el asesor contacte) — ✅ 2026-10-15 · Claude (agente)
+- [x] **46** · **Factura por viaje** (`/viaje/[id]/factura`): logo, datos del cliente, desglose, forma de pago y saldo; se puede imprimir o guardar como PDF — ✅ 2026-10-15 · Claude (agente)
+- [x] **47** · **Usuario y clave del admin en variables de entorno** (`ADMIN_EMAIL` y `ADMIN_PASSWORD`), para poder entrar al panel en el desplegado — ✅ 2026-10-15 · Claude (agente)
+
+✔ **Chequeo G:** desde `/admin` se puede responder "¿cuánta gente entró, cuánta compró y cuánta terminó el flujo?" y el botón de WhatsApp abre el chat del asesor.
+
 ### 8.1 Notas de implementación (lo que ya existe)
 
 - **Cuentas:** `admin@aitrava.co` y `demo@aitrava.co`, clave `aitrava123` (las crea el seed). En producción la clave del admin sale de la variable `ADMIN_PASSWORD`.
@@ -465,6 +478,11 @@ model Iteration {
 - **Motor:** `aitrava-api/src/engine/engine.service.ts`. Filtra por presupuesto, cosas a evitar y origen; puntúa por gustos + ADN viajero (+ algo de azar). **La IA no es necesaria para elegir el destino**: eso lo hace el algoritmo. Si hay `GROQ_API_KEY`, la IA elige entre el top 5 y escribe pistas, razón e itinerario personalizados (~1,5 s); si falla o no hay key, usa el banco de pistas del catálogo. Probado con la key real el 2026-09-21.
 - **Modo demo:** `DEMO_MODE=true` → pistas cada 30 s, revelación a los 3 min de reservar y botón "⏩ Adelantar el tiempo" en la pantalla de pistas (para la presentación). **Para usuarios reales poner `DEMO_MODE=false`.**
 - **Eventos del embudo.** Los registra el backend: `signup`, `trip_generated`, `trip_reroll`, `reservation`, `guess`, `friend_guess`, `reveal`, `nps_submit`, `feedback_submit`. Los registra el frontend (`lib/track.ts`, también al Meta Pixel): `page_view`, `cta_click`, `quiz_start`, `quiz_step`, `quiz_complete`, `checkout_view`, `share`, `share_view`, `gift_open`, `referral_click`, `clue_view`. Al registrarse, los eventos anónimos pasan a ser del usuario.
+- **Datos del cliente:** el registro pide nombre, correo, **cédula** y **celular** (`User.idNumber`, `User.phone`, migración `datos_cliente`); se usan en la factura y para que el asesor contacte. Los usuarios creados antes del cambio los tienen vacíos.
+- **Factura:** `/viaje/[id]/factura` (consecutivo `FAC-AT-xxxx`, logo, datos del cliente, desglose, forma de pago y saldo). Se imprime o se guarda en PDF con el botón; los estilos de impresión están en `app/globals.css`. Dice explícitamente que **no tiene validez fiscal** porque el cobro es simulado.
+- **Acceso al panel:** `ADMIN_EMAIL` y `ADMIN_PASSWORD` en el `.env` del API (y en Railway). El seed crea o actualiza ese admin en cada despliegue.
+- **Formas de pago:** `RESERVATION_FEE` ($39.900) y `chargeFor()` en `aitrava-api/src/engine/types.ts`; la elección queda en `Trip.paymentType` (`reserva` | `completo`, migración `forma_de_pago`). El panel `/admin` tiene el tablero **Pagos y reservas** (`GET /api/admin/payments`) con quién apartó, quién pagó completo, cuánto falta por cobrar y quién llegó hasta abrir el sobre.
+- **Asesor por WhatsApp:** `WHATSAPP_URL` en `aitrava-app/lib/constants.ts` y el componente `components/WhatsAppCta.tsx` (botón flotante + tarjetas en inicio, viaje y checkout). Cada clic manda el evento `whatsapp_click` y se cuenta en `/admin`.
 - **El wizard se puede llenar sin cuenta.** El registro se pide al final (mejor conversión) y el borrador se guarda en `sessionStorage`.
 - **Antes de las pruebas con usuarios reales:** borrar los datos de prueba con `pnpm db:reset` (en `aitrava-api/`, **borra todo**) para que el dashboard muestre solo datos reales.
 - **Probado:** flujo completo en Chrome headless a 390 px y 1440 px (registro → wizard → generar → re-sortear → pagar → pistas → apostar → amigo/regalo apuesta → adelantar → abrir sobre → NPS → admin). Los builds de producción de ambos proyectos compilan y el lint pasa.
@@ -517,3 +535,6 @@ model Iteration {
 | 2026-09-21 | Claude (agente) | D1 resuelta: configuración de despliegue para el monorepo. API + Postgres en Railway (`railway.json`, Prisma y tsx pasan a dependencias, `postinstall: prisma generate`, se excluye `prisma/` del build de Nest para que `dist/main.js` exista, clave del admin por `ADMIN_PASSWORD`). App en Cloudflare Workers con `@opennextjs/cloudflare` (`wrangler.jsonc`, `open-next.config.ts`, imágenes sin optimizar). Guía paso a paso en `docs/DESPLIEGUE.md`. |
 | 2026-09-21 | Claude (agente) | Arreglo: en Railway no se creaban tablas. La migración `comision_unica` tenía un nombre con la hora local que la ordenaba antes de `init`, así que en una BD vacía fallaba. Se renombró a `20260922034604_comision_unica` (hora UTC). `pnpm start` ahora corre `db:deploy` (limpia el intento fallido viejo + migra + seed) antes de arrancar, y el healthcheck `/api` consulta la BD. Probado con una BD vacía y con una BD en el estado roto. Si alguien tiene la BD local con el nombre viejo: `pnpm db:reset`. |
 | 2026-09-23 | Claude (agente) | Modelo de ingresos: la comisión del cliente pasa de 10 % a **tarifa fija de $50.000**, y se suma la **comisión de los aliados** (transporte, alojamiento y experiencias) por promover el viaje y gestionar la reserva. Nuevo repertorio de aliados reales por destino (`prisma/providers.ts`, migración `aliados`): al revelar, el viajero ve con quién viaja, dónde duerme y qué experiencias tiene, con precios. `/admin` muestra ingresos separados (tarifa fija vs aliados). El abono para apartar pasa a ser 20 % del viaje. Rediseño del sobre digital (SVG, sin puntas mal cortadas). |
+| 2026-10-15 | Claude (agente) | Diagnóstico del build fallido en Cloudflare: se estaba construyendo en la raíz del repo (sin `package.json`), porque faltaba el **Root directory = `aitrava-app`**. Se documentó cómo verificarlo en los logs y dos planes B en `docs/DESPLIEGUE.md`. No hubo cambios de código. |
+| 2026-10-15 | Claude (agente) | Etapa G: checkout con **dos opciones de pago** (apartar por $39.900 fijos, que se abonan al total, o pagar completo), guardadas en `Trip.paymentType`; tablero **Pagos y reservas** en `/admin` (quién apartó, quién pagó, % de visitantes que compran, cuántos completan el flujo, por cobrar y clics a WhatsApp); **asesor de ventas por WhatsApp** con botón flotante y tarjetas en inicio, viaje y checkout, con evento `whatsapp_click`. El widget de feedback se movió a la izquierda para no chocar con el botón de WhatsApp. |
+| 2026-10-15 | Claude (agente) | Registro con **cédula y celular** (migración `datos_cliente`), **factura por viaje** en `/viaje/[id]/factura` con el logo, el desglose, la forma de pago y el saldo (imprimible o PDF), y **usuario/clave del admin por variables de entorno** (`ADMIN_EMAIL`, `ADMIN_PASSWORD`) para entrar al panel en el desplegado. |

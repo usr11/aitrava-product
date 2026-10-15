@@ -49,7 +49,7 @@ export class TripsController {
     @Param('id') id: string,
     @Body() dto: ReserveDto,
   ) {
-    return this.trips.reserve(id, user.sub, dto.deposit);
+    return this.trips.reserve(id, user.sub, dto.payment);
   }
 
   @Post(':id/guess')

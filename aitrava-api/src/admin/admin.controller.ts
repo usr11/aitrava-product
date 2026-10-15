@@ -47,6 +47,11 @@ export class AdminController {
     return this.admin.metrics();
   }
 
+  @Get('payments')
+  payments() {
+    return this.admin.payments();
+  }
+
   @Get('feedback')
   feedback() {
     return this.admin.feedback();

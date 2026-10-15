@@ -64,6 +64,7 @@ async function createTrip(opts: {
   unlocked: number;
   revealInMinutes: number;
   code: string;
+  pago?: 'reserva' | 'completo';
   friends?: { name: string; slug: string }[];
 }) {
   const d = await prisma.destination.findUniqueOrThrow({
@@ -93,7 +94,8 @@ async function createTrip(opts: {
       breakdown: b,
       booking,
       partnerCommission,
-      amountPaid: opts.budget,
+      amountPaid: opts.pago === 'reserva' ? 39_900 : opts.budget,
+      paymentType: opts.pago ?? 'completo',
       shareCode: opts.code,
       reservedAt: new Date(now - 60 * 60_000),
       revealAt,
@@ -170,6 +172,7 @@ async function main() {
     unlocked: 2,
     revealInMinutes: 3 * 24 * 60,
     code: 'DEMO02',
+    pago: 'reserva',
     friends: [{ name: 'Sofía', slug: 'jardin' }],
   });
 

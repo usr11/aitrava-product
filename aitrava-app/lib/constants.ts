@@ -41,9 +41,11 @@ export const CLUE_LABELS: Record<string, string> = {
  * + comisión que nos dejan los aliados de transporte, alojamiento y experiencias.
  */
 export const COMMISSION_FIXED = 50_000;
-export const DEPOSIT_RATE = 0.2;
+/** Apartar el viaje: tarifa fija que se abona al total. */
+export const RESERVATION_FEE = 39_900;
 export const MAX_REROLLS = 2;
-export const depositFor = (total: number) => Math.round((total * DEPOSIT_RATE) / 10_000) * 10_000;
+/** Asesor de ventas (el mismo número del QR de la agencia). */
+export const WHATSAPP_URL = 'https://wa.me/qr/EUC6OFUW7XOIK1?s=p';
 
 /** Degradados para las "postales" de destino (no dependemos de fotos externas). */
 export const POSTCARD_GRADIENTS = [

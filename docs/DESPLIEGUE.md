@@ -50,6 +50,7 @@ En el servicio del API → **Variables** → **Raw Editor**, pega esto y reempla
 ```env
 DATABASE_URL=${{Postgres.DATABASE_URL}}
 JWT_SECRET=<el de openssl rand -hex 32>
+ADMIN_EMAIL=<correo con el que entrarás al panel /admin>
 ADMIN_PASSWORD=<la clave del admin para producción>
 GROQ_API_KEY=<tu clave de Groq>
 GROQ_MODEL=openai/gpt-oss-120b
@@ -58,6 +59,7 @@ DEMO_MODE=true
 
 - `${{Postgres.DATABASE_URL}}` se escribe tal cual: Railway lo reemplaza por la conexión interna a la BD. Si tu servicio de BD tiene otro nombre, cambia `Postgres` por ese nombre.
 - `PORT` **no** se pone: Railway lo asigna solo y el API ya lo lee.
+- `ADMIN_EMAIL` y `ADMIN_PASSWORD`: con esos datos entras a `/admin` en el desplegado. Si no los pones, quedan los de local (`admin@aitrava.co` / `aitrava123`), que están públicos en el repo. Si cambias el correo, el seed crea ese admin nuevo (el anterior sigue existiendo).
 - `DEMO_MODE`: `true` para presentar y hacer pruebas guiadas (pistas cada 30 s); **`false` para la campaña con usuarios reales**.
 
 Guarda (**Deploy** o **Apply changes**). Railway redespliega solo.
@@ -84,7 +86,7 @@ Servicio del API → **Settings → Networking → Generate Domain**.
 | :-- | :-- |
 | **Project name** | `aitrava-app` *(tiene que ser igual al `name` de `aitrava-app/wrangler.jsonc`)* |
 | **Production branch** | `main` |
-| **Root directory** *(en "Advanced settings" / "Path")* | `aitrava-app` |
+| **Root directory** *(en "Advanced settings" / "Build configuration" / "Path")* | `aitrava-app` ← **el campo más importante: si queda vacío, el build falla** |
 | **Build command** | `pnpm exec opennextjs-cloudflare build` |
 | **Deploy command** | `pnpm exec opennextjs-cloudflare deploy` |
 | **Non-production branch deploy command** *(si aparece)* | `pnpm exec opennextjs-cloudflare upload` |
@@ -100,6 +102,34 @@ NEXT_PUBLIC_META_PIXEL_ID=1257792940757500
 > ⚠️ `NEXT_PUBLIC_API_URL` va **sin** `/api` al final y sin `/` final.
 
 4. **Save and Deploy.** Cloudflare instala con pnpm (lo detecta por `pnpm-lock.yaml` y el campo `packageManager`), usa Node 22 (`.nvmrc`) y despliega.
+
+### 2.1.1 Cómo saber si el Root directory quedó bien
+En los logs del build, antes del comando, tienen que aparecer **estas dos cosas**:
+
+```
+Detected the following tools from environment: nodejs, pnpm
+Installing project dependencies: pnpm install --frozen-lockfile
+```
+
+Si en cambio ves `Detected the following tools from environment:` vacío, ninguna línea de instalación, y un error como
+`pnpm: Cannot read properties of undefined (reading '/opt/buildhome/repo')` o
+`ERR_PNPM_RECURSIVE_EXEC_NO_PACKAGE: No package found in this workspace`,
+es que **se está construyendo en la raíz del repo** (ahí no hay `package.json`, porque esto es un monorepo).
+Arreglo: **Settings → Build → Build configuration → Edit → Root directory = `aitrava-app`** y vuelve a lanzar el build con **Retry build**.
+
+**Plan B** si tu panel no muestra el campo Root directory: déjalo vacío y usa estos comandos, que entran solos a la carpeta:
+
+| Campo | Valor |
+| :-- | :-- |
+| **Build command** | `cd aitrava-app && pnpm install --frozen-lockfile && pnpm exec opennextjs-cloudflare build` |
+| **Deploy command** | `cd aitrava-app && pnpm exec opennextjs-cloudflare deploy` |
+
+**Plan C** (si el panel sigue dando problemas, para salir del paso): desplegar desde tu PC.
+```bash
+cd aitrava-app
+npx wrangler login                                   # abre el navegador una vez
+NEXT_PUBLIC_API_URL="https://<tu-dominio-railway>" pnpm deploy
+```
 
 ### 2.2 Watch paths (monorepo)
 **Settings → Build → Build watch paths → Include paths:** `aitrava-app/*`

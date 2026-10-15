@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  IsIn,
   IsArray,
   IsBoolean,
   IsDateString,
@@ -31,7 +32,7 @@ export class GenerateTripDto {
 }
 
 export class ReserveDto {
-  @IsOptional() @IsBoolean() deposit?: boolean;
+  @IsIn(['reserva', 'completo']) payment: 'reserva' | 'completo';
 }
 
 export class GuessDto {

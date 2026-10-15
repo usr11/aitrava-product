@@ -14,7 +14,8 @@ import { EngineService } from '../engine/engine.service';
 import {
   Booking,
   computeBreakdown,
-  depositFor,
+  chargeFor,
+  PaymentType,
   partnerCommissionOf,
   MAX_REROLLS,
   TravelDna,
@@ -112,6 +113,8 @@ export class TripsService {
       budgetTotal: t.budgetTotal,
       breakdown: t.breakdown,
       amountPaid: t.amountPaid,
+      paymentType: t.paymentType,
+      reservedAt: t.reservedAt,
       vibes: t.vibes,
       isGift: t.isGift,
       giftTo: t.giftTo,
@@ -330,7 +333,7 @@ export class TripsService {
     return this.get(id, userId);
   }
 
-  async reserve(id: string, userId: string, deposit = false) {
+  async reserve(id: string, userId: string, payment: PaymentType) {
     const trip = await this.findOwned(id, userId);
     if (trip.status !== 'GENERATED')
       throw new BadRequestException('Este viaje ya está reservado');
@@ -359,7 +362,8 @@ export class TripsService {
         data: {
           status: 'RESERVED',
           breakdown,
-          amountPaid: deposit ? depositFor(breakdown.total) : breakdown.total,
+          amountPaid: chargeFor(breakdown.total, payment),
+          paymentType: payment,
           partnerCommission: partnerCommissionOf(
             trip.booking as unknown as Booking,
           ),
@@ -370,9 +374,9 @@ export class TripsService {
     ]);
     await this.events.log('reservation', userId, {
       tripId: id,
-      deposit,
+      payment,
       commission: breakdown.comision,
-      amount: deposit ? depositFor(breakdown.total) : breakdown.total,
+      amount: chargeFor(breakdown.total, payment),
       partnerCommission: partnerCommissionOf(
         trip.booking as unknown as Booking,
       ),

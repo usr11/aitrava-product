@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { DepartureBoard } from '@/components/DepartureBoard';
 import { Icon, type IconName } from '@/components/Icon';
+import { WhatsAppCard } from '@/components/WhatsAppCta';
 import { useAuth } from '@/lib/auth';
 import { TRAVELERS } from '@/lib/constants';
 import { track } from '@/lib/track';
@@ -87,6 +88,13 @@ export default function Home() {
       </section>
 
       <section className="container-app pb-6">
+        <div className="mb-4">
+          <WhatsAppCard
+            where="home"
+            title="¿Prefieres hablar con una persona?"
+            text="Nuestro asesor te arma el viaje por WhatsApp, con el mismo precio y la misma sorpresa."
+          />
+        </div>
         <div className="card flex flex-col items-start gap-6 overflow-hidden p-7 md:flex-row md:items-center md:justify-between md:p-10">
           <div>
             <p className="eyebrow text-secondary">Modo regalo</p>

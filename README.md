@@ -42,7 +42,7 @@ Desde el celular: `http://<IP-de-tu-PC>:3000`. Para ver tu IP: `hostname -I`. Si
 
 | Correo | Rol |
 | :-- | :-- |
-| `admin@aitrava.co` | Admin: ve `/admin` (métricas, iteraciones, feedback, usuarios) |
+| `admin@aitrava.co` | Admin: ve `/admin` (métricas, pagos, iteraciones, feedback, usuarios). En el desplegado el correo y la clave se definen con `ADMIN_EMAIL` y `ADMIN_PASSWORD` |
 | `demo@aitrava.co` | Usuario demo para la presentación |
 
 ## Comandos útiles (en `aitrava-api/`)
