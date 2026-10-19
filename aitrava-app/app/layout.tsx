@@ -1,11 +1,17 @@
 import type { Metadata, Viewport } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import localFont from 'next/font/local';
 import { Analytics } from '@/components/Analytics';
 import { AppShell } from '@/components/AppShell';
 import { AuthProvider } from '@/lib/auth';
 import './globals.css';
 
-const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-jakarta' });
+// Fuente incluida en el repo (no se descarga al compilar: el build de Cloudflare no siempre llega a Google Fonts).
+const jakarta = localFont({
+  src: './fonts/PlusJakartaSans-latin.woff2',
+  weight: '400 800',
+  display: 'swap',
+  variable: '--font-jakarta',
+});
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
