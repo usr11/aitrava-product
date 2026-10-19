@@ -1,5 +1,7 @@
 # Guía de pruebas con usuarios (pasos 32, 35 y 36)
 
+> ⚠️ **Pendiente de actualizar a AITRAVA 3.0** (roadmap, pasos 70 y 75). Este documento describe la versión 2 (viajes sorpresa). El flujo nuevo es: registro → verificación → crear viaje → plan de ahorro → reservas → Bóveda → Modo Viaje → Pass.
+
 Objetivo: tener **evidencia real** de que la gente entiende, quiere y usaría AiTrava, y **usarla para cambiar algo** (criterios 2 y 3 de la rúbrica). Cada prueba dura unos 15 minutos.
 
 ## Antes de empezar (una sola vez)

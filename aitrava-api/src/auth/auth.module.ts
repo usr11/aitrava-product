@@ -1,9 +1,11 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { EventsModule } from '../events/events.module';
 import { AuthController } from './auth.controller';
+import { AdminGuard, VerifiedGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 
+@Global()
 @Module({
   imports: [
     EventsModule,
@@ -15,6 +17,7 @@ import { AuthService } from './auth.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, VerifiedGuard, AdminGuard],
+  exports: [VerifiedGuard, AdminGuard],
 })
 export class AuthModule {}

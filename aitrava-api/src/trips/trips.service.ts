@@ -1,467 +1,635 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Clue, Destination, Guess, Trip, User } from '@prisma/client';
-import {
-  DEMO_CLUE_SECONDS,
-  DEMO_REVEAL_SECONDS,
-  isDemoMode,
-} from '../common/config';
-import { EngineService } from '../engine/engine.service';
-import {
-  Booking,
-  computeBreakdown,
-  chargeFor,
-  PaymentType,
-  partnerCommissionOf,
-  MAX_REROLLS,
-  TravelDna,
-  TripPreferences,
-} from '../engine/types';
+import { Prisma } from '@prisma/client';
+import { hasPass, ownTrip } from '../common/access';
+import { FREE_LIMITS } from '../common/config';
 import { EventsService } from '../events/events.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { GenerateTripDto } from './trips.dto';
+import {
+  BOOKING_TO_BUDGET,
+  BUDGET_CATEGORIES,
+  BudgetByCategory,
+  BudgetCategory,
+  computePlan,
+  splitBudget,
+  startOfDay,
+} from '../savings/plan';
+import {
+  BookingDto,
+  BookingPatchDto,
+  CreateTripDto,
+  ExpenseDto,
+  ItemDto,
+  ItemPatchDto,
+  SuggestQueryDto,
+  UpdateTripDto,
+} from './trips.dto';
 
-type FullTrip = Trip & {
-  destination: Destination;
-  clues: Clue[];
-  guesses: Guess[];
-  user: User;
+const DAY = 86_400_000;
+
+const ITEM_TO_BUDGET: Record<string, BudgetCategory> = {
+  actividad: 'actividades',
+  restaurante: 'comida',
+  comida: 'comida',
+  transporte: 'transporte',
+  alojamiento: 'alojamiento',
 };
 
-const include = {
-  destination: true,
-  clues: { orderBy: { order: 'asc' } },
-  guesses: { orderBy: { createdAt: 'asc' } },
-  user: true,
-} as const;
+const CHECKLIST: { key: string; label: string }[] = [
+  { key: 'vuelo', label: 'Vuelo' },
+  { key: 'alojamiento', label: 'Hotel' },
+  { key: 'seguro', label: 'Seguro' },
+  { key: 'transporte', label: 'Transporte' },
+  { key: 'actividad', label: 'Actividades' },
+  { key: 'documentos', label: 'Documentos' },
+  { key: 'restaurante', label: 'Restaurantes' },
+  { key: 'ahorro', label: 'Plan de ahorro cumplido' },
+];
 
-const makeCode = () =>
-  Array.from(
-    { length: 6 },
-    () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)],
-  ).join('');
-
-/** Reparte las pistas entre `from` y `revealAt`; la primera queda desbloqueada de una. */
-const schedule = (count: number, from: Date, revealAt: Date) => {
-  const step = Math.max(0, revealAt.getTime() - from.getTime()) / count;
-  return Array.from(
-    { length: count },
-    (_, i) => new Date(from.getTime() + i * step),
-  );
+const TAG_LABELS: Record<string, string> = {
+  playa: 'playa',
+  montana: 'montaña',
+  comida: 'buena comida',
+  fiesta: 'vida nocturna',
+  cultura: 'cultura e historia',
+  naturaleza: 'naturaleza',
+  silencio: 'desconexión',
+  aventura: 'aventura',
+  cafe: 'café',
+  pueblo: 'pueblos',
 };
 
-const defaultRevealAt = (startDate: Date) => {
-  const dayBefore = new Date(startDate.getTime() - 86_400_000);
-  const min = new Date(Date.now() + 10 * 60_000);
-  return dayBefore > min ? dayBefore : min;
-};
+const date = (s?: string | null) =>
+  s ? new Date(s) : s === null ? null : undefined;
+
+const fullInclude = {
+  pass: true,
+  items: { orderBy: { startAt: 'asc' } },
+  bookings: { orderBy: [{ startAt: 'asc' }, { createdAt: 'asc' }] },
+  documents: {
+    select: {
+      id: true,
+      category: true,
+      title: true,
+      fileName: true,
+      mimeType: true,
+      size: true,
+      bookingId: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  },
+  expenses: { orderBy: { date: 'desc' } },
+  savingsPlan: { include: { contributions: { orderBy: { date: 'desc' } } } },
+} satisfies Prisma.TripInclude;
+
+type FullTrip = Prisma.TripGetPayload<{ include: typeof fullInclude }>;
 
 @Injectable()
 export class TripsService {
   constructor(
     private prisma: PrismaService,
-    private engine: EngineService,
     private events: EventsService,
   ) {}
 
-  // ---------- Serialización: el destino jamás sale antes de revelar ----------
+  // ── Lectura ───────────────────────────────────────────────────────────
 
-  private isRevealed(t: Trip) {
-    return t.status === 'REVEALED' || t.status === 'COMPLETED';
-  }
-
-  private clueView(t: Trip, clues: Clue[]) {
-    const now = Date.now();
-    const active = t.status !== 'GENERATED';
-    return clues.map((c) => {
-      const unlocked =
-        this.isRevealed(t) || (active && c.unlockAt.getTime() <= now);
+  private phase(trip: { startDate: Date; endDate: Date }, now = new Date()) {
+    const today = startOfDay(now).getTime();
+    const start = startOfDay(trip.startDate).getTime();
+    const end = startOfDay(trip.endDate).getTime();
+    const totalDays = Math.round((end - start) / DAY) + 1;
+    if (today < start)
       return {
-        order: c.order,
-        type: c.type,
-        unlockAt: c.unlockAt,
-        locked: !unlocked,
-        text: unlocked ? c.text : null,
+        phase: 'planning' as const,
+        daysToTrip: Math.round((start - today) / DAY),
+        dayOfTrip: null,
+        totalDays,
       };
-    });
-  }
-
-  private destinationView(d: Destination) {
+    if (today > end)
+      return {
+        phase: 'finished' as const,
+        daysToTrip: 0,
+        dayOfTrip: null,
+        totalDays,
+      };
     return {
-      slug: d.slug,
-      name: d.name,
-      region: d.region,
-      imageUrl: d.imageUrl,
-      description: d.description,
+      phase: 'active' as const,
+      daysToTrip: 0,
+      dayOfTrip: Math.round((today - start) / DAY) + 1,
+      totalDays,
     };
   }
 
-  toOwnerView(t: FullTrip) {
-    const revealed = this.isRevealed(t);
-    const ownerGuess = [...t.guesses].reverse().find((g) => g.isOwner) ?? null;
+  private budget(trip: FullTrip) {
+    const plan = splitBudget(
+      trip.budgetAmount,
+      trip.budgetByCategory as BudgetByCategory | null,
+    );
+    const estimated = Object.fromEntries(
+      BUDGET_CATEGORIES.map((c) => [c, 0]),
+    ) as Record<BudgetCategory, number>;
+    const spent = { ...estimated };
+    for (const b of trip.bookings) {
+      const c = BOOKING_TO_BUDGET[b.category] ?? 'otros';
+      estimated[c] += b.cost ?? 0;
+      if (b.isPaid) spent[c] += b.cost ?? 0; // reserva pagada = gasto confirmado
+    }
+    for (const it of trip.items) {
+      if (it.bookingId || it.status === 'cancelled') continue; // ya contado en la reserva
+      estimated[ITEM_TO_BUDGET[it.type] ?? 'otros'] += it.estimatedCost ?? 0;
+    }
+    for (const e of trip.expenses)
+      spent[(e.category as BudgetCategory) ?? 'otros'] += e.amount;
+    const sum = (o: Record<string, number>) =>
+      Object.values(o).reduce((s, v) => s + v, 0);
     return {
-      id: t.id,
-      status: t.status,
-      originCity: t.originCity,
-      startDate: t.startDate,
-      endDate: t.endDate,
-      travelers: t.travelers,
-      budgetTotal: t.budgetTotal,
-      breakdown: t.breakdown,
-      amountPaid: t.amountPaid,
-      paymentType: t.paymentType,
-      reservedAt: t.reservedAt,
-      vibes: t.vibes,
-      isGift: t.isGift,
-      giftTo: t.giftTo,
-      giftMessage: t.giftMessage,
-      shareCode: t.shareCode,
-      revealAt: t.revealAt,
-      canReveal: t.status === 'RESERVED' && t.revealAt.getTime() <= Date.now(),
-      rerolls: t.rerolls,
-      maxRerolls: MAX_REROLLS,
-      aiGenerated: t.aiGenerated,
-      clues: this.clueView(t, t.clues),
-      ownerGuess: ownerGuess
-        ? {
-            destination: ownerGuess.destination,
-            correct: revealed ? ownerGuess.correct : null,
-          }
-        : null,
-      friendGuesses: t.guesses
-        .filter((g) => !g.isOwner)
-        .map((g) => ({
-          name: g.guesserName,
-          destination: revealed ? g.destination : null,
-          correct: revealed ? g.correct : null,
-        })),
-      destination: revealed ? this.destinationView(t.destination) : null,
-      itinerary: revealed ? t.itinerary : null,
-      booking: revealed ? t.booking : null,
-      aiReason: revealed ? t.aiReason : null,
-      createdAt: t.createdAt,
-    };
-  }
-
-  private toPublicView(t: FullTrip) {
-    const revealed = this.isRevealed(t);
-    return {
-      ownerName: t.user.name.split(' ')[0],
-      status: t.status,
-      isGift: t.isGift,
-      giftTo: t.giftTo,
-      giftMessage: t.giftMessage,
-      startDate: t.startDate,
-      travelers: t.travelers,
-      vibes: t.vibes,
-      revealAt: t.revealAt,
-      clues: this.clueView(t, t.clues),
-      guesses: t.guesses.map((g) => ({
-        name: g.guesserName,
-        isOwner: g.isOwner,
-        destination: revealed ? g.destination : null,
-        correct: revealed ? g.correct : null,
+      total: trip.budgetAmount,
+      detailed: !!trip.budgetByCategory,
+      categories: BUDGET_CATEGORIES.map((c) => ({
+        key: c,
+        budget: plan[c],
+        estimated: estimated[c],
+        spent: spent[c],
       })),
-      destination: revealed ? this.destinationView(t.destination) : null,
-      referralCode: t.user.referralCode,
+      estimated: sum(estimated),
+      spent: sum(spent),
+      remaining: trip.budgetAmount - sum(spent),
+      unassigned: trip.budgetAmount - sum(estimated),
     };
   }
 
-  // ---------- Consultas ----------
-
-  private async findOwned(id: string, userId: string) {
-    const trip = await this.prisma.trip.findUnique({ where: { id }, include });
-    if (!trip) throw new NotFoundException('Viaje no encontrado');
-    if (trip.userId !== userId) throw new ForbiddenException();
-    return trip;
+  private savings(trip: FullTrip) {
+    const p = trip.savingsPlan;
+    if (!p) return null;
+    return {
+      plan: {
+        id: p.id,
+        targetAmount: p.targetAmount,
+        initialSaved: p.initialSaved,
+        frequency: p.frequency,
+        monthlyCapacity: p.monthlyCapacity,
+        startDate: p.startDate,
+        contributions: p.contributions.map((c) => ({
+          id: c.id,
+          amount: c.amount,
+          date: c.date,
+          note: c.note,
+        })),
+      },
+      computed: computePlan(p, {
+        startDate: trip.startDate,
+        budgetAmount: trip.budgetAmount,
+        budgetByCategory: trip.budgetByCategory as BudgetByCategory | null,
+        bookings: trip.bookings,
+      }),
+    };
   }
 
-  private async findByCode(code: string) {
-    const trip = await this.prisma.trip.findUnique({
-      where: { shareCode: code.toUpperCase() },
-      include,
-    });
-    if (!trip) throw new NotFoundException('Este link no existe');
-    return trip;
+  private checklist(trip: FullTrip, savingsDone: boolean) {
+    const cats = new Set(trip.bookings.map((b) => b.category));
+    const items = CHECKLIST.map(({ key, label }) => ({
+      key,
+      label,
+      done:
+        key === 'documentos'
+          ? trip.documents.length > 0
+          : key === 'ahorro'
+            ? savingsDone
+            : cats.has(key),
+    }));
+    return {
+      items,
+      percent: Math.round(
+        (items.filter((i) => i.done).length / items.length) * 100,
+      ),
+    };
   }
 
-  async get(id: string, userId: string) {
-    return this.toOwnerView(await this.findOwned(id, userId));
+  private shape(trip: FullTrip) {
+    const savings = this.savings(trip);
+    const pass = hasPass(trip);
+    return {
+      id: trip.id,
+      title: trip.title,
+      mode: trip.mode,
+      destinationCity: trip.destinationCity,
+      destinationCountry: trip.destinationCountry,
+      originCity: trip.originCity,
+      startDate: trip.startDate,
+      endDate: trip.endDate,
+      travelerCount: trip.travelerCount,
+      budgetAmount: trip.budgetAmount,
+      budgetByCategory: trip.budgetByCategory,
+      currency: trip.currency,
+      preferences: trip.preferences,
+      isDemo: trip.isDemo,
+      createdAt: trip.createdAt,
+      ...this.phase(trip),
+      hasPass: pass,
+      passStatus: trip.isDemo ? 'demo' : (trip.pass?.status ?? 'none'),
+      readiness: this.checklist(
+        trip,
+        savings ? savings.computed.saved >= savings.computed.target : false,
+      ),
+      items: trip.items,
+      bookings: trip.bookings,
+      documents: trip.documents,
+      expenses: trip.expenses,
+      budget: this.budget(trip),
+      savings,
+      limits: {
+        vaultDocuments: pass ? null : FREE_LIMITS.vaultDocumentsPerTrip,
+      },
+    };
   }
 
   async list(userId: string) {
     const trips = await this.prisma.trip.findMany({
       where: { userId },
-      include,
-      orderBy: { createdAt: 'desc' },
+      include: fullInclude,
+      orderBy: { startDate: 'asc' },
     });
-    return trips.map((t) => this.toOwnerView(t));
+    return trips.map((t) => {
+      const s = this.shape(t);
+      return {
+        id: s.id,
+        title: s.title,
+        destinationCity: s.destinationCity,
+        destinationCountry: s.destinationCountry,
+        startDate: s.startDate,
+        endDate: s.endDate,
+        travelerCount: s.travelerCount,
+        isDemo: s.isDemo,
+        phase: s.phase,
+        daysToTrip: s.daysToTrip,
+        dayOfTrip: s.dayOfTrip,
+        totalDays: s.totalDays,
+        hasPass: s.hasPass,
+        readiness: s.readiness.percent,
+        savings: s.savings
+          ? {
+              progress: s.savings.computed.progress,
+              saved: s.savings.computed.saved,
+              target: s.savings.computed.target,
+              status: s.savings.computed.status,
+            }
+          : null,
+      };
+    });
   }
 
-  async share(code: string) {
-    return this.toPublicView(await this.findByCode(code));
+  async get(userId: string, id: string) {
+    await ownTrip(this.prisma, userId, id);
+    const trip = await this.prisma.trip.findUniqueOrThrow({
+      where: { id },
+      include: fullInclude,
+    });
+    return this.shape(trip);
   }
 
-  destinations() {
-    return this.prisma.destination.findMany({
-      select: { slug: true, name: true, region: true },
-      orderBy: { name: 'asc' },
-    });
-  }
+  // ── Crear / editar ────────────────────────────────────────────────────
 
-  // ---------- Acciones ----------
-
-  async generate(userId: string, dto: GenerateTripDto) {
-    const user = await this.prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-    });
-    const prefs: TripPreferences = { ...dto, excluded: [] };
-    const start = new Date(dto.startDate);
-    const end = new Date(dto.endDate);
-    if (end <= start)
+  async create(userId: string, dto: CreateTripDto) {
+    const start = startOfDay(new Date(dto.startDate));
+    const end = startOfDay(new Date(dto.endDate));
+    if (end < start)
       throw new BadRequestException(
         'La fecha de regreso debe ser después de la salida',
       );
-
-    const plan = await this.engine.plan(
-      prefs,
-      user.travelDna as TravelDna | null,
-    );
-    const revealAt = defaultRevealAt(start);
-    const times = schedule(plan.clues.length, new Date(), revealAt);
+    if ((end.getTime() - start.getTime()) / DAY > 120)
+      throw new BadRequestException('El viaje puede durar máximo 120 días');
+    const dest = dto.destinationSlug
+      ? await this.prisma.destination.findUnique({
+          where: { slug: dto.destinationSlug },
+        })
+      : null;
 
     const trip = await this.prisma.trip.create({
       data: {
         userId,
-        originCity: dto.originCity,
+        mode: dto.mode,
+        title: dto.title?.trim() || `Mi viaje a ${dto.destinationCity.trim()}`,
+        destinationCity: dto.destinationCity.trim(),
+        destinationCountry: dto.destinationCountry.trim(),
+        originCity: dto.originCity.trim(),
         startDate: start,
         endDate: end,
-        travelers: dto.travelers,
-        budgetTotal: dto.budgetTotal,
-        preferences: prefs,
-        destinationId: plan.destinationId,
-        aiReason: plan.reason,
-        aiGenerated: plan.aiGenerated,
-        vibes: plan.vibes,
-        itinerary: plan.itinerary,
-        booking: plan.booking,
-        breakdown: computeBreakdown(dto.budgetTotal),
-        isGift: !!dto.isGift,
-        giftTo: dto.giftTo,
-        giftMessage: dto.giftMessage,
-        shareCode: makeCode(),
-        revealAt,
-        clues: {
-          create: plan.clues.map((c, i) => ({
-            order: i + 1,
-            type: c.type,
-            text: c.text,
-            unlockAt: times[i],
-          })),
-        },
+        travelerCount: dto.travelerCount,
+        budgetAmount: dto.budgetAmount,
+        budgetByCategory: this.cleanBudget(dto.budgetByCategory),
+        preferences: (dto.preferences ?? undefined) as Prisma.InputJsonValue,
       },
     });
 
-    // ADN viajero: acumula los gustos elegidos.
-    const dna: TravelDna = (user.travelDna as TravelDna | null) ?? {
-      tagCounts: {},
-      visited: [],
-    };
-    for (const v of dto.vibes) dna.tagCounts[v] = (dna.tagCounts[v] ?? 0) + 1;
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { travelDna: dna },
-    });
-
-    await this.events.log('trip_generated', userId, {
-      tripId: trip.id,
-      aiGenerated: plan.aiGenerated,
-      budget: dto.budgetTotal,
-      travelers: dto.travelers,
-      vibes: dto.vibes,
-      isGift: !!dto.isGift,
-    });
-    return { id: trip.id };
-  }
-
-  async reroll(id: string, userId: string) {
-    const trip = await this.findOwned(id, userId);
-    if (trip.status !== 'GENERATED')
-      throw new BadRequestException('Solo puedes re-sortear antes de reservar');
-    if (trip.rerolls >= MAX_REROLLS)
-      throw new BadRequestException(
-        `Máximo ${MAX_REROLLS} re-sorteos por viaje`,
+    // "Ayúdame a elegir" / "Sorpresa": itinerario base sugerido (editable), del catálogo.
+    if (dest && dto.prefillItinerary) {
+      const days = Math.round((end.getTime() - start.getTime()) / DAY) + 1;
+      const base = dest.itinerary as {
+        day: number;
+        title: string;
+        items: string[];
+      }[];
+      const hours = [9 * 60, 12 * 60 + 30, 15 * 60 + 30, 19 * 60];
+      const data: Prisma.ItineraryItemCreateManyInput[] = [];
+      base.slice(0, days).forEach((d, i) =>
+        d.items.slice(0, 4).forEach((title, j) =>
+          data.push({
+            tripId: trip.id,
+            type: 'actividad',
+            title,
+            description: `Sugerencia para el día ${i + 1} (${d.title}). Edítala o bórrala.`,
+            startAt: new Date(start.getTime() + i * DAY + hours[j] * 60_000),
+            locationName: `${title}, ${dest.name}`,
+          }),
+        ),
       );
-    const prefs = trip.preferences as unknown as TripPreferences;
-    prefs.excluded = [...(prefs.excluded ?? []), trip.destination.slug];
+      if (data.length) await this.prisma.itineraryItem.createMany({ data });
+    }
 
-    const plan = await this.engine.plan(
-      prefs,
-      trip.user.travelDna as TravelDna | null,
+    await this.events.log(
+      'trip_created',
+      userId,
+      { mode: dto.mode, international: dto.destinationCountry !== 'Colombia' },
+      null,
+      trip.id,
     );
-    const times = schedule(plan.clues.length, new Date(), trip.revealAt);
-    await this.prisma.clue.deleteMany({ where: { tripId: id } });
-    await this.prisma.trip.update({
-      where: { id },
-      data: {
-        preferences: prefs,
-        destinationId: plan.destinationId,
-        aiReason: plan.reason,
-        aiGenerated: plan.aiGenerated,
-        vibes: plan.vibes,
-        itinerary: plan.itinerary,
-        booking: plan.booking,
-        rerolls: { increment: 1 },
-        clues: {
-          create: plan.clues.map((c, i) => ({
-            order: i + 1,
-            type: c.type,
-            text: c.text,
-            unlockAt: times[i],
-          })),
-        },
-      },
-    });
-    await this.events.log('trip_reroll', userId, {
-      tripId: id,
-      number: trip.rerolls + 1,
-    });
-    return this.get(id, userId);
-  }
 
-  async reserve(id: string, userId: string, payment: PaymentType) {
-    const trip = await this.findOwned(id, userId);
-    if (trip.status !== 'GENERATED')
-      throw new BadRequestException('Este viaje ya está reservado');
-
-    const breakdown = computeBreakdown(trip.budgetTotal);
-    const now = new Date();
-    const demo = isDemoMode();
-    const revealAt = demo
-      ? new Date(now.getTime() + DEMO_REVEAL_SECONDS * 1000)
-      : trip.revealAt;
-    const times = demo
-      ? trip.clues.map(
-          (_, i) => new Date(now.getTime() + i * DEMO_CLUE_SECONDS * 1000),
-        )
-      : schedule(trip.clues.length, now, revealAt);
-
-    await this.prisma.$transaction([
-      ...trip.clues.map((c, i) =>
-        this.prisma.clue.update({
-          where: { id: c.id },
-          data: { unlockAt: times[i] },
-        }),
-      ),
-      this.prisma.trip.update({
-        where: { id },
+    if (dto.savings) {
+      await this.prisma.savingsPlan.create({
         data: {
-          status: 'RESERVED',
-          breakdown,
-          amountPaid: chargeFor(breakdown.total, payment),
-          paymentType: payment,
-          partnerCommission: partnerCommissionOf(
-            trip.booking as unknown as Booking,
-          ),
-          reservedAt: now,
-          revealAt,
+          tripId: trip.id,
+          targetAmount: dto.savings.targetAmount ?? dto.budgetAmount,
+          initialSaved: dto.savings.initialSaved ?? 0,
+          frequency: dto.savings.frequency ?? 'BIWEEKLY',
+          monthlyCapacity: dto.savings.monthlyCapacity ?? null,
+          startDate: startOfDay(new Date()),
         },
-      }),
-    ]);
-    await this.events.log('reservation', userId, {
-      tripId: id,
-      payment,
-      commission: breakdown.comision,
-      amount: chargeFor(breakdown.total, payment),
-      partnerCommission: partnerCommissionOf(
-        trip.booking as unknown as Booking,
-      ),
-    });
-    return this.get(id, userId);
+      });
+      await this.events.log(
+        'savings_goal_created',
+        userId,
+        { frequency: dto.savings.frequency ?? 'BIWEEKLY', fromWizard: true },
+        null,
+        trip.id,
+      );
+    }
+    return this.get(userId, trip.id);
   }
 
-  async guess(id: string, userId: string, slug: string) {
-    const trip = await this.findOwned(id, userId);
-    if (this.isRevealed(trip))
-      throw new BadRequestException('El destino ya fue revelado');
-    await this.prisma.guess.create({
-      data: {
-        tripId: id,
-        guesserName: trip.user.name,
-        isOwner: true,
-        destination: slug,
-        correct: slug === trip.destination.slug,
-      },
-    });
-    await this.events.log('guess', userId, { tripId: id });
-    return this.get(id, userId);
+  private cleanBudget(b?: Record<string, number>) {
+    if (!b) return undefined;
+    const out: Record<string, number> = {};
+    for (const c of BUDGET_CATEGORIES) {
+      const v = Number(b[c] ?? 0);
+      if (!Number.isFinite(v) || v < 0)
+        throw new BadRequestException('Revisa los valores del presupuesto');
+      out[c] = Math.round(v);
+    }
+    return out;
   }
 
-  async reveal(id: string, userId: string) {
-    const trip = await this.findOwned(id, userId);
-    if (this.isRevealed(trip)) return this.toOwnerView(trip);
-    if (trip.status !== 'RESERVED')
-      throw new BadRequestException('Primero reserva tu viaje');
-    if (trip.revealAt.getTime() > Date.now())
-      throw new BadRequestException('Todavía no es momento de abrir el sobre');
-
+  async update(userId: string, id: string, dto: UpdateTripDto) {
+    await ownTrip(this.prisma, userId, id);
+    const { startDate, endDate, budgetByCategory, ...rest } = dto;
     await this.prisma.trip.update({
       where: { id },
-      data: { status: 'REVEALED', revealedAt: new Date() },
-    });
-    const dna: TravelDna = (trip.user.travelDna as TravelDna | null) ?? {
-      tagCounts: {},
-      visited: [],
-    };
-    dna.visited = [...new Set([...(dna.visited ?? []), trip.destination.slug])];
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { travelDna: dna },
-    });
-
-    const ownerGuess = [...trip.guesses].reverse().find((g) => g.isOwner);
-    await this.events.log('reveal', userId, {
-      tripId: id,
-      guessed: !!ownerGuess,
-      correct: ownerGuess?.correct ?? false,
-    });
-    return this.get(id, userId);
-  }
-
-  /** Solo en modo demo: desbloquea todas las pistas y deja el sobre listo para abrir (para la presentación). */
-  async demoSkip(id: string, userId: string) {
-    if (!isDemoMode())
-      throw new ForbiddenException('Solo disponible en modo demo');
-    const trip = await this.findOwned(id, userId);
-    if (trip.status !== 'RESERVED')
-      throw new BadRequestException('Primero reserva tu viaje');
-    const now = new Date();
-    await this.prisma.clue.updateMany({
-      where: { tripId: id, unlockAt: { gt: now } },
-      data: { unlockAt: now },
-    });
-    await this.prisma.trip.update({ where: { id }, data: { revealAt: now } });
-    return this.get(id, userId);
-  }
-
-  async friendGuess(code: string, name: string, slug: string, anonId?: string) {
-    const trip = await this.findByCode(code);
-    if (this.isRevealed(trip))
-      throw new BadRequestException('El destino ya fue revelado');
-    await this.prisma.guess.create({
       data: {
-        tripId: trip.id,
-        guesserName: name.trim(),
-        isOwner: false,
-        destination: slug,
-        correct: slug === trip.destination.slug,
+        ...rest,
+        startDate: startDate ? startOfDay(new Date(startDate)) : undefined,
+        endDate: endDate ? startOfDay(new Date(endDate)) : undefined,
+        budgetByCategory: budgetByCategory
+          ? this.cleanBudget(budgetByCategory)
+          : undefined,
       },
     });
-    await this.events.log('friend_guess', null, { tripId: trip.id }, anonId);
-    return this.toPublicView(await this.findByCode(code));
+    const t = await this.prisma.trip.findUniqueOrThrow({ where: { id } });
+    if (t.endDate < t.startDate) {
+      await this.prisma.trip.update({
+        where: { id },
+        data: { endDate: t.startDate },
+      });
+    }
+    return this.get(userId, id);
+  }
+
+  async remove(userId: string, id: string) {
+    const trip = await ownTrip(this.prisma, userId, id);
+    if (
+      await this.prisma.payment.count({
+        where: { tripId: id, status: 'approved' },
+      })
+    ) {
+      throw new BadRequestException(
+        'Este viaje tiene un AITRAVA Pass pagado. Escríbenos si necesitas eliminarlo.',
+      );
+    }
+    await this.prisma.trip.delete({ where: { id: trip.id } });
+    return { ok: true };
+  }
+
+  // ── Itinerario ────────────────────────────────────────────────────────
+
+  private async ownBooking(tripId: string, bookingId?: string | null) {
+    if (!bookingId) return null;
+    const b = await this.prisma.booking.findFirst({
+      where: { id: bookingId, tripId },
+    });
+    if (!b) throw new NotFoundException('No encontramos esa reserva');
+    return b;
+  }
+
+  async addItem(userId: string, tripId: string, dto: ItemDto) {
+    await ownTrip(this.prisma, userId, tripId);
+    await this.ownBooking(tripId, dto.bookingId);
+    return this.prisma.itineraryItem.create({
+      data: {
+        ...dto,
+        tripId,
+        startAt: new Date(dto.startAt),
+        endAt: date(dto.endAt),
+      },
+    });
+  }
+
+  async updateItem(
+    userId: string,
+    tripId: string,
+    itemId: string,
+    dto: ItemPatchDto,
+  ) {
+    await ownTrip(this.prisma, userId, tripId);
+    const item = await this.prisma.itineraryItem.findFirst({
+      where: { id: itemId, tripId },
+    });
+    if (!item) throw new NotFoundException('No encontramos esa actividad');
+    return this.prisma.itineraryItem.update({
+      where: { id: itemId },
+      data: {
+        ...dto,
+        startAt: date(dto.startAt) ?? undefined,
+        endAt: date(dto.endAt),
+      },
+    });
+  }
+
+  async removeItem(userId: string, tripId: string, itemId: string) {
+    await ownTrip(this.prisma, userId, tripId);
+    const { count } = await this.prisma.itineraryItem.deleteMany({
+      where: { id: itemId, tripId },
+    });
+    if (!count) throw new NotFoundException('No encontramos esa actividad');
+    return { ok: true };
+  }
+
+  // ── Reservas (incluidas las compradas fuera de AITRAVA) ───────────────
+
+  async addBooking(userId: string, tripId: string, dto: BookingDto) {
+    await ownTrip(this.prisma, userId, tripId);
+    const { addToItinerary, ...data } = dto;
+    const booking = await this.prisma.booking.create({
+      data: {
+        ...data,
+        tripId,
+        startAt: date(data.startAt),
+        endAt: date(data.endAt),
+      },
+    });
+    if (addToItinerary && booking.startAt) {
+      const type =
+        { vuelo: 'transporte', seguro: 'otro', otro: 'otro' }[
+          booking.category
+        ] ?? booking.category;
+      await this.prisma.itineraryItem.create({
+        data: {
+          tripId,
+          bookingId: booking.id,
+          type,
+          title: booking.title,
+          startAt: booking.startAt,
+          endAt: booking.endAt,
+          locationName: booking.address ?? booking.provider ?? undefined,
+          address: booking.address,
+        },
+      });
+    }
+    await this.events.log(
+      'external_booking_added',
+      userId,
+      { category: dto.category, withCost: dto.cost != null },
+      null,
+      tripId,
+    );
+    return booking;
+  }
+
+  async updateBooking(
+    userId: string,
+    tripId: string,
+    bookingId: string,
+    dto: BookingPatchDto,
+  ) {
+    await ownTrip(this.prisma, userId, tripId);
+    await this.ownBooking(tripId, bookingId);
+    return this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { ...dto, startAt: date(dto.startAt), endAt: date(dto.endAt) },
+    });
+  }
+
+  async removeBooking(userId: string, tripId: string, bookingId: string) {
+    await ownTrip(this.prisma, userId, tripId);
+    await this.ownBooking(tripId, bookingId);
+    // Las actividades creadas desde esta reserva se van con ella.
+    await this.prisma.itineraryItem.deleteMany({
+      where: { tripId, bookingId },
+    });
+    await this.prisma.booking.delete({ where: { id: bookingId } });
+    return { ok: true };
+  }
+
+  // ── Gastos ────────────────────────────────────────────────────────────
+
+  async addExpense(userId: string, tripId: string, dto: ExpenseDto) {
+    await ownTrip(this.prisma, userId, tripId);
+    return this.prisma.expense.create({
+      data: {
+        tripId,
+        amount: dto.amount,
+        category: dto.category,
+        description: dto.description,
+        date: dto.date ? new Date(dto.date) : new Date(),
+      },
+    });
+  }
+
+  async removeExpense(userId: string, tripId: string, expenseId: string) {
+    await ownTrip(this.prisma, userId, tripId);
+    const { count } = await this.prisma.expense.deleteMany({
+      where: { id: expenseId, tripId },
+    });
+    if (!count) throw new NotFoundException('No encontramos ese gasto');
+    return { ok: true };
+  }
+
+  // ── Sugerencias: "Ayúdame a elegir" y "Destino sorpresa" ──────────────
+
+  async destinations(featuredOnly: boolean) {
+    const list = await this.prisma.destination.findMany({
+      where: featuredOnly ? { featured: true } : undefined,
+      orderBy: [{ featured: 'desc' }, { name: 'asc' }],
+    });
+    // minBudgetPP es una referencia interna: no se publica como precio.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return list.map(({ minBudgetPP, ...d }) => d);
+  }
+
+  async suggest(q: SuggestQueryDto) {
+    const likes = (q.likes ?? '').split(',').filter(Boolean);
+    const avoid = (q.avoid ?? '').split(',').filter(Boolean);
+    const travelers = q.travelers ?? 1;
+    const nights = q.nights ?? 3;
+    const scope = q.scope ?? 'todos';
+    const all = await this.prisma.destination.findMany();
+    const scored = all
+      .filter((d) =>
+        scope === 'colombia'
+          ? d.country === 'Colombia'
+          : scope === 'internacional'
+            ? d.country !== 'Colombia'
+            : true,
+      )
+      .filter((d) => !avoid.some((a) => d.avoidTags.includes(a)))
+      .map((d) => {
+        const matches = likes.filter((l) => d.tags.includes(l));
+        const baseNights = d.country === 'Colombia' ? 2 : 5;
+        const reference = d.minBudgetPP * (0.6 + (0.4 * nights) / baseNights);
+        const perPerson = q.budget ? q.budget / travelers : null;
+        const fits = perPerson == null ? null : perPerson >= reference;
+        const budgetScore =
+          perPerson == null
+            ? 0
+            : fits
+              ? 3
+              : -4 * Math.min(1, (reference - perPerson) / reference);
+        return {
+          slug: d.slug,
+          name: d.name,
+          country: d.country,
+          region: d.region,
+          imageUrl: d.imageUrl,
+          description: d.description,
+          tags: d.tags,
+          fitsBudget: fits,
+          reasons: matches.map((m) => TAG_LABELS[m] ?? m),
+          score: matches.length * 2 + budgetScore,
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return scored.slice(0, 6).map(({ score, ...rest }) => rest);
   }
 }

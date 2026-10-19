@@ -1,6 +1,7 @@
 /**
- * Catálogo curado de destinos (Colombia). Precios de referencia por persona para 2 noches, en COP,
- * incluyendo transporte desde el interior. avoidTags: avion | calor | frio | caminatas | ruido.
+ * Destinos de Colombia para "Ayúdame a elegir" y "Destino sorpresa".
+ * minBudgetPP es una referencia aproximada por persona (2 noches, COP) que solo se usa para
+ * ordenar sugerencias: nunca se muestra como precio. avoidTags: avion | calor | frio | caminatas | ruido.
  */
 export const destinations = [
   {
@@ -12,28 +13,6 @@ export const destinations = [
     minBudgetPP: 1_200_000,
     description:
       'La ciudad más antigua de Colombia, entre la Sierra Nevada y el mar. Playas escondidas, Tayrona a la vuelta y atardeceres naranjas.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Vestido de baño, bloqueador y unos tenis que aguanten un sendero entre selva y mar.',
-      },
-      {
-        type: 'clima',
-        text: 'Harás 32 °C a la sombra, pero en las tardes baja una brisa que viene de la montaña.',
-      },
-      {
-        type: 'comida',
-        text: 'Prepárate para un pescado frito con patacón y arroz de coco frente al mar.',
-      },
-      {
-        type: 'musica',
-        text: 'Allá nació uno de los futbolistas más famosos del país… y también suena mucho vallenato.',
-      },
-      {
-        type: 'cultura',
-        text: 'Es la ciudad más antigua que sigue en pie en el país. Fundada en 1525.',
-      },
-    ],
     itinerary: [
       {
         title: 'Llegada y atardecer',
@@ -67,28 +46,6 @@ export const destinations = [
     minBudgetPP: 1_500_000,
     description:
       'Murallas, balcones con flores, islas de agua turquesa y noches de salsa en Getsemaní.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Ropa fresca y clara, sombrero y algo elegante para una noche especial.',
-      },
-      {
-        type: 'clima',
-        text: 'Húmedo y caliente todo el año. El mejor momento para caminar es cuando cae el sol.',
-      },
-      {
-        type: 'comida',
-        text: 'Vas a probar posta negra, arepa de huevo y una limonada de coco que no vas a olvidar.',
-      },
-      {
-        type: 'musica',
-        text: 'La champeta suena en cada esquina y la salsa se baila hasta tarde.',
-      },
-      {
-        type: 'cultura',
-        text: 'Una ciudad rodeada de murallas de piedra que protegían contra piratas.',
-      },
-    ],
     itinerary: [
       {
         title: 'Ciudad amurallada',
@@ -121,28 +78,6 @@ export const destinations = [
     minBudgetPP: 2_200_000,
     description:
       'El mar de siete colores. Buceo, cayos y una cultura raizal que mezcla inglés, creole y español.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Careta de snorkel si tienes, sandalias y el documento de identidad a la mano.',
-      },
-      {
-        type: 'clima',
-        text: 'Sol casi todo el día y un viento que te despeina rico. El agua está tibia.',
-      },
-      {
-        type: 'comida',
-        text: 'Rondón: una sopa de coco con pescado, caracol y bola de plátano.',
-      },
-      {
-        type: 'musica',
-        text: 'Escucharás reggae, calypso y gente hablando en creole.',
-      },
-      {
-        type: 'cultura',
-        text: 'Vas a necesitar una tarjeta especial para entrar a tu destino.',
-      },
-    ],
     itinerary: [
       {
         title: 'Llegada al paraíso',
@@ -175,28 +110,6 @@ export const destinations = [
     minBudgetPP: 900_000,
     description:
       'Casas de colores, fincas cafeteras y palmas de cera de 60 metros en el Valle de Cocora.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Una chaqueta impermeable y botas que se puedan embarrar.',
-      },
-      {
-        type: 'clima',
-        text: 'Mañanas frescas, tardes con neblina y quizá un aguacero corto.',
-      },
-      {
-        type: 'comida',
-        text: 'Trucha con patacón gigante y un café que sabe distinto porque lo tomas donde lo cultivan.',
-      },
-      {
-        type: 'musica',
-        text: 'En la plaza verás gente jugando tejo mientras suena música de carrilera.',
-      },
-      {
-        type: 'cultura',
-        text: 'Verás el árbol nacional de Colombia… y es más alto que un edificio de 20 pisos.',
-      },
-    ],
     itinerary: [
       {
         title: 'Pueblo de colores',
@@ -229,28 +142,6 @@ export const destinations = [
     minBudgetPP: 600_000,
     description:
       'Una de las plazas empedradas más grandes de Sudamérica, fósiles, viñedos y cielos llenos de estrellas.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Zapatos cómodos para piedra, un saco para la noche y ganas de caminar despacio.',
-      },
-      {
-        type: 'clima',
-        text: 'Días soleados y secos; en la noche refresca y el cielo se llena de estrellas.',
-      },
-      {
-        type: 'comida',
-        text: 'Vas a probar vino de altura y un postre con arequipe hecho por monjas.',
-      },
-      {
-        type: 'musica',
-        text: 'Si tienes suerte, te toca un festival de cometas o de luces.',
-      },
-      {
-        type: 'cultura',
-        text: 'Cerca de allí encontraron el fósil de un reptil marino de 120 millones de años.',
-      },
-    ],
     itinerary: [
       {
         title: 'Plaza y calma',
@@ -283,28 +174,6 @@ export const destinations = [
     minBudgetPP: 700_000,
     description:
       'Zócalos de colores, una represa llena de islas y una roca de 740 escalones con la mejor vista del país.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Buenas piernas: vas a subir más de 700 escalones. Lleva agua.',
-      },
-      {
-        type: 'clima',
-        text: 'Templado y agradable, con lluvias rápidas en la tarde.',
-      },
-      {
-        type: 'comida',
-        text: 'Bandeja paisa frente al agua y una trucha en salsa de coco.',
-      },
-      {
-        type: 'musica',
-        text: 'Música popular en los balcones y parlantes en las lanchas.',
-      },
-      {
-        type: 'cultura',
-        text: 'Las fachadas del pueblo cuentan historias con figuras en relieve pintadas a mano.',
-      },
-    ],
     itinerary: [
       {
         title: 'Pueblo de zócalos',
@@ -337,28 +206,6 @@ export const destinations = [
     minBudgetPP: 1_000_000,
     description:
       'Un pueblo escondido en la selva de la Sierra Nevada: cascadas, café, pájaros y hamacas gigantes.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Repelente, linterna y ropa que se pueda mojar.',
-      },
-      {
-        type: 'clima',
-        text: 'Caluroso abajo, fresco arriba. Llueve de repente y escampa rápido.',
-      },
-      {
-        type: 'comida',
-        text: 'Cacao recién tostado y un café orgánico cultivado entre la selva.',
-      },
-      {
-        type: 'musica',
-        text: 'Lo que más vas a oír son pájaros: hay cientos de especies.',
-      },
-      {
-        type: 'cultura',
-        text: 'Desde allí, en un día despejado, se ven a la vez montañas nevadas y el mar.',
-      },
-    ],
     itinerary: [
       {
         title: 'Entre la selva',
@@ -388,25 +235,6 @@ export const destinations = [
     minBudgetPP: 750_000,
     description:
       'Dicen que es el pueblo más lindo de Colombia: tapia pisada, calles de piedra amarilla y el Camino Real.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Sombrero, bloqueador y una libreta: es un lugar para escribir y no hacer nada.',
-      },
-      {
-        type: 'clima',
-        text: 'Seco y soleado, las tardes son doradas y las noches tibias.',
-      },
-      { type: 'comida', text: 'Te van a ofrecer hormigas… y te van a gustar.' },
-      {
-        type: 'musica',
-        text: 'Silencio, campanas de iglesia y algún tiple a lo lejos.',
-      },
-      {
-        type: 'cultura',
-        text: 'Las casas están hechas con tierra pisada, una técnica de hace siglos.',
-      },
-    ],
     itinerary: [
       {
         title: 'Pueblo de piedra',
@@ -436,25 +264,6 @@ export const destinations = [
     minBudgetPP: 800_000,
     description:
       'La capital de la aventura: rafting, parapente sobre un cañón y cascadas para nadar.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Ropa que se pueda mojar, zapatos acuáticos y valentía.',
-      },
-      { type: 'clima', text: 'Caliente de día; perfecto para tirarse al río.' },
-      {
-        type: 'comida',
-        text: 'Carne oreada, pepitoria y una arepa de maíz pelado.',
-      },
-      {
-        type: 'musica',
-        text: 'En las noches, parranda con música de carrilera y cerveza fría.',
-      },
-      {
-        type: 'cultura',
-        text: 'Vas a volar sobre uno de los cañones más profundos del continente.',
-      },
-    ],
     itinerary: [
       {
         title: 'Llegada',
@@ -480,25 +289,6 @@ export const destinations = [
     minBudgetPP: 1_100_000,
     description:
       'Donde el río baja de la Sierra y se encuentra con el mar. Hamacas, tubing y playas casi vacías.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Lo mínimo: vestido de baño, un libro y cero afán.',
-      },
-      {
-        type: 'clima',
-        text: 'Calor rico, brisa de mar y lluvias cortas en la tarde.',
-      },
-      {
-        type: 'comida',
-        text: 'Pescado del día y jugos de frutas que no sabías que existían.',
-      },
-      { type: 'musica', text: 'Olas, un tambor lejano y reggae en el hostal.' },
-      {
-        type: 'cultura',
-        text: 'Bajarás un río flotando en un neumático hasta llegar al mar.',
-      },
-    ],
     itinerary: [
       {
         title: 'Desconexión',
@@ -528,28 +318,6 @@ export const destinations = [
     minBudgetPP: 850_000,
     description:
       'Un pueblo paisa de balcones de colores, basílica neogótica, cascadas y gallitos de roca.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Botas de caminar y algo abrigado para la noche.',
-      },
-      {
-        type: 'clima',
-        text: 'Templado; en las tardes baja una neblina que envuelve la plaza.',
-      },
-      {
-        type: 'comida',
-        text: 'Trucha, dulces de la región y un tinto en la plaza viendo pasar caballos.',
-      },
-      {
-        type: 'musica',
-        text: 'Música de despecho en las sillas de colores de la plaza.',
-      },
-      {
-        type: 'cultura',
-        text: 'Verás un pájaro naranja brillante que parece de mentiras.',
-      },
-    ],
     itinerary: [
       {
         title: 'Plaza de colores',
@@ -578,25 +346,6 @@ export const destinations = [
     minBudgetPP: 650_000,
     description:
       'Un desierto rojo y gris en el corazón del país con uno de los mejores cielos para ver estrellas.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Gorra, mucha agua y una chaqueta liviana para la madrugada.',
-      },
-      {
-        type: 'clima',
-        text: 'De día pasa los 35 °C; de noche el cielo se abre por completo.',
-      },
-      { type: 'comida', text: 'Asado huilense y dulces de leche de cabra.' },
-      {
-        type: 'musica',
-        text: 'San Juanero, y un silencio que casi se escucha.',
-      },
-      {
-        type: 'cultura',
-        text: 'Verás planetas por un telescopio en medio de la nada.',
-      },
-    ],
     itinerary: [
       {
         title: 'Rojo y gris',
@@ -626,25 +375,6 @@ export const destinations = [
     minBudgetPP: 1_900_000,
     description:
       'Un pueblo sin carros entre la selva y el mar, en la frontera. Caminas de una playa a otra… de otro país.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Morral pequeño, bolsa seca y efectivo: allá no todo acepta tarjeta.',
-      },
-      {
-        type: 'clima',
-        text: 'Caliente, húmedo y con aguaceros tropicales que refrescan.',
-      },
-      {
-        type: 'comida',
-        text: 'Langosta al ajillo y coco recién bajado de la palma.',
-      },
-      { type: 'musica', text: 'Chirimía, olas y ni un solo pito de carro.' },
-      {
-        type: 'cultura',
-        text: 'Podrás almorzar en otro país y volver caminando.',
-      },
-    ],
     itinerary: [
       {
         title: 'Llegada en lancha',
@@ -674,25 +404,6 @@ export const destinations = [
     minBudgetPP: 2_400_000,
     description:
       'La puerta al Amazonas: delfines rosados, comunidades indígenas y la triple frontera.',
-    clueBank: [
-      {
-        type: 'empacar',
-        text: 'Manga larga, repelente fuerte y botas de caucho.',
-      },
-      {
-        type: 'clima',
-        text: 'Húmedo, caliente y con lluvias intensas que duran poco.',
-      },
-      {
-        type: 'comida',
-        text: 'Pirarucú, uno de los peces de agua dulce más grandes del mundo.',
-      },
-      {
-        type: 'musica',
-        text: 'Al atardecer, miles de loros hacen un concierto en el parque.',
-      },
-      { type: 'cultura', text: 'Estarás a minutos de dos países más.' },
-    ],
     itinerary: [
       {
         title: 'Selva',
@@ -725,22 +436,6 @@ export const destinations = [
     minBudgetPP: 950_000,
     description:
       'La Ciudad Blanca: arquitectura colonial, Ciudad Creativa de la Gastronomía y termales cerca.',
-    clueBank: [
-      { type: 'empacar', text: 'Un saco, zapatos cómodos y mucho apetito.' },
-      { type: 'clima', text: 'Primaveral: días templados y noches frescas.' },
-      {
-        type: 'comida',
-        text: 'Empanadas de pipián con salsa de maní y un salpicón de guanábana.',
-      },
-      {
-        type: 'musica',
-        text: 'Procesiones con música de chirimía en Semana Santa.',
-      },
-      {
-        type: 'cultura',
-        text: 'Todas las fachadas del centro son del mismo color.',
-      },
-    ],
     itinerary: [
       {
         title: 'Ciudad Blanca',

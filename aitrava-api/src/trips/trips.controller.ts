@@ -1,112 +1,148 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
-  Headers,
   Param,
+  Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard, CurrentUser, type AuthUser } from '../auth/auth.guard';
-import { isDemoMode } from '../common/config';
-import { EngineService } from '../engine/engine.service';
+import { AuthUser, CurrentUser, VerifiedGuard } from '../auth/auth.guard';
 import {
-  FriendGuessDto,
-  GenerateTripDto,
-  GuessDto,
-  ReserveDto,
+  BookingDto,
+  BookingPatchDto,
+  CreateTripDto,
+  ExpenseDto,
+  ItemDto,
+  ItemPatchDto,
+  SuggestQueryDto,
+  UpdateTripDto,
 } from './trips.dto';
 import { TripsService } from './trips.service';
 
+/** Públicos: inspiración y sugerencias (el wizard se puede llenar antes de crear la cuenta). */
+@Controller()
+export class DestinationsController {
+  constructor(private trips: TripsService) {}
+
+  @Get('destinations')
+  destinations(@Query('featured') featured?: string) {
+    return this.trips.destinations(featured === 'true');
+  }
+
+  @Get('suggestions')
+  suggest(@Query() q: SuggestQueryDto) {
+    return this.trips.suggest(q);
+  }
+}
+
 @Controller('trips')
-@UseGuards(AuthGuard)
+@UseGuards(VerifiedGuard)
 export class TripsController {
   constructor(private trips: TripsService) {}
 
   @Get()
-  list(@CurrentUser() user: AuthUser) {
-    return this.trips.list(user.sub);
+  list(@CurrentUser() u: AuthUser) {
+    return this.trips.list(u.sub);
   }
 
-  @Post('generate')
-  generate(@CurrentUser() user: AuthUser, @Body() dto: GenerateTripDto) {
-    return this.trips.generate(user.sub, dto);
+  @Post()
+  create(@CurrentUser() u: AuthUser, @Body() dto: CreateTripDto) {
+    return this.trips.create(u.sub, dto);
   }
 
   @Get(':id')
-  get(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.trips.get(id, user.sub);
+  get(@CurrentUser() u: AuthUser, @Param('id') id: string) {
+    return this.trips.get(u.sub, id);
   }
 
-  @Post(':id/reroll')
-  reroll(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.trips.reroll(id, user.sub);
-  }
-
-  @Post(':id/reserve')
-  reserve(
-    @CurrentUser() user: AuthUser,
+  @Patch(':id')
+  update(
+    @CurrentUser() u: AuthUser,
     @Param('id') id: string,
-    @Body() dto: ReserveDto,
+    @Body() dto: UpdateTripDto,
   ) {
-    return this.trips.reserve(id, user.sub, dto.payment);
+    return this.trips.update(u.sub, id, dto);
   }
 
-  @Post(':id/guess')
-  guess(
-    @CurrentUser() user: AuthUser,
+  @Delete(':id')
+  remove(@CurrentUser() u: AuthUser, @Param('id') id: string) {
+    return this.trips.remove(u.sub, id);
+  }
+
+  @Post(':id/items')
+  addItem(
+    @CurrentUser() u: AuthUser,
     @Param('id') id: string,
-    @Body() dto: GuessDto,
+    @Body() dto: ItemDto,
   ) {
-    return this.trips.guess(id, user.sub, dto.destination);
+    return this.trips.addItem(u.sub, id, dto);
   }
 
-  @Post(':id/demo-skip')
-  demoSkip(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.trips.demoSkip(id, user.sub);
-  }
-
-  @Post(':id/reveal')
-  reveal(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.trips.reveal(id, user.sub);
-  }
-}
-
-@Controller()
-export class PublicController {
-  constructor(
-    private trips: TripsService,
-    private engine: EngineService,
-  ) {}
-
-  @Get()
-  /** También verifica la BD: si faltan las tablas responde 500 y el healthcheck de Railway falla. */
-  async health() {
-    const destinations = (await this.trips.destinations()).length;
-    return { ok: true, name: 'AiTrava API', destinations };
-  }
-
-  @Get('config')
-  config() {
-    return { demoMode: isDemoMode(), aiEnabled: this.engine.aiEnabled };
-  }
-
-  @Get('destinations')
-  destinations() {
-    return this.trips.destinations();
-  }
-
-  @Get('share/:code')
-  share(@Param('code') code: string) {
-    return this.trips.share(code);
-  }
-
-  @Post('share/:code/guess')
-  friendGuess(
-    @Param('code') code: string,
-    @Body() dto: FriendGuessDto,
-    @Headers('x-anon-id') anonId?: string,
+  @Patch(':id/items/:itemId')
+  updateItem(
+    @CurrentUser() u: AuthUser,
+    @Param('id') id: string,
+    @Param('itemId') itemId: string,
+    @Body() dto: ItemPatchDto,
   ) {
-    return this.trips.friendGuess(code, dto.name, dto.destination, anonId);
+    return this.trips.updateItem(u.sub, id, itemId, dto);
+  }
+
+  @Delete(':id/items/:itemId')
+  removeItem(
+    @CurrentUser() u: AuthUser,
+    @Param('id') id: string,
+    @Param('itemId') itemId: string,
+  ) {
+    return this.trips.removeItem(u.sub, id, itemId);
+  }
+
+  @Post(':id/bookings')
+  addBooking(
+    @CurrentUser() u: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: BookingDto,
+  ) {
+    return this.trips.addBooking(u.sub, id, dto);
+  }
+
+  @Patch(':id/bookings/:bookingId')
+  updateBooking(
+    @CurrentUser() u: AuthUser,
+    @Param('id') id: string,
+    @Param('bookingId') bid: string,
+    @Body() dto: BookingPatchDto,
+  ) {
+    return this.trips.updateBooking(u.sub, id, bid, dto);
+  }
+
+  @Delete(':id/bookings/:bookingId')
+  removeBooking(
+    @CurrentUser() u: AuthUser,
+    @Param('id') id: string,
+    @Param('bookingId') bid: string,
+  ) {
+    return this.trips.removeBooking(u.sub, id, bid);
+  }
+
+  @Post(':id/expenses')
+  addExpense(
+    @CurrentUser() u: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: ExpenseDto,
+  ) {
+    return this.trips.addExpense(u.sub, id, dto);
+  }
+
+  @Delete(':id/expenses/:expenseId')
+  removeExpense(
+    @CurrentUser() u: AuthUser,
+    @Param('id') id: string,
+    @Param('expenseId') eid: string,
+  ) {
+    return this.trips.removeExpense(u.sub, id, eid);
   }
 }

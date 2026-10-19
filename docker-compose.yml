@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: aitrava
       POSTGRES_DB: aitrava
     ports:
-      - "5432:5432"
+      - "${AITRAVA_DB_PORT:-5432}:5432"
     volumes:
       - aitrava-pgdata:/var/lib/postgresql/data
     healthcheck:

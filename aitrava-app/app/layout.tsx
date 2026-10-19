@@ -1,36 +1,44 @@
 import type { Metadata, Viewport } from 'next';
-import { Big_Shoulders, Familjen_Grotesk, IBM_Plex_Mono } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import { Analytics } from '@/components/Analytics';
 import { AppShell } from '@/components/AppShell';
-import { DemoBanner } from '@/components/DemoBanner';
-import { FeedbackWidget } from '@/components/FeedbackWidget';
-import { WhatsAppFloating } from '@/components/WhatsAppCta';
 import { AuthProvider } from '@/lib/auth';
 import './globals.css';
 
-const display = Big_Shoulders({ subsets: ['latin'], weight: ['800', '900'], variable: '--font-big-shoulders' });
-const body = Familjen_Grotesk({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-familjen' });
-const mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '600'], variable: '--font-plex-mono' });
+const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-jakarta' });
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
 export const metadata: Metadata = {
-  title: 'AiTrava · Viajes sorpresa personalizados',
+  metadataBase: SITE_URL ? new URL(SITE_URL) : undefined,
+  title: { default: 'AITRAVA | Tu viaje vive aquí', template: '%s | AITRAVA' },
   description:
-    'Tú pones el presupuesto y las fechas; nuestra IA arma transporte, alojamiento y planes locales. El destino lo descubres cuando toca.',
+    'Planea, ahorra, organiza y lleva contigo todo tu viaje en un solo lugar: itinerario, reservas, documentos, presupuesto y un plan de ahorro inteligente hasta el día del viaje.',
   icons: { icon: '/brand/favicon.png', apple: '/brand/apple-touch-icon.png' },
-  openGraph: { images: ['/brand/og-image.jpg'], locale: 'es_CO', siteName: 'AiTrava' },
+  openGraph: {
+    title: 'AITRAVA | Tu viaje vive aquí',
+    description: 'Planea, ahorra y lleva contigo todo tu viaje en un solo lugar.',
+    images: ['/brand/og-image.jpg'],
+    locale: 'es_CO',
+    siteName: 'AITRAVA',
+    type: 'website',
+  },
+  manifest: '/manifest.webmanifest',
 };
 
-export const viewport: Viewport = { themeColor: '#1A1C20', width: 'device-width', initialScale: 1 };
+export const viewport: Viewport = {
+  themeColor: '#ffffff',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
 
-export default function RootLayout({ children }: LayoutProps<'/'>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    <html lang="es-CO" className={jakarta.variable}>
       <body>
         <AuthProvider>
-          <DemoBanner />
           <AppShell>{children}</AppShell>
-          <FeedbackWidget />
-          <WhatsAppFloating />
           <Analytics />
         </AuthProvider>
       </body>

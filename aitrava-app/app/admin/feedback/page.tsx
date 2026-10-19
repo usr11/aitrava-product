@@ -1,54 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Spinner } from '@/components/Spinner';
-import { api } from '@/lib/api';
+import { AdminTitle, useAdminData } from '@/components/admin/common';
+import { ErrorState, LoadingState } from '@/components/ui';
+import { formatDate } from '@/lib/format';
 
-type Feedback = { id: string; kind: string; score: number | null; comment: string | null; page: string | null; createdAt: string };
-const FACES = ['', '😣', '😕', '😐', '🙂', '🤩'];
+type F = { id: string; kind: string; score: number | null; comment: string | null; page: string | null; createdAt: string };
 
-export default function AdminFeedback() {
-  const [items, setItems] = useState<Feedback[] | null>(null);
-  const [filter, setFilter] = useState<'all' | 'nps' | 'widget'>('all');
-  useEffect(() => {
-    api<Feedback[]>('/admin/feedback').then(setItems).catch(() => setItems([]));
-  }, []);
-  if (!items) return <Spinner full />;
-  const shown = items.filter((f) => filter === 'all' || f.kind === filter);
-
+export default function FeedbackPage() {
+  const { data, error, reload } = useAdminData<F[]>('/admin/feedback');
+  const scored = data?.filter((f) => f.score != null) ?? [];
+  const avg = scored.length ? (scored.reduce((s, f) => s + (f.score ?? 0), 0) / scored.length).toFixed(1) : null;
   return (
-    <div>
-      <div className="flex gap-2">
-        {(['all', 'nps', 'widget'] as const).map((f) => (
-          <button key={f} className="chip" aria-pressed={filter === f} onClick={() => setFilter(f)}>
-            {f === 'all' ? 'Todo' : f === 'nps' ? 'NPS' : 'Widget'}
-          </button>
-        ))}
-      </div>
-      {shown.length === 0 ? (
-        <p className="card mt-6 p-8 text-center text-muted">Aún no hay feedback. Comparte la app y pide a la gente que use el botón “¿Qué le cambiarías?”.</p>
-      ) : (
-        <ul className="mt-6 grid gap-3 md:grid-cols-2">
-          {shown.map((f) => (
-            <li key={f.id} className="card p-4">
-              <div className="flex items-center justify-between gap-3">
-                <span className="eyebrow text-[10px] text-muted-2">
-                  {f.kind === 'nps' ? 'NPS' : 'Widget'} · {f.page ?? '—'}
-                </span>
-                <span className="font-mono text-xs text-dim">{new Date(f.createdAt).toLocaleString('es-CO')}</span>
-              </div>
-              <p className="mt-2 text-2xl">
-                {f.kind === 'nps' ? (
-                  <span className={`font-display font-black ${f.score! >= 9 ? 'text-ok' : f.score! <= 6 ? 'text-bad' : 'text-secondary'}`}>{f.score}/10</span>
-                ) : (
-                  FACES[f.score ?? 0]
-                )}
-              </p>
-              {f.comment && <p className="mt-2 text-text-soft">“{f.comment}”</p>}
+    <>
+      <AdminTitle title="Feedback" text={avg ? `Promedio del widget: ${avg} / 5 (${scored.length} respuestas)` : 'Opiniones del widget en todas las pantallas.'} />
+      {error ? <ErrorState text={error} onRetry={reload} /> : !data ? <LoadingState label="Cargando…" /> : !data.length ? <p className="text-text-3">Sin datos suficientes.</p> : (
+        <ul className="space-y-2">
+          {data.map((f) => (
+            <li key={f.id} className="card p-4 text-sm">
+              <p className="text-text-2">{formatDate(f.createdAt, { day: 'numeric', month: 'short' })} · {f.page ?? '—'} {f.score != null && <strong className="text-navy">· {f.score}/5</strong>}</p>
+              {f.comment && <p className="mt-1 text-navy">{f.comment}</p>}
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </>
   );
 }

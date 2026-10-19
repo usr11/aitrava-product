@@ -24,15 +24,18 @@ export function getAnonId() {
 
 /** Eventos que también se mandan al Meta Pixel con su nombre estándar. */
 const PIXEL_STANDARD: Record<string, string> = {
-  signup: 'CompleteRegistration',
-  quiz_complete: 'Lead',
-  checkout_view: 'InitiateCheckout',
-  reservation: 'Purchase',
+  signup_started: 'Lead',
+  checkout_viewed: 'InitiateCheckout',
+  payment_cta_clicked: 'AddPaymentInfo',
 };
 
-export function track(name: string, props: Record<string, unknown> = {}) {
+/**
+ * Registra un evento propio (y en el Meta Pixel). Nunca se manda información sensible:
+ * ni correos, ni documentos, ni datos de pago.
+ */
+export function track(name: string, props: Record<string, string | number | boolean | null> = {}, tripId?: string) {
   if (typeof window === 'undefined') return;
-  api('/events', { json: { name, anonId: getAnonId(), props } }).catch(() => {});
+  api('/events', { json: { name, anonId: getAnonId(), tripId, props } }).catch(() => {});
   try {
     const std = PIXEL_STANDARD[name];
     if (std) window.fbq?.('track', std, props);
@@ -40,25 +43,19 @@ export function track(name: string, props: Record<string, unknown> = {}) {
   } catch {}
 }
 
-/** Guarda ref y utm_source de la URL para usarlos al registrarse. */
+/** Guarda utm_source de la URL para usarlo al registrarse. */
 export function captureAttribution() {
   try {
-    const q = new URLSearchParams(window.location.search);
-    const ref = q.get('ref');
-    const utm = q.get('utm_source');
-    if (ref) localStorage.setItem('aitrava_ref', ref);
-    if (utm) localStorage.setItem('aitrava_utm', utm);
+    const utm = new URLSearchParams(window.location.search).get('utm_source');
+    if (utm) localStorage.setItem('aitrava_utm', utm.slice(0, 60));
   } catch {}
 }
 
-export function getAttribution() {
+export function getUtmSource() {
   try {
-    return {
-      ref: localStorage.getItem('aitrava_ref') ?? undefined,
-      utmSource: localStorage.getItem('aitrava_utm') ?? undefined,
-    };
+    return localStorage.getItem('aitrava_utm') ?? undefined;
   } catch {
-    return {};
+    return undefined;
   }
 }
 

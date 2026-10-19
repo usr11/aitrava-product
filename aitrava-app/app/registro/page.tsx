@@ -1,5 +1,13 @@
-import { AuthForm } from '@/components/AuthForm';
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import { RegisterForm } from './form';
 
-export default function RegisterPage() {
-  return <AuthForm mode="register" />;
+export const metadata: Metadata = { title: 'Crear cuenta' };
+
+export default function RegistroPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
+  );
 }

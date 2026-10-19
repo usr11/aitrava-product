@@ -7,7 +7,7 @@ import { captureAttribution, track } from '@/lib/track';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
-/** Meta Pixel + page_view propio en cada cambio de ruta. */
+/** Meta Pixel + page_view propio en cada cambio de ruta (y landing_view en el inicio). */
 export function Analytics() {
   const pathname = usePathname();
 
@@ -16,7 +16,10 @@ export function Analytics() {
   }, []);
 
   useEffect(() => {
-    track('page_view', { path: pathname });
+    // No se mide el panel admin (son visitas del equipo)
+    if (pathname.startsWith('/admin')) return;
+    track('page_view', { path: pathname.replace(/\/viajes\/[^/]+/, '/viajes/:id').replace(/\/(checkout|comprobante)\/[^/]+/, '/$1/:id') });
+    if (pathname === '/') track('landing_view');
   }, [pathname]);
 
   if (!PIXEL_ID) return null;

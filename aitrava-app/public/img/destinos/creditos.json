@@ -1,0 +1,98 @@
+{
+ "santa-marta": {
+  "page": "https://en.wikipedia.org/wiki/Santa_Marta,_Colombia",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/55/Bah%C3%ADa_de_Santa_Marta.jpg/3840px-Bah%C3%ADa_de_Santa_Marta.jpg"
+ },
+ "san-andres": {
+  "page": "https://en.wikipedia.org/wiki/San_Andrés_(island)",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/e/e3/San_Andres_Island_Montage.jpg"
+ },
+ "salento": {
+  "page": "https://en.wikipedia.org/wiki/Cocora_Valley",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Valle_del_cocora_-_general_view.jpg"
+ },
+ "villa-de-leyva": {
+  "page": "https://en.wikipedia.org/wiki/Villa_de_Leyva",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/Villa_de_Leyva_Boyaca_22.JPG/3840px-Villa_de_Leyva_Boyaca_22.JPG"
+ },
+ "guatape": {
+  "page": "https://en.wikipedia.org/wiki/El_Peñón_de_Guatapé",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/b/bd/El_Pe%C3%B1ol_de_Guatap%C3%A9_%28The_Rock_of_Guatape%29_2017-04-10.jpg"
+ },
+ "minca": {
+  "page": "https://en.wikipedia.org/wiki/Minca",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Digby_County_%2818178365406%29.jpg"
+ },
+ "barichara": {
+  "page": "https://en.wikipedia.org/wiki/Barichara",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a0/Street_in_Barichara_02.jpg/3840px-Street_in_Barichara_02.jpg"
+ },
+ "tatacoa": {
+  "page": "https://en.wikipedia.org/wiki/Tatacoa_Desert",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Desierto_de_la_Tatacoa_-_camilogaleano%28com%29.jpg"
+ },
+ "capurgana": {
+  "page": "https://en.wikipedia.org/wiki/Capurganá",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Capurgan%C3%A1_toma_aerea.JPG"
+ },
+ "leticia": {
+  "page": "https://en.wikipedia.org/wiki/Leticia,_Amazonas",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Leticia_montaje.png"
+ },
+ "popayan": {
+  "page": "https://en.wikipedia.org/wiki/Popayán",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/7/77/Atardecer_en_Popay%C3%A1n%2C_Cauca.jpg"
+ },
+ "barcelona": {
+  "page": "https://en.wikipedia.org/wiki/Barcelona",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Evening_light_over_Barcelona.jpg/3840px-Evening_light_over_Barcelona.jpg"
+ },
+ "madrid": {
+  "page": "https://en.wikipedia.org/wiki/Madrid",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/14/Madrid_-_Sky_Bar_360%C2%BA_%28Hotel_Riu_Plaza_Espa%C3%B1a%29%2C_vistas_19.jpg/3840px-Madrid_-_Sky_Bar_360%C2%BA_%28Hotel_Riu_Plaza_Espa%C3%B1a%29%2C_vistas_19.jpg"
+ },
+ "roma": {
+  "page": "https://en.wikipedia.org/wiki/Rome",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg"
+ },
+ "cancun": {
+  "page": "https://en.wikipedia.org/wiki/Cancún",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d8/Cancun_Strand_Luftbild_%2822143397586%29.jpg/3840px-Cancun_Strand_Luftbild_%2822143397586%29.jpg"
+ },
+ "tokio": {
+  "page": "https://en.wikipedia.org/wiki/Tokyo",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Skyscrapers_of_Shinjuku_2009_January.jpg"
+ },
+ "paris": {
+  "page": "https://en.wikipedia.org/wiki/Paris",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg/3840px-La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg"
+ },
+ "nueva-york": {
+  "page": "https://en.wikipedia.org/wiki/New_York_City",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7a/View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu_%28cropped%29.jpg/3840px-View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu_%28cropped%29.jpg"
+ },
+ "lisboa": {
+  "page": "https://en.wikipedia.org/wiki/Lisbon",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/f/f2/Lisboa_-_Portugal_%2852597836992%29.jpg"
+ },
+ "ciudad-de-mexico": {
+  "page": "https://en.wikipedia.org/wiki/Mexico_City",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4f/Sobrevuelos_CDMX_HJ2A4913_%2825514321687%29_%28cropped%29.jpg/3840px-Sobrevuelos_CDMX_HJ2A4913_%2825514321687%29_%28cropped%29.jpg"
+ },
+ "cusco": {
+  "page": "https://en.wikipedia.org/wiki/Cusco",
+  "file": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/Vista_Calle_Suecia.jpg/3840px-Vista_Calle_Suecia.jpg"
+ },
+ "buenos-aires": {
+  "page": "https://en.wikipedia.org/wiki/Buenos_Aires",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Puerto_Madero%2C_Buenos_Aires_%2840689219792%29_%28cropped%29.jpg"
+ },
+ "palomino": {
+  "page": "https://es.wikipedia.org/wiki/Palomino_(La_Guajira)",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/La_playa_palomino.jpg/1280px-La_playa_palomino.jpg"
+ },
+ "jardin": {
+  "page": "https://es.wikipedia.org/wiki/Jardín_(Antioquia)",
+  "file": "https://upload.wikimedia.org/wikipedia/commons/9/91/Panor%C3%A1micaJard%C3%ADnAntioquia.jpg"
+ }
+}

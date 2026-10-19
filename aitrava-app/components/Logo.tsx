@@ -1,19 +1,24 @@
 import Image from 'next/image';
 
-export function Logo({ size = 36, showName = true }: { size?: number; showName?: boolean }) {
+/** Logo oficial (sin recolorear ni deformar) + nombre. */
+export function Logo({ size = 36, showName = true, light = false }: { size?: number; showName?: boolean; light?: boolean }) {
   return (
     <span className="inline-flex items-center gap-2.5">
       <Image
         src="/brand/aitrava-mark.jpg"
-        alt={showName ? '' : 'AiTrava'}
+        alt={showName ? '' : 'AITRAVA'}
         width={size * 2}
         height={size * 2}
-        style={{ width: size, height: size, borderRadius: size * 0.25 }}
+        className="object-contain"
+        style={{ width: size, height: size, borderRadius: size * 0.24 }}
         priority
       />
       {showName && (
-        <span className="font-display font-extrabold leading-none tracking-wide" style={{ fontSize: size * 0.7 }}>
-          AiTrava
+        <span
+          className={`font-extrabold tracking-[0.06em] ${light ? 'text-white' : 'text-navy'}`}
+          style={{ fontSize: Math.max(16, size * 0.52) }}
+        >
+          AITRAVA
         </span>
       )}
     </span>

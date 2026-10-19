@@ -1,3 +1,7 @@
+// AITRAVA 3.0 · "Tu viaje vive aquí". Modelo en docs/ROADMAP.md (sección 8, paso 49).
+// Fechas de actividades y reservas: se guardan como "hora local del destino" en UTC
+// (2026-12-15T10:30 se guarda como 2026-12-15T10:30Z) y se muestran con timeZone UTC.
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,107 +16,291 @@ enum Role {
   ADMIN
 }
 
-enum TripStatus {
-  GENERATED
-  RESERVED
-  REVEALED
-  COMPLETED
+enum TripMode {
+  KNOWN // Sé a dónde voy
+  HELP // Ayúdame a elegir
+  SURPRISE // Destino sorpresa
+}
+
+enum SavingsFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+enum PaymentStatus {
+  created
+  redirected
+  pending
+  pending_verification
+  approved
+  declined
+  cancelled
+  error
+  unknown
+}
+
+enum ProviderStatus {
+  demo
+  prospect
+  active
+  inactive
 }
 
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  name         String
-  passwordHash String
-  idNumber     String? // cédula, para la factura
-  phone        String? // celular, para que el asesor contacte
-  role         Role       @default(USER)
-  referralCode String     @unique
-  referredBy   String? // referralCode de quien lo invitó
-  utmSource    String?
-  travelDna    Json? // gustos acumulados (ADN viajero)
-  createdAt    DateTime   @default(now())
-  trips        Trip[]
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  firstName          String
+  lastName           String
+  passwordHash       String
+  role               Role      @default(USER)
+  emailVerifiedAt    DateTime?
+  verifyTokenHash    String?
+  verifySentAt       DateTime?
+  resetTokenHash     String?
+  resetExpiresAt     DateTime?
+  termsAcceptedAt    DateTime
+  dataConsentAt      DateTime
+  utmSource          String?
+  isDemo             Boolean   @default(false) // cuenta de demostración: no cuenta en métricas
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  trips              Trip[]
+  payments           Payment[]
+  passes             Pass[]
+  documents          VaultDocument[]
 }
 
+/// Destinos de inspiración / sugerencias (no son productos a la venta ni tienen precios en vivo).
 model Destination {
   id          String   @id @default(cuid())
   slug        String   @unique
   name        String
+  country     String
   region      String
   tags        String[]
   avoidTags   String[]
-  minBudgetPP Int // COP por persona, 2 noches
+  minBudgetPP Int // referencia aproximada por persona (COP), solo para sugerir
   imageUrl    String
   description String
-  providers   Json // { transporte[], alojamiento[], experiencias[] } (prisma/providers.ts)
-  clueBank    Json // [{ type, text }]
-  itinerary   Json // [{ day, title, items[] }]
-  trips       Trip[]
+  itinerary   Json // [{ day, title, items[] }] → base sugerida
+  featured    Boolean  @default(false)
 }
 
 model Trip {
-  id            String      @id @default(cuid())
-  userId        String
-  user          User        @relation(fields: [userId], references: [id])
-  status        TripStatus  @default(GENERATED)
-  originCity    String
-  startDate     DateTime
-  endDate       DateTime
-  travelers     Int
-  budgetTotal   Int
-  preferences   Json
-  destinationId String
-  destination   Destination @relation(fields: [destinationId], references: [id])
-  aiReason      String?
-  aiGenerated   Boolean     @default(false)
-  vibes         String[] // pistas de ambiente que se muestran antes de revelar
-  itinerary     Json
-  breakdown     Json
-  booking       Json? // aliados reservados (transporte, alojamiento, experiencias)
-  partnerCommission Int  @default(0) // comisión que nos dejan los aliados
-  amountPaid    Int?
-  paymentType   String? // reserva | completo
-  isGift        Boolean     @default(false)
-  giftTo        String?
-  giftMessage   String?
-  shareCode     String      @unique
-  revealAt      DateTime
-  reservedAt    DateTime?
-  revealedAt    DateTime?
-  rerolls       Int         @default(0)
-  createdAt     DateTime    @default(now())
-  clues         Clue[]
-  guesses       Guess[]
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title              String
+  mode               TripMode  @default(KNOWN)
+  destinationCity    String
+  destinationCountry String
+  originCity         String
+  startDate          DateTime
+  endDate            DateTime
+  travelerCount      Int
+  budgetAmount       Int
+  currency           String    @default("COP")
+  budgetByCategory   Json? // { transporte, alojamiento, actividades, comida, seguros, otros }
+  preferences        Json? // { likes[], avoid[], style }
+  isDemo             Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  items              ItineraryItem[]
+  bookings           Booking[]
+  documents          VaultDocument[]
+  expenses           Expense[]
+  savingsPlan        SavingsPlan?
+  payments           Payment[]
+  pass               Pass?
+
+  @@index([userId])
 }
 
-model Clue {
-  id       String   @id @default(cuid())
-  tripId   String
-  trip     Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  order    Int
-  type     String
-  text     String
-  unlockAt DateTime
+model ItineraryItem {
+  id            String    @id @default(cuid())
+  tripId        String
+  trip          Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  type          String // actividad | restaurante | transporte | alojamiento | comida | libre | otro
+  title         String
+  description   String?
+  startAt       DateTime
+  endAt         DateTime?
+  locationName  String?
+  address       String?
+  latitude      Float?
+  longitude     Float?
+  estimatedCost Int?
+  status        String    @default("planned") // planned | done | cancelled
+  bookingId     String?
+  booking       Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+
+  @@index([tripId, startAt])
 }
 
-model Guess {
+/// Reserva o componente del viaje. `source = externa` si se compró fuera de AITRAVA.
+model Booking {
+  id          String          @id @default(cuid())
+  tripId      String
+  trip        Trip            @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  category    String // vuelo | alojamiento | actividad | transporte | seguro | restaurante | otro
+  title       String
+  provider    String?
+  reference   String?
+  startAt     DateTime?
+  endAt       DateTime?
+  cost        Int?
+  currency    String          @default("COP")
+  isPaid      Boolean         @default(false)
+  address     String?
+  notes       String?
+  source      String          @default("externa")
+  createdAt   DateTime        @default(now())
+  items       ItineraryItem[]
+  documents   VaultDocument[]
+
+  @@index([tripId])
+}
+
+/// Archivo privado de la Bóveda. Se guarda en la BD y solo lo descarga su dueño.
+model VaultDocument {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  category  String
+  title     String
+  fileName  String
+  mimeType  String
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  @@index([tripId])
+}
+
+model Expense {
   id          String   @id @default(cuid())
   tripId      String
   trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  guesserName String
-  isOwner     Boolean
-  destination String
-  correct     Boolean
+  amount      Int
+  category    String
+  description String?
+  date        DateTime
   createdAt   DateTime @default(now())
+
+  @@index([tripId])
+}
+
+/// Plan de ahorro inteligente. AITRAVA NO custodia el dinero: los aportes son declarados por el usuario.
+model SavingsPlan {
+  id               String                @id @default(cuid())
+  tripId           String                @unique
+  trip             Trip                  @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  targetAmount     Int
+  initialSaved     Int                   @default(0)
+  frequency        SavingsFrequency      @default(BIWEEKLY)
+  monthlyCapacity  Int? // cuánto dice que puede ahorrar al mes
+  startDate        DateTime
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  contributions    SavingsContribution[]
+}
+
+model SavingsContribution {
+  id        String      @id @default(cuid())
+  planId    String
+  plan      SavingsPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  amount    Int // negativo = retiro
+  date      DateTime
+  note      String?
+  createdAt DateTime    @default(now())
+
+  @@index([planId])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  reference     String        @unique
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripId        String
+  trip          Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  product       String        @default("AITRAVA_PASS")
+  amount        Int
+  currency      String        @default("COP")
+  status        PaymentStatus @default(created)
+  provider      String        @default("wompi")
+  providerTxId  String?
+  verifiedVia   String? // webhook | admin
+  verifiedBy    String?
+  verifiedAt    DateTime?
+  userNote      String? // lo que el usuario escribe al volver (p. ej. el id de la transacción)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  pass          Pass?
+
+  @@index([status, createdAt])
+}
+
+model Pass {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripId      String    @unique
+  trip        Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  paymentId   String    @unique
+  payment     Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  status      String    @default("active") // active | revoked
+  activatedAt DateTime  @default(now())
+  expiresAt   DateTime?
+}
+
+model Provider {
+  id          String         @id @default(cuid())
+  name        String
+  category    String // aerolineas | hoteles | restaurantes | experiencias | transporte | seguros | otros
+  country     String
+  logoUrl     String?
+  websiteUrl  String?
+  description String
+  status      ProviderStatus @default(demo)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model AdminCost {
+  id          String   @id @default(cuid())
+  category    String // pasarela | tecnologia | hosting | herramientas | marketing | operacion | otros
+  kind        String // fijo | variable
+  amount      Int
+  description String?
+  date        DateTime
+  createdAt   DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  handled   Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model Event {
   id        String   @id @default(cuid())
   name      String
   userId    String?
+  tripId    String?
   anonId    String?
   props     Json?
+  isDemo    Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([name, createdAt])

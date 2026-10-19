@@ -1,5 +1,7 @@
 # Presentación · contenido diapositiva por diapositiva (paso 39)
 
+> ⚠️ **Pendiente de actualizar a AITRAVA 3.0** (roadmap, pasos 70 y 75). Este documento describe la versión 2 (viajes sorpresa). El flujo nuevo es: registro → verificación → crear viaje → plan de ahorro → reservas → Bóveda → Modo Viaje → Pass.
+
 Pensada para **unos 7 minutos**; ajustar cuando se sepa el tiempo real (D2). Cada diapositiva cubre un criterio de la rúbrica, marcado con **[C1]–[C5]**. Los datos entre `{llaves}` se sacan de `/admin` el día anterior.
 
 > Estilo: mismos colores y tipografías de la app (fondo #1A1C20, amarillo #FFD700, títulos en Big Shoulders). Poco texto y una idea por diapositiva.

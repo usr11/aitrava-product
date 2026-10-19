@@ -50,17 +50,32 @@ En el servicio del API → **Variables** → **Raw Editor**, pega esto y reempla
 ```env
 DATABASE_URL=${{Postgres.DATABASE_URL}}
 JWT_SECRET=<el de openssl rand -hex 32>
-ADMIN_EMAIL=<correo con el que entrarás al panel /admin>
-ADMIN_PASSWORD=<la clave del admin para producción>
-GROQ_API_KEY=<tu clave de Groq>
-GROQ_MODEL=openai/gpt-oss-120b
-DEMO_MODE=true
+APP_URL=<URL de la app en Cloudflare, p. ej. https://aitrava-app.xxx.workers.dev>
+EMAIL_VERIFICATION_REQUIRED=false
+ADMIN_EMAILS=<correos de los 4 integrantes, separados por coma>
+ADMIN_EMAIL=<correo del admin de respaldo>
+ADMIN_PASSWORD=<la clave del admin de respaldo>
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=aitrava.25@gmail.com
+SMTP_PASS=<clave de aplicación de Google, no la clave normal>
+MAIL_FROM=AITRAVA <aitrava.25@gmail.com>
+PASS_PRICE_COP=39900
+PAYMENT_URL=https://checkout.nequi.wompi.co/l/PgimzF
+WOMPI_EVENTS_SECRET=<secreto de eventos del panel de Wompi, si lo tienen>
 ```
 
 - `${{Postgres.DATABASE_URL}}` se escribe tal cual: Railway lo reemplaza por la conexión interna a la BD. Si tu servicio de BD tiene otro nombre, cambia `Postgres` por ese nombre.
 - `PORT` **no** se pone: Railway lo asigna solo y el API ya lo lee.
-- `ADMIN_EMAIL` y `ADMIN_PASSWORD`: con esos datos entras a `/admin` en el desplegado. Si no los pones, quedan los de local (`admin@aitrava.co` / `aitrava123`), que están públicos en el repo. Si cambias el correo, el seed crea ese admin nuevo (el anterior sigue existiendo).
-- `DEMO_MODE`: `true` para presentar y hacer pruebas guiadas (pistas cada 30 s); **`false` para la campaña con usuarios reales**.
+- `APP_URL`: los enlaces de los correos (verificar, recuperar contraseña) apuntan aquí, y CORS solo acepta este origen. Si queda vacío, CORS acepta cualquier origen.
+- `ADMIN_EMAILS`: cada integrante crea su cuenta normal, verifica su correo y al iniciar sesión recibe el rol admin. No hay claves escritas en el código.
+- `ADMIN_EMAIL` / `ADMIN_PASSWORD`: admin de respaldo. **En producción solo se crea si pones `ADMIN_PASSWORD`** (ya no hay clave por defecto).
+- `EMAIL_VERIFICATION_REQUIRED`: `false` en la fase de prueba (la gente entra sin verificar el correo); `true` cuando se opere en serio. El rol admin siempre exige correo verificado.
+- `SMTP_*`: sin esto los usuarios no reciben el correo de verificación (la app lo dice y no finge el envío). Mientras tanto, un admin puede verificarlos a mano en `/admin/usuarios`. Para Gmail: activa la verificación en 2 pasos de `aitrava.25@gmail.com` → *Contraseñas de aplicaciones* → crea una y pégala en `SMTP_PASS`.
+- `WOMPI_EVENTS_SECRET`: en el panel de Wompi → *Desarrolladores* → *Secretos* → *Eventos*, y como URL de eventos `https://<tu-dominio-railway>/api/payments/wompi/events`. Sin esto, los pagos quedan "en verificación" y se aprueban a mano en `/admin/pagos` después de verlos en Wompi.
+- `DEMO_MODE` y `GROQ_*` ya no se usan en la 3.0 (se pueden borrar).
+
+> ⚠️ **Al desplegar la 3.0 por primera vez**, la migración `20261019153600_aitrava_3` **borra los viajes sorpresa de la v2** (viajes, pistas y apuestas) y conserva las cuentas de usuario (deberán verificar su correo). Eventos, feedback e iteraciones se conservan. Si quieren guardar algo de la v2, exporten antes desde el `/admin` viejo.
 
 Guarda (**Deploy** o **Apply changes**). Railway redespliega solo.
 
@@ -70,9 +85,9 @@ Servicio del API → **Settings → Networking → Generate Domain**.
 - Te queda algo como `https://aitrava-api-production.up.railway.app`. **Cópialo.**
 
 ### 1.5 Verificar
-- En el navegador: `https://<tu-dominio-railway>/api` → debe responder `{"ok":true,"name":"AiTrava API","destinations":15}`. Si da error 500, no hay tablas: revisa los logs.
-- `https://<tu-dominio-railway>/api/config` → `{"demoMode":true,"aiEnabled":true}`. Si `aiEnabled` es `false`, falta `GROQ_API_KEY`.
-- En **Deployments → View logs** del último deploy deberías ver `All migrations have been successfully applied` y `Seed listo: 15 destinos…`.
+- En el navegador: `https://<tu-dominio-railway>/api` → debe responder `{"ok":true,"name":"AITRAVA API"}`. Si da error 500, no hay tablas: revisa los logs.
+- `https://<tu-dominio-railway>/api/config` → muestra el precio del Pass, el link de pago y `"mailEnabled":true` si el SMTP quedó bien.
+- En **Deployments → View logs** del último deploy deberías ver `All migrations have been successfully applied` y `Seed listo: 26 destinos, 15 proveedores DEMO…`.
 
 ---
 
@@ -137,8 +152,8 @@ Así los cambios del API no reconstruyen la app.
 
 ### 2.3 Verificar
 - La URL queda como `https://aitrava-app.<tu-subdominio>.workers.dev`.
-- Crea una cuenta, arma un viaje y resérvalo. Si el viaje se genera, la app está hablando con Railway.
-- Entra con `admin@aitrava.co` + tu `ADMIN_PASSWORD` → `/admin`.
+- Crea una cuenta, verifica el correo (revisa spam), crea un viaje y su plan de ahorro. Si el viaje se crea, la app está hablando con Railway.
+- Entra con tu cuenta del equipo (de `ADMIN_EMAILS`) o con el admin de respaldo → `/admin`.
 - Pruébala desde el celular con datos móviles (no con el wifi de la casa).
 
 ---
@@ -148,9 +163,9 @@ Así los cambios del API no reconstruyen la app.
 1. **Preparar la demo en producción** (antes de presentar). Opción fácil, desde tu PC:
    - Railway → servicio `Postgres` → **Connect** → copia la **Public Network URL** (`postgresql://…proxy.rlwy.net:…`).
    - `cd aitrava-api && DATABASE_URL="<esa URL>" pnpm db:demo`
-2. **Paso 30 del roadmap:** cambiar los botones de la landing (`AiTrava-landing/src/data/site.ts`) para que apunten a `https://aitrava-app.<subdominio>.workers.dev/crear?utm_source=landing`. Pídeselo al agente con la URL final.
+2. **Paso 69 del roadmap:** cambiar los botones de la landing (`AiTrava-landing/src/data/site.ts`) para que apunten a `https://aitrava-app.<subdominio>.workers.dev/planear?utm_source=landing`. Pídeselo al agente con la URL final.
 3. **Dominio propio (opcional):** Cloudflare → Worker → **Settings → Domains & Routes → Add custom domain** (p. ej. `app.aitrava.co`). Si lo cambias, no hay que tocar el API (CORS acepta cualquier origen).
-4. **Pruebas con usuarios reales / campaña (pasos 32–34):** pon `DEMO_MODE=false` en Railway cuando la gente la vaya a usar sola.
+4. **Pruebas con usuarios reales / campaña (etapa K):** el caso DEMO (cuenta `demo@aitrava.co`) no cuenta en las métricas, así que no hace falta borrarlo.
 
 ## 4. Cómo se actualiza de ahora en adelante
 
@@ -170,7 +185,9 @@ Solo `git push` a `main`:
 | La app carga pero no hay datos / "Failed to fetch" | `NEXT_PUBLIC_API_URL` vacío o mal escrito | Revísalo en Build variables y haz **Retry build** |
 | Cloudflare: "Worker name mismatch" | El nombre del proyecto ≠ `name` en `wrangler.jsonc` | Deben ser iguales (`aitrava-app`) |
 | Cloudflare no encuentra `package.json` | Falta el Root directory | Root directory = `aitrava-app` |
-| `aiEnabled: false` | Falta `GROQ_API_KEY` en Railway | Agregarla y redeploy |
+| `"mailEnabled": false` o no llegan los correos | Faltan `SMTP_*` o la clave de aplicación es incorrecta | Revisar los logs (`No se pudo enviar…`) y la clave de aplicación de Gmail |
+| Los enlaces del correo abren `localhost` | `APP_URL` no está definida | Ponerla con la URL de Cloudflare |
+| "Explora cerca" no carga lugares | Overpass/Photon (OpenStreetMap) no responden | Es externo; la app ofrece buscar en Google Maps mientras tanto |
 
 ## 6. Probar el build de Cloudflare en tu PC (opcional)
 

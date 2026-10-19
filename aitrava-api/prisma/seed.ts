@@ -1,16 +1,23 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { destinations } from './destinations';
+import { inspiration } from './inspiration';
 import { providers } from './providers';
 
 const prisma = new PrismaClient();
+const isProd =
+  process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
 
 async function main() {
-  for (const d of destinations) {
+  // Destinos: Colombia (sugerencias) + internacionales (inspiración, destacados en /destinos).
+  const all = [
+    ...destinations.map((d) => ({ ...d, country: 'Colombia', featured: false })),
+    ...inspiration.map((d) => ({ ...d, featured: true })),
+  ];
+  for (const d of all) {
     const data = {
       ...d,
-      providers: providers[d.slug],
-      imageUrl: '',
+      imageUrl: `/img/destinos/${d.slug}.jpg`,
       itinerary: d.itinerary.map((it, i) => ({ day: i + 1, ...it })),
     };
     await prisma.destination.upsert({
@@ -20,55 +27,54 @@ async function main() {
     });
   }
 
-  const passwordHash = await bcrypt.hash('aitrava123', 10);
-  // Usuario y clave del admin: en producción vienen de ADMIN_EMAIL y ADMIN_PASSWORD
-  // (los de por defecto están públicos en el repo, así que solo sirven en local).
-  const adminEmail = (process.env.ADMIN_EMAIL ?? 'admin@aitrava.co')
-    .toLowerCase()
-    .trim();
-  const adminHash = process.env.ADMIN_PASSWORD
-    ? await bcrypt.hash(process.env.ADMIN_PASSWORD, 10)
-    : passwordHash;
-  await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: { role: 'ADMIN', passwordHash: adminHash },
-    create: {
-      email: adminEmail,
-      name: 'Equipo AiTrava',
-      passwordHash: adminHash,
-      role: 'ADMIN',
-      referralCode: 'AITRAVA',
-    },
-  });
-  await prisma.user.upsert({
-    where: { email: 'demo@aitrava.co' },
-    update: {},
-    create: {
-      email: 'demo@aitrava.co',
-      name: 'Valentina Demo',
-      passwordHash,
-      referralCode: 'VALEN2026',
-    },
-  });
+  // Proveedores: todos DEMO (sin convenio). Solo se crean si no existen, para no pisar lo editado en /admin.
+  for (const p of providers) {
+    const exists = await prisma.provider.findFirst({ where: { name: p.name } });
+    if (!exists) await prisma.provider.create({ data: { ...p, status: 'demo' } });
+  }
 
-  // Iteraciones de ejemplo: reemplazarlas por las reales desde /admin/iteraciones.
-  if ((await prisma.iteration.count()) === 0) {
-    await prisma.iteration.create({
-      data: {
-        version: 'v0',
-        date: new Date(),
-        hypothesis:
-          '(Ejemplo, editar) Los jóvenes de 18–30 pagarían por no tener que planear y por la emoción de la sorpresa.',
-        metric: 'Encuestas + clics en el CTA de la landing (Meta Pixel).',
-        result: 'Pendiente de medir con la app.',
-        decision: 'Construir el prototipo con wizard, pistas y revelación.',
-        change: 'Primera versión del producto.',
+  const now = new Date();
+  // Admin de respaldo. En producción solo se crea si hay ADMIN_PASSWORD (nada de claves por defecto).
+  // Los integrantes del equipo se vuelven admin con ADMIN_EMAILS al verificar su correo.
+  const adminEmail = (process.env.ADMIN_EMAIL ?? 'admin@aitrava.co').toLowerCase().trim();
+  const adminPassword = process.env.ADMIN_PASSWORD || (isProd ? '' : 'aitrava123');
+  if (adminPassword) {
+    const hash = await bcrypt.hash(adminPassword, 10);
+    await prisma.user.upsert({
+      where: { email: adminEmail },
+      update: { role: 'ADMIN', passwordHash: hash, emailVerifiedAt: now },
+      create: {
+        email: adminEmail,
+        firstName: 'Equipo',
+        lastName: 'AITRAVA',
+        passwordHash: hash,
+        role: 'ADMIN',
+        emailVerifiedAt: now,
+        termsAcceptedAt: now,
+        dataConsentAt: now,
       },
     });
   }
 
+  // Cuenta DEMO para la presentación (sus datos no cuentan en las métricas).
+  await prisma.user.upsert({
+    where: { email: 'demo@aitrava.co' },
+    update: { isDemo: true, emailVerifiedAt: now },
+    create: {
+      email: 'demo@aitrava.co',
+      firstName: 'Valentina',
+      lastName: 'Demo',
+      passwordHash: await bcrypt.hash('aitrava123', 10),
+      isDemo: true,
+      emailVerifiedAt: now,
+      termsAcceptedAt: now,
+      dataConsentAt: now,
+    },
+  });
+
   console.log(
-    `Seed listo: ${destinations.length} destinos, ${adminEmail} (clave: ${process.env.ADMIN_PASSWORD ? 'la de ADMIN_PASSWORD' : 'aitrava123'}) y demo@aitrava.co (clave: aitrava123)`,
+    `Seed listo: ${all.length} destinos, ${providers.length} proveedores DEMO, ` +
+      `${adminPassword ? `admin ${adminEmail}` : 'sin admin de respaldo (define ADMIN_PASSWORD)'} y demo@aitrava.co (clave: aitrava123).`,
   );
 }
 
