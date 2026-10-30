@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { AuthCard } from '@/components/AuthCard';
 import { Alert, Field } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
@@ -12,7 +12,13 @@ import type { User } from '@/lib/types';
 function Login() {
   const router = useRouter();
   const next = useSearchParams().get('next');
-  const { signIn } = useAuth();
+  const { signIn, user, loading } = useAuth();
+  const target = next?.startsWith('/') && !next.startsWith('//') ? next : '/admin';
+
+  // Si ya hay sesión del equipo, no se pide de nuevo: directo al panel.
+  useEffect(() => {
+    if (!loading && user?.role === 'ADMIN') router.replace(target);
+  }, [loading, user, router, target]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +31,7 @@ function Login() {
     try {
       const r = await api<{ token: string; user: User }>('/auth/login', { json: { email, password } });
       signIn(r.token, r.user);
-      router.replace(next?.startsWith('/') && !next.startsWith('//') ? next : '/admin');
+      router.replace(target);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'No pudimos iniciar sesión.');
       setBusy(false);

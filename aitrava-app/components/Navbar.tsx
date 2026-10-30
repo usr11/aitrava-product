@@ -54,6 +54,11 @@ export function Navbar() {
           )}
         </nav>
         <div className="flex items-center gap-2">
+          {user?.role === 'ADMIN' && (
+            <Link href="/admin" className="btn btn-pine btn-sm lg:hidden">
+              Panel
+            </Link>
+          )}
           <Link href="/salidas" className="btn btn-ember btn-sm hidden sm:inline-flex">
             Ver salidas
           </Link>
