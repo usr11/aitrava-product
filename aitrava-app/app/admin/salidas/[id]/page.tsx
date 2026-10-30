@@ -63,6 +63,7 @@ export default function SalidaAdmin() {
           </>
         }
       />
+      <Visibility s={s} onPublished={reload} />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <section>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -162,6 +163,60 @@ function CloseOut({ s, commissionDue, onSaved }: { s: AdminSalida; commissionDue
         </button>
       )}
       {msg && <Alert tone={msg.tone}>{msg.text}</Alert>}
+    </div>
+  );
+}
+
+/** Dice si la salida se ve en la página pública y, si no, por qué (con la acción para arreglarlo). */
+function Visibility({ s, onPublished }: { s: AdminSalida; onPublished: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const past = new Date(s.startsAt) <= new Date();
+  const publish = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/admin/salidas/${s.id}`, { method: 'PATCH', json: { status: 'open' } });
+      onPublished();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'No se pudo publicar.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (s.status === 'open' && !past)
+    return (
+      <div className="mb-5">
+        <Alert tone="ok">Publicada: se ve en la página y recibe reservas.</Alert>
+      </div>
+    );
+  const text =
+    s.status === 'draft'
+      ? past
+        ? 'Está en borrador y su fecha ya pasó: no se ve en la página. Cambia la fecha en Editar y luego publícala.'
+        : 'Está en borrador: nadie la ve fuera del panel.'
+      : s.status === 'open'
+        ? 'Su fecha ya pasó: ya no aparece en la página. Si se realizó, márcala como realizada.'
+        : s.status === 'closed'
+          ? past
+            ? 'Cerrada y con fecha pasada: ya no aparece en la página.'
+            : 'Cerrada: se ve en la página, pero no recibe reservas.'
+          : s.status === 'done'
+            ? 'Realizada: ya no aparece en la página.'
+            : 'Cancelada: no aparece en la página.';
+  return (
+    <div className="mb-5">
+      <Alert tone="warn">
+        <span className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <span>{text}</span>
+          {(s.status === 'draft' || s.status === 'closed') && !past && (
+            <button onClick={publish} disabled={busy} className="btn btn-ember btn-sm shrink-0">
+              {busy ? 'Publicando…' : s.status === 'draft' ? 'Publicar en la página' : 'Abrir reservas'}
+            </button>
+          )}
+        </span>
+        {error && <span className="error-text block">{error}</span>}
+      </Alert>
     </div>
   );
 }

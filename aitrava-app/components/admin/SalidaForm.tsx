@@ -50,9 +50,15 @@ export function SalidaForm({ salida, onSaved }: { salida?: AdminSalida; onSaved:
     setF((prev) => ({ ...prev, placeId: id, title: prev.title || (p ? p.name : ''), price: prev.price || (p ? String(p.refPrice) : '') }));
   };
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    // Al crear, el botón decide: "Publicar" la abre en la página; "Borrador" la deja oculta.
+    const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    const status = salida ? f.status : submitter?.value === 'draft' ? 'draft' : 'open';
+    if (status === 'open' && new Date(localInputToISO(f.startsAt)) <= new Date()) {
+      return setError('La fecha ya pasó: una salida abierta solo se ve en la página si su fecha es futura.');
+    }
     const commission = Number(f.commission) / 100;
     if (!f.placeId) return setError('Elige el lugar.');
     if (!f.startsAt) return setError('Pon la fecha y la hora.');
@@ -74,7 +80,7 @@ export function SalidaForm({ salida, onSaved }: { salida?: AdminSalida; onSaved:
         commissionRate: commission,
         includes: f.includes.split('\n').map((s) => s.trim()).filter(Boolean),
         paymentInstructions: f.paymentInstructions || null,
-        status: f.status,
+        status,
         womenOnly: f.womenOnly,
         isSimulacro: f.isSimulacro,
         isDemo: f.isDemo,
@@ -129,6 +135,7 @@ export function SalidaForm({ salida, onSaved }: { salida?: AdminSalida; onSaved:
         <Field label="Duración (min)" htmlFor="s-dur">
           <input id="s-dur" className="input tnum" type="number" min={30} max={1440} value={f.durationMin} onChange={set('durationMin')} required />
         </Field>
+        {salida && (
         <Field label="Estado" htmlFor="s-status">
           <select id="s-status" className="input" value={f.status} onChange={set('status')}>
             {STATUSES.map((s) => (
@@ -138,6 +145,7 @@ export function SalidaForm({ salida, onSaved }: { salida?: AdminSalida; onSaved:
             ))}
           </select>
         </Field>
+        )}
       </div>
       <Field label="Punto de encuentro" htmlFor="s-meet">
         <input id="s-meet" className="input" value={f.meetingPoint} onChange={set('meetingPoint')} required minLength={4} maxLength={300} />
@@ -177,9 +185,21 @@ export function SalidaForm({ salida, onSaved }: { salida?: AdminSalida; onSaved:
         </label>
       </div>
       {error && <Alert tone="bad">{error}</Alert>}
-      <button disabled={busy} className="btn btn-pine">
-        {busy ? 'Guardando…' : salida ? 'Guardar cambios' : 'Crear salida'}
-      </button>
+      {salida ? (
+        <button disabled={busy} className="btn btn-pine">
+          {busy ? 'Guardando…' : 'Guardar cambios'}
+        </button>
+      ) : (
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button disabled={busy} value="open" className="btn btn-ember">
+            {busy ? 'Guardando…' : 'Publicar en la página'}
+          </button>
+          <button disabled={busy} value="draft" className="btn btn-line">
+            Guardar como borrador
+          </button>
+        </div>
+      )}
+      {!salida && <p className="hint">Un borrador no lo ve nadie fuera del panel; lo publicas después desde la salida.</p>}
     </form>
   );
 }
