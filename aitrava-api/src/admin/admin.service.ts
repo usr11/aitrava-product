@@ -1,59 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, type Reservation } from '@prisma/client';
+import { CHANNELS, TARGETS } from '../common/config';
+import { BASE } from '../model/model';
 import { PrismaService } from '../prisma/prisma.service';
-
-/** Embudo de validación (especificación §48). Cada paso cuenta personas únicas (usuario o anónimo). */
-export const FUNNEL: { key: string; label: string; events: string[] }[] = [
-  { key: 'visit', label: 'Visita', events: ['page_view'] },
-  {
-    key: 'signup_started',
-    label: 'Registro iniciado',
-    events: ['signup_started'],
-  },
-  {
-    key: 'signup_completed',
-    label: 'Usuario registrado',
-    events: ['signup_completed'],
-  },
-  {
-    key: 'email_verified',
-    label: 'Correo verificado',
-    events: ['email_verified'],
-  },
-  { key: 'trip_created', label: 'Viaje creado', events: ['trip_created'] },
-  {
-    key: 'content_added',
-    label: 'Reserva o documento agregado',
-    events: ['external_booking_added', 'document_uploaded'],
-  },
-  { key: 'checkout', label: 'Checkout', events: ['checkout_viewed'] },
-  {
-    key: 'payment_started',
-    label: 'Pago iniciado (Wompi)',
-    events: ['wompi_redirected'],
-  },
-  {
-    key: 'payment_approved',
-    label: 'Pago confirmado',
-    events: ['payment_approved'],
-  },
-  {
-    key: 'travel_mode',
-    label: 'Modo Viaje usado',
-    events: ['travel_mode_opened'],
-  },
-];
+import { codeOf, profile } from '../salidas/rules';
 
 export type Range = { from?: Date; to?: Date };
-
-const pct = (a: number, b: number) => (b ? Math.round((a / b) * 1000) / 10 : 0);
-
-/** Filtro de eventos reales: sin DEMO y sin las cuentas del equipo (admins). */
-const realEvents = (r: Range) => Prisma.sql`
-  e."isDemo" = false
-  AND (e."userId" IS NULL OR e."userId" NOT IN (SELECT id FROM "User" WHERE role = 'ADMIN' OR "isDemo" = true))
-  ${r.from ? Prisma.sql`AND e."createdAt" >= ${r.from}` : Prisma.empty}
-  ${r.to ? Prisma.sql`AND e."createdAt" < ${r.to}` : Prisma.empty}`;
 
 const csvCell = (v: unknown) => {
   if (v == null) return '""';
@@ -65,7 +17,7 @@ const csvCell = (v: unknown) => {
         ? v
         : JSON.stringify(v);
   // Evita que un texto se ejecute como fórmula al abrir el CSV en Excel.
-  const safe = /^[=+\-@]/.test(s) ? `'${s}` : s;
+  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
   return `"${safe.replace(/"/g, '""')}"`;
 };
 export const toCsv = (header: string[], rows: unknown[][]) =>
@@ -75,486 +27,1017 @@ export const toCsv = (header: string[], rows: unknown[][]) =>
     ...rows.map((r) => r.map(csvCell).join(',')),
   ].join('\n');
 
+const ratio = (num: number, den: number) => (den > 0 ? num / den : null);
+
+/** Estados que ya pasaron por cada escalón (una reserva pagada también fue confirmada). */
+const REACHED = {
+  confirmed: ['confirmed', 'payment_reported', 'paid', 'attended', 'no_show'],
+  reported: ['payment_reported', 'paid', 'attended', 'no_show'],
+  paid: ['paid', 'attended', 'no_show'],
+} as const;
+
+type ResWithSalida = Reservation & {
+  salida: {
+    isSimulacro: boolean;
+    isDemo: boolean;
+    status: string;
+    commissionRate: number;
+  };
+  survey?: { id: string } | null;
+};
+
+/** Canal atribuido: el de la URL manda; si no hay, lo que respondió el viajero. */
+export const channelOf = (r: { channel: string | null; heardFrom: string }) =>
+  r.channel ?? r.heardFrom;
+
 @Injectable()
 export class AdminService {
   constructor(private prisma: PrismaService) {}
 
-  private realUser(r: Range = {}): Prisma.UserWhereInput {
-    return {
-      role: 'USER',
-      isDemo: false,
-      createdAt: { gte: r.from, lt: r.to },
-    };
+  private created(r: Range) {
+    return r.from || r.to ? { createdAt: { gte: r.from, lt: r.to } } : {};
   }
 
-  private realTrip(r: Range = {}): Prisma.TripWhereInput {
-    return {
-      isDemo: false,
-      user: { role: 'USER', isDemo: false },
-      createdAt: { gte: r.from, lt: r.to },
-    };
-  }
-
-  private realPayment(
-    r: Range = {},
-    dateField: 'createdAt' | 'verifiedAt' = 'createdAt',
-  ): Prisma.PaymentWhereInput {
-    return {
-      trip: { isDemo: false },
-      user: { isDemo: false },
-      [dateField]: { gte: r.from, lt: r.to },
-    };
-  }
-
-  async metrics(r: Range) {
-    const [
-      byEvent,
-      funnelRows,
-      daily,
-      users,
-      verified,
-      trips,
-      docs,
-      bookings,
-      vaults,
-      plans,
-      payments,
-      revenue,
-      passes,
-    ] = await Promise.all([
-      this.prisma.$queryRaw<
-        { name: string; people: bigint; total: bigint; anon: bigint }[]
-      >`
-          SELECT name, COUNT(DISTINCT COALESCE(e."userId", e."anonId")) AS people, COUNT(*) AS total,
-                 COUNT(DISTINCT e."anonId") AS anon
-          FROM "Event" e WHERE ${realEvents(r)} GROUP BY name`,
-      Promise.all(
-        FUNNEL.map(
-          (s) =>
-            this.prisma.$queryRaw<{ n: bigint }[]>`
-              SELECT COUNT(DISTINCT COALESCE(e."userId", e."anonId")) AS n FROM "Event" e
-              WHERE ${realEvents(r)} AND e.name IN (${Prisma.join(s.events)})`,
-        ),
-      ),
-      this.prisma.$queryRaw<{ day: Date; name: string; n: bigint }[]>`
-          SELECT date_trunc('day', e."createdAt") AS day, e.name, COUNT(DISTINCT COALESCE(e."userId", e."anonId")) AS n
-          FROM "Event" e
-          WHERE ${realEvents({ from: r.from ?? new Date(Date.now() - 30 * 86_400_000), to: r.to })}
-            AND e.name IN ('page_view', 'signup_completed', 'trip_created', 'checkout_viewed', 'payment_approved')
-          GROUP BY 1, 2 ORDER BY 1`,
-      this.prisma.user.count({ where: this.realUser(r) }),
-      this.prisma.user.count({
-        where: { ...this.realUser(r), emailVerifiedAt: { not: null } },
-      }),
-      this.prisma.trip.count({ where: this.realTrip(r) }),
-      this.prisma.vaultDocument.count({
-        where: { trip: this.realTrip(), createdAt: { gte: r.from, lt: r.to } },
-      }),
-      this.prisma.booking.count({
-        where: { trip: this.realTrip(), createdAt: { gte: r.from, lt: r.to } },
-      }),
-      this.prisma.trip.count({
-        where: {
-          ...this.realTrip(),
-          documents: { some: { createdAt: { gte: r.from, lt: r.to } } },
-        },
-      }),
-      this.prisma.savingsPlan.count({
-        where: { trip: this.realTrip(), createdAt: { gte: r.from, lt: r.to } },
-      }),
-      this.prisma.payment.groupBy({
-        by: ['status'],
-        _count: true,
-        where: this.realPayment(r),
-      }),
-      this.prisma.payment.aggregate({
-        _sum: { amount: true },
-        _count: true,
-        where: { ...this.realPayment(r, 'verifiedAt'), status: 'approved' },
-      }),
-      this.prisma.pass.count({
-        where: { status: 'active', trip: { isDemo: false } },
-      }),
-    ]);
-
-    const ev = Object.fromEntries(
-      byEvent.map((e) => [
-        e.name,
-        {
-          people: Number(e.people),
-          total: Number(e.total),
-          anon: Number(e.anon),
-        },
-      ]),
-    );
-    const status = Object.fromEntries(
-      payments.map((p) => [p.status, p._count]),
-    ) as Record<string, number>;
-    const funnel = FUNNEL.map((s, i) => ({
-      key: s.key,
-      label: s.label,
-      value: Number(funnelRows[i][0]?.n ?? 0),
-    }));
-    const withRates = funnel.map((s, i) => ({
-      ...s,
-      fromPrevious: i === 0 ? 100 : pct(s.value, funnel[i - 1].value),
-      fromStart: pct(s.value, funnel[0].value),
-    }));
-
-    const dailyMap: Record<string, Record<string, number | string>> = {};
-    for (const row of daily) {
-      const key = row.day.toISOString().slice(0, 10);
-      dailyMap[key] ??= { day: key };
-      dailyMap[key][row.name] = Number(row.n);
-    }
-
-    return {
-      kpis: {
-        visits: ev.page_view?.total ?? 0,
-        uniqueVisitors: ev.page_view?.anon ?? 0,
-        users,
-        verified,
-        trips,
-        vaultsUsed: vaults,
-        documents: docs,
-        bookings,
-        savingsPlans: plans,
-        checkouts: ev.checkout_viewed?.people ?? 0,
-        wompiClicks: ev.wompi_redirected?.total ?? 0,
-        paymentsApproved: revenue._count,
-        paymentsPending:
-          (status.pending ?? 0) + (status.pending_verification ?? 0),
-        paymentsDeclined: (status.declined ?? 0) + (status.error ?? 0),
-        passesActive: passes,
-        revenue: revenue._sum.amount ?? 0,
-        travelModeUsers: ev.travel_mode_opened?.people ?? 0,
-        whatsappClicks: ev.whatsapp_click?.total ?? 0,
+  /** Reservas que cuentan: ni DEMO ni de simulacros. */
+  private realReservations(r: Range = {}) {
+    return this.prisma.reservation.findMany({
+      where: {
+        isDemo: false,
+        salida: { isDemo: false, isSimulacro: false },
+        ...this.created(r),
       },
-      funnel: withRates,
-      daily: Object.values(dailyMap),
-      events: Object.entries(ev)
-        .map(([name, v]) => ({ name, ...v }))
-        .sort((a, b) => b.total - a.total),
-    };
+      include: {
+        salida: {
+          select: {
+            isSimulacro: true,
+            isDemo: true,
+            status: true,
+            commissionRate: true,
+          },
+        },
+        survey: { select: { id: true } },
+      },
+    }) as Promise<ResWithSalida[]>;
   }
 
-  async finance(r: Range) {
-    const [approved, pending, declined, costs, monthly] = await Promise.all([
-      this.prisma.payment.aggregate({
-        _sum: { amount: true },
-        _count: true,
-        where: { ...this.realPayment(r, 'verifiedAt'), status: 'approved' },
+  /** Visitantes únicos por evento (y por variante). */
+  private async uniques(
+    names: string[],
+    r: Range,
+    by: 'variant' | 'channel' | null = null,
+  ) {
+    const where: Prisma.EventWhereInput = {
+      name: { in: names },
+      isDemo: false,
+      ...this.created(r),
+    };
+    const rows = await this.prisma.event.findMany({
+      where,
+      select: {
+        name: true,
+        anonId: true,
+        variant: true,
+        channel: true,
+        id: true,
+      },
+    });
+    const out = new Map<string, Set<string>>();
+    for (const e of rows) {
+      const key = `${e.name}|${by ? (e[by] ?? '—') : ''}`;
+      if (!out.has(key)) out.set(key, new Set());
+      out.get(key)!.add(e.anonId ?? e.id);
+    }
+    return (name: string, group = '') => out.get(`${name}|${group}`)?.size ?? 0;
+  }
+
+  // ───────────── Tablero de evidencia ─────────────
+
+  async overview(range: Range) {
+    const [res, waitlist, hosts, ab, funnel, channels, value, viability] =
+      await Promise.all([
+        this.realReservations(range),
+        this.prisma.waitlistEntry.count({ where: this.created(range) }),
+        this.hostsProgress(),
+        this.abTest(range),
+        this.funnel(range),
+        this.channels(range),
+        this.valueDelivered(),
+        this.viability(),
+      ]);
+
+    const withProfile = res.map((x) => ({ ...x, profile: profile(x) }));
+    const reached = (k: keyof typeof REACHED) =>
+      withProfile.filter((x) =>
+        (REACHED[k] as readonly string[]).includes(x.status),
+      );
+    const paidAll = reached('paid');
+    const paidQualified = paidAll.filter((x) => x.profile.qualifies === true);
+
+    const evidence = {
+      interest: waitlist,
+      reservations: withProfile.length,
+      qualified: withProfile.filter((x) => x.profile.qualifies === true).length,
+      pendingReview: withProfile.filter((x) => x.profile.qualifies === null)
+        .length,
+      friendsFamily: withProfile.filter((x) => x.knowsTeam).length,
+      paymentReported: reached('reported').length,
+      paid: paidAll.length,
+      paidQualified: paidQualified.length,
+      conversionToPay: ratio(paidAll.length, withProfile.length),
+      simulacros: await this.prisma.reservation.count({
+        where: { salida: { isSimulacro: true }, isDemo: false },
       }),
-      this.prisma.payment.aggregate({
-        _sum: { amount: true },
-        _count: true,
-        where: {
-          ...this.realPayment(r),
-          status: { in: ['pending', 'pending_verification'] },
-        },
-      }),
-      this.prisma.payment.count({
-        where: {
-          ...this.realPayment(r),
-          status: { in: ['declined', 'error'] },
-        },
-      }),
-      this.prisma.adminCost.findMany({
-        where: { date: { gte: r.from, lt: r.to } },
-        orderBy: { date: 'desc' },
-      }),
-      this.prisma.$queryRaw<{ month: Date; revenue: bigint; sales: bigint }[]>`
-        SELECT date_trunc('month', p."verifiedAt") AS month, SUM(p.amount) AS revenue, COUNT(*) AS sales
-        FROM "Payment" p JOIN "Trip" t ON t.id = p."tripId" JOIN "User" u ON u.id = p."userId"
-        WHERE p.status = 'approved' AND t."isDemo" = false AND u."isDemo" = false
-        GROUP BY 1 ORDER BY 1`,
-    ]);
-    const revenue = approved._sum.amount ?? 0;
-    const variable = costs
-      .filter((c) => c.kind === 'variable')
-      .reduce((s, c) => s + c.amount, 0);
-    const fixed = costs
-      .filter((c) => c.kind === 'fijo')
-      .reduce((s, c) => s + c.amount, 0);
-    const byCategory = Object.entries(
-      costs.reduce<Record<string, number>>(
-        (acc, c) => ({
-          ...acc,
-          [c.category]: (acc[c.category] ?? 0) + c.amount,
-        }),
-        {},
-      ),
-    ).map(([category, amount]) => ({ category, amount }));
+    };
+
+    const spend = await this.spendByChannel(range);
+    const totalSpend = [...spend.values()].reduce((a, b) => a + b, 0);
+    const newPaid = paidAll.length; // el CAC global usa todas las reservas pagadas del periodo
     return {
-      revenue,
-      sales: approved._count,
-      avgTicket: approved._count ? Math.round(revenue / approved._count) : 0,
-      pendingCount: pending._count,
-      pendingAmount: pending._sum.amount ?? 0,
-      declinedCount: declined,
-      variableCosts: variable,
-      fixedCosts: fixed,
-      contributionMargin: revenue - variable,
-      operatingResult: revenue - variable - fixed,
-      costsByCategory: byCategory,
-      costs,
-      monthly: monthly.map((m) => ({
-        month: m.month.toISOString().slice(0, 7),
-        revenue: Number(m.revenue),
-        sales: Number(m.sales),
-      })),
+      targets: TARGETS,
+      evidence,
+      cac: {
+        spend: totalSpend,
+        paid: newPaid,
+        value: newPaid ? totalSpend / newPaid : null,
+      },
+      hosts,
+      ab,
+      funnel,
+      channels,
+      value,
+      viability,
     };
   }
 
-  users() {
-    return this.prisma.user
-      .findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 500,
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          role: true,
-          isDemo: true,
-          emailVerifiedAt: true,
-          utmSource: true,
-          createdAt: true,
-          _count: {
-            select: {
-              trips: true,
-              payments: { where: { status: 'approved' } },
-            },
-          },
-        },
-      })
-      .then((list) =>
-        list.map(({ _count, ...u }) => ({
-          ...u,
-          trips: _count.trips,
-          paidPasses: _count.payments,
-        })),
+  private async spendByChannel(range: Range) {
+    const costs = await this.prisma.adminCost.findMany({
+      where: {
+        category: 'pauta',
+        ...(range.from || range.to
+          ? { date: { gte: range.from, lt: range.to } }
+          : {}),
+      },
+      select: { channel: true, amount: true },
+    });
+    const m = new Map<string, number>();
+    for (const c of costs)
+      m.set(
+        c.channel ?? 'SIN_CANAL',
+        (m.get(c.channel ?? 'SIN_CANAL') ?? 0) + c.amount,
       );
+    return m;
   }
 
-  trips() {
-    return this.prisma.trip
-      .findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 500,
-        include: {
-          user: { select: { email: true, firstName: true, lastName: true } },
-          pass: { select: { status: true } },
-          savingsPlan: {
-            select: {
-              targetAmount: true,
-              initialSaved: true,
-              contributions: { select: { amount: true } },
-            },
-          },
-          _count: {
-            select: {
-              bookings: true,
-              documents: true,
-              items: true,
-              expenses: true,
-            },
-          },
+  async hostsProgress() {
+    const hosts = await this.prisma.host.findMany({
+      select: { status: true, commissionAccepted: true, isTestHost: true },
+    });
+    const real = hosts.filter((h) => !h.isTestHost);
+    return {
+      total: real.length,
+      contacted: real.filter((h) => h.status !== 'prospect').length,
+      accepted: real.filter(
+        (h) =>
+          (h.commissionAccepted ?? 0) >= 0.16 &&
+          ['accepted', 'active'].includes(h.status),
+      ).length,
+      acceptedAt20: real.filter(
+        (h) =>
+          (h.commissionAccepted ?? 0) >= 0.2 &&
+          ['accepted', 'active'].includes(h.status),
+      ).length,
+      testHosts: hosts.length - real.length,
+    };
+  }
+
+  /** TC0: visitas, clics y leads por variante. Ganador: ≥ 60 visitas por variante y ≥ 5 pp de diferencia. */
+  async abTest(range: Range) {
+    const u = await this.uniques(
+      ['landing_view', 'hook_cta_clicked'],
+      range,
+      'variant',
+    );
+    const [wl, rs] = await Promise.all([
+      this.prisma.waitlistEntry.groupBy({
+        by: ['variant'],
+        where: this.created(range),
+        _count: { _all: true },
+      }),
+      this.prisma.reservation.groupBy({
+        by: ['variant'],
+        where: {
+          isDemo: false,
+          salida: { isDemo: false, isSimulacro: false },
+          ...this.created(range),
         },
+        _count: { _all: true },
+      }),
+    ]);
+    const count = (
+      rows: { variant: string | null; _count: { _all: number } }[],
+      v: string,
+    ) => rows.find((x) => x.variant === v)?._count._all ?? 0;
+    const variants = (['A', 'B'] as const).map((v) => {
+      const visits = u('landing_view', v);
+      const clicks = u('hook_cta_clicked', v);
+      const leads = count(wl, v) + count(rs, v);
+      return {
+        variant: v,
+        label:
+          v === 'A'
+            ? 'Tribu Cero · "Ve solo, sal acompañado"'
+            : 'Reset 180° · "3 horas sin celular"',
+        visits,
+        clicks,
+        waitlist: count(wl, v),
+        reservations: count(rs, v),
+        clickRate: ratio(clicks, visits),
+        leadRate: ratio(leads, visits),
+      };
+    });
+    const [a, b] = variants;
+    const enough =
+      a.visits >= TARGETS.tc0ClicksPerVariant &&
+      b.visits >= TARGETS.tc0ClicksPerVariant;
+    const diffPp =
+      a.leadRate != null && b.leadRate != null
+        ? (a.leadRate - b.leadRate) * 100
+        : null;
+    const winner =
+      enough && diffPp != null && Math.abs(diffPp) >= TARGETS.tc0DiffPp
+        ? diffPp > 0
+          ? 'A'
+          : 'B'
+        : null;
+    return {
+      variants,
+      enough,
+      diffPp,
+      winner,
+      decision: !enough
+        ? `Faltan visitas: se necesitan ${TARGETS.tc0ClicksPerVariant} por variante.`
+        : winner
+          ? `Lidera la variante ${winner}.`
+          : 'Ninguna gana por 5 pp o más: se comunican los dos ganchos juntos.',
+    };
+  }
+
+  async funnel(range: Range) {
+    const u = await this.uniques(
+      [
+        'landing_view',
+        'hook_cta_clicked',
+        'salida_viewed',
+        'reserve_started',
+        'whatsapp_clicked',
+      ],
+      range,
+    );
+    const res = await this.realReservations(range);
+    const reached = (k: keyof typeof REACHED) =>
+      res.filter((x) => (REACHED[k] as readonly string[]).includes(x.status))
+        .length;
+    const steps = [
+      { key: 'visit', label: 'Visitas', value: u('landing_view') },
+      { key: 'cta', label: 'Clic en el gancho', value: u('hook_cta_clicked') },
+      { key: 'salida', label: 'Ven una salida', value: u('salida_viewed') },
+      {
+        key: 'start',
+        label: 'Empiezan la reserva',
+        value: u('reserve_started'),
+      },
+      { key: 'reserved', label: 'Reserva creada', value: res.length },
+      {
+        key: 'whatsapp',
+        label: 'Abren WhatsApp',
+        value: u('whatsapp_clicked'),
+      },
+      {
+        key: 'confirmed',
+        label: 'Cupo confirmado',
+        value: reached('confirmed'),
+      },
+      { key: 'reported', label: 'Pago reportado', value: reached('reported') },
+      { key: 'paid', label: 'Pago verificado', value: reached('paid') },
+      {
+        key: 'attended',
+        label: 'Asistieron',
+        value: res.filter((x) => x.status === 'attended').length,
+      },
+      {
+        key: 'survey',
+        label: 'Respondieron la encuesta',
+        value: res.filter((x) => x.survey).length,
+      },
+    ];
+    const first = steps[0].value;
+    return steps.map((s, i) => ({
+      ...s,
+      fromPrevious: i === 0 ? null : ratio(s.value, steps[i - 1].value),
+      fromStart: ratio(s.value, first),
+    }));
+  }
+
+  /** Canales: reservas, pagos, pauta y CAC por canal (regla §5.6: CAC > $10.400 dos salidas seguidas → se corta). */
+  async channels(range: Range) {
+    const [res, spend, visits] = await Promise.all([
+      this.realReservations(range),
+      this.spendByChannel(range),
+      this.uniques(['landing_view'], range, 'channel'),
+    ]);
+    const keys = new Set<string>([
+      ...Object.keys(CHANNELS),
+      ...spend.keys(),
+      ...res.map(channelOf),
+    ]);
+    return [...keys]
+      .map((ch) => {
+        const mine = res.filter((x) => channelOf(x) === ch);
+        const paid = mine.filter((x) =>
+          (REACHED.paid as readonly string[]).includes(x.status),
+        ).length;
+        const s = spend.get(ch) ?? 0;
+        return {
+          channel: ch,
+          label: (CHANNELS as Record<string, string>)[ch] ?? ch,
+          visits: visits('landing_view', ch),
+          reservations: mine.length,
+          paid,
+          spend: s,
+          cac: paid ? s / paid : null,
+          overCac: paid ? s / paid > TARGETS.cacMax : s > 0,
+        };
       })
-      .then((list) =>
-        list.map((t) => {
-          const saved = t.savingsPlan
-            ? t.savingsPlan.initialSaved +
-              t.savingsPlan.contributions.reduce((s, c) => s + c.amount, 0)
-            : null;
-          return {
-            id: t.id,
-            title: t.title,
-            mode: t.mode,
-            destination: `${t.destinationCity}, ${t.destinationCountry}`,
-            startDate: t.startDate,
-            endDate: t.endDate,
-            travelerCount: t.travelerCount,
-            budgetAmount: t.budgetAmount,
-            isDemo: t.isDemo,
-            user: t.user,
-            pass: t.isDemo ? 'demo' : (t.pass?.status ?? 'none'),
-            savingsProgress:
-              t.savingsPlan && saved != null
-                ? Math.min(
-                    100,
-                    Math.round((saved / t.savingsPlan.targetAmount) * 100),
-                  )
-                : null,
-            counts: t._count,
-            createdAt: t.createdAt,
-          };
+      .filter((c) => c.visits || c.reservations || c.spend)
+      .sort((a, b) => b.reservations - a.reservations);
+  }
+
+  /** Métricas de entrega de valor (documento §4.3), separadas en salidas reales y simulacros. */
+  async valueDelivered() {
+    const compute = async (isSimulacro: boolean) => {
+      const where = { isDemo: false, salida: { isDemo: false, isSimulacro } };
+      const [surveys, attended, salidas] = await Promise.all([
+        this.prisma.surveyResponse.findMany({ where: { reservation: where } }),
+        this.prisma.reservation.findMany({
+          where: { ...where, status: 'attended' },
+          select: { phoneChallenge: true, challengeCompleted: true },
         }),
+        this.prisma.salida.findMany({
+          where: { isDemo: false, isSimulacro, status: 'done' },
+          select: {
+            hostNewClients: true,
+            _count: {
+              select: { reservations: { where: { status: 'attended' } } },
+            },
+          },
+        }),
+      ]);
+      const solo = surveys.filter((s) => s.cameAlone);
+      const promoters = surveys.filter((s) => s.nps >= 9).length;
+      const detractors = surveys.filter((s) => s.nps <= 6).length;
+      const challenged = attended.filter(
+        (a) => a.phoneChallenge && a.challengeCompleted !== null,
       );
+      const interviewed = salidas.filter((s) => s.hostNewClients != null);
+      const hostNew = interviewed.reduce(
+        (a, s) => a + (s.hostNewClients ?? 0),
+        0,
+      );
+      const hostBase = interviewed.reduce(
+        (a, s) => a + s._count.reservations,
+        0,
+      );
+      return {
+        surveys: surveys.length,
+        attended: attended.length,
+        salidasDone: salidas.length,
+        newContactRate: {
+          value: ratio(solo.filter((s) => s.newContact).length, solo.length),
+          n: solo.length,
+          target: TARGETS.newContactRate,
+        },
+        wouldReturnRate: {
+          value: ratio(
+            surveys.filter((s) => s.wouldReturn).length,
+            surveys.length,
+          ),
+          n: surveys.length,
+          target: TARGETS.wouldReturnRate,
+        },
+        nps: {
+          value: surveys.length
+            ? ((promoters - detractors) / surveys.length) * 100
+            : null,
+          n: surveys.length,
+          target: TARGETS.nps,
+        },
+        challengeRate: {
+          value: ratio(
+            challenged.filter((a) => a.challengeCompleted).length,
+            challenged.length,
+          ),
+          n: challenged.length,
+          target: TARGETS.challengeRate,
+        },
+        hostConfirmsRate: {
+          value: ratio(hostNew, hostBase),
+          n: hostBase,
+          target: TARGETS.hostConfirmsRate,
+        },
+        improvements: surveys
+          .filter((s) => s.improve)
+          .slice(-20)
+          .map((s) => s.improve),
+      };
+    };
+    const [real, simulacro] = await Promise.all([
+      compute(false),
+      compute(true),
+    ]);
+    return { real, simulacro };
   }
 
-  payments() {
-    return this.prisma.payment.findMany({
+  /** Decisión de viabilidad (documento §7.8): se evalúa con 4 salidas reales hechas. */
+  async viability() {
+    const fin = await this.finance({});
+    const done = await this.prisma.salida.count({
+      where: { isDemo: false, isSimulacro: false, status: 'done' },
+    });
+    const value = await this.valueDelivered();
+    const returnSignal = Math.max(
+      fin.unit.repurchaseRate ?? 0,
+      value.real.wouldReturnRate.value ?? 0,
+    );
+    const hasReturnData =
+      fin.unit.repurchaseRate != null ||
+      value.real.wouldReturnRate.value != null;
+    const conditions = [
+      {
+        key: 'contribution',
+        label: 'Contribución por reserva ≥ $0',
+        value: fin.unit.contribution,
+        ok: fin.unit.contribution == null ? null : fin.unit.contribution >= 0,
+      },
+      {
+        key: 'cac',
+        label: 'CAC ≤ $10.400',
+        value: fin.unit.cac,
+        ok: fin.unit.cac == null ? null : fin.unit.cac <= TARGETS.cacMax,
+      },
+      {
+        key: 'return',
+        label: 'Recompra o intención de volver ≥ 25 %',
+        value: hasReturnData ? returnSignal : null,
+        ok: hasReturnData ? returnSignal >= TARGETS.repurchaseMin : null,
+      },
+    ];
+    const failed = conditions.filter((c) => c.ok === false).length;
+    return {
+      salidasDone: done,
+      ready: done >= 4,
+      conditions,
+      decision:
+        done < 4
+          ? `Se decide después de 4 salidas reales (van ${done}).`
+          : failed === 0
+            ? 'Se sigue: se cumplen las tres condiciones.'
+            : failed === 1
+              ? 'Falla una condición: se pivota esa palanca.'
+              : 'Fallan dos o más: se replantea el modelo.',
+    };
+  }
+
+  // ───────────── Finanzas reales ─────────────
+
+  async finance(range: Range) {
+    const inRange = (d: Date | null) =>
+      !!d && (!range.from || d >= range.from) && (!range.to || d < range.to);
+    const res = await this.prisma.reservation.findMany({
+      where: {
+        isDemo: false,
+        salida: { isDemo: false, isSimulacro: false },
+        status: { in: [...REACHED.paid] },
+      },
+      include: {
+        salida: {
+          select: {
+            id: true,
+            status: true,
+            commissionRate: true,
+            startsAt: true,
+          },
+        },
+      },
+    });
+    const paid = res.filter((r) => inRange(r.paidAt ?? r.createdAt));
+    const salidas = await this.prisma.salida.findMany({
+      where: {
+        isDemo: false,
+        isSimulacro: false,
+        status: { in: ['done', 'open', 'closed'] },
+      },
+      select: {
+        id: true,
+        startsAt: true,
+        status: true,
+        commissionPaidAmount: true,
+        commissionPaidAt: true,
+        coordinatorHours: true,
+      },
+    });
+    const costs = await this.prisma.adminCost.findMany({
+      where:
+        range.from || range.to
+          ? { date: { gte: range.from, lt: range.to } }
+          : {},
+      orderBy: { date: 'asc' },
+    });
+
+    // La comisión se causa cuando la salida se realiza (status done) con reservas pagadas o que asistieron.
+    const doneIds = new Set(
+      salidas.filter((s) => s.status === 'done').map((s) => s.id),
+    );
+    const accrued = paid
+      .filter((r) => doneIds.has(r.salidaId) && r.status !== 'no_show')
+      .reduce(
+        (a, r) => a + r.price * r.salida.commissionRate + r.serviceFee,
+        0,
+      );
+    const collected = salidas
+      .filter((s) => inRange(s.commissionPaidAt))
+      .reduce((a, s) => a + (s.commissionPaidAmount ?? 0), 0);
+    const gmv = paid.reduce((a, r) => a + r.price, 0);
+    const byCat = (cat: string) =>
+      costs.filter((c) => c.category === cat).reduce((a, c) => a + c.amount, 0);
+    const variable = byCat('pauta') + byCat('kit') + byCat('horas');
+    const fixed = costs
+      .filter((c) => !['pauta', 'kit', 'horas'].includes(c.category))
+      .reduce((a, c) => a + c.amount, 0);
+
+    // Recompra: personas (por WhatsApp) con más de una reserva pagada.
+    const byPhone = new Map<string, number>();
+    for (const r of res) byPhone.set(r.phone, (byPhone.get(r.phone) ?? 0) + 1);
+    const buyers = byPhone.size;
+    const repeaters = [...byPhone.values()].filter((n) => n > 1).length;
+
+    // Por mes (America/Bogota ≈ UTC−5; se agrupa por la fecha del pago).
+    const month = (d: Date) =>
+      new Date(d.getTime() - 5 * 3_600_000).toISOString().slice(0, 7);
+    const months = new Map<
+      string,
+      {
+        month: string;
+        bookings: number;
+        gmv: number;
+        commission: number;
+        costs: number;
+      }
+    >();
+    const row = (m: string) => {
+      if (!months.has(m))
+        months.set(m, {
+          month: m,
+          bookings: 0,
+          gmv: 0,
+          commission: 0,
+          costs: 0,
+        });
+      return months.get(m)!;
+    };
+    for (const r of paid) {
+      const m = row(month(r.paidAt ?? r.createdAt));
+      m.bookings += 1;
+      m.gmv += r.price;
+      if (doneIds.has(r.salidaId) && r.status !== 'no_show')
+        m.commission += r.price * r.salida.commissionRate + r.serviceFee;
+    }
+    for (const c of costs) row(month(c.date)).costs += c.amount;
+
+    const n = paid.length;
+    const hours = salidas.filter((s) => s.coordinatorHours != null);
+    return {
+      paidBookings: n,
+      gmv,
+      commissionAccrued: accrued,
+      commissionCollected: collected,
+      costs: {
+        pauta: byCat('pauta'),
+        kit: byCat('kit'),
+        horas: byCat('horas'),
+        fijos: byCat('fijos'),
+        formalizacion: byCat('formalizacion'),
+        otros: byCat('otros'),
+        variable,
+        fixed,
+        total: variable + fixed,
+      },
+      result: accrued - variable - fixed,
+      unit: {
+        ticket: n ? gmv / n : null,
+        commissionPerBooking: n ? accrued / n : null,
+        cac: n && byCat('pauta') ? byCat('pauta') / n : n ? 0 : null,
+        contribution: n ? (accrued - variable) / n : null,
+        repurchaseRate: buyers ? repeaters / buyers : null,
+        avgCoordinatorHours: hours.length
+          ? hours.reduce((a, s) => a + (s.coordinatorHours ?? 0), 0) /
+            hours.length
+          : null,
+      },
+      byMonth: [...months.values()].sort((a, b) =>
+        a.month.localeCompare(b.month),
+      ),
+      note: 'La comisión se causa cuando la salida queda como realizada. El valor reservado es del anfitrión, no de AiTrava.',
+    };
+  }
+
+  /** Supuestos que salen de los datos reales, para "Usar datos reales" en el modelo (solo los que ya tienen datos). */
+  async modelActuals() {
+    const fin = await this.finance({});
+    const salidas = await this.prisma.salida.findMany({
+      where: { isDemo: false, isSimulacro: false, status: 'done' },
+      select: {
+        capacity: true,
+        _count: {
+          select: {
+            reservations: { where: { status: { in: ['attended', 'paid'] } } },
+          },
+        },
+      },
+    });
+    const cap = salidas.reduce((a, s) => a + s.capacity, 0);
+    const att = salidas.reduce((a, s) => a + s._count.reservations, 0);
+    const commissions = await this.prisma.salida.aggregate({
+      where: { isDemo: false, isSimulacro: false, status: 'done' },
+      _avg: { commissionRate: true },
+    });
+    return {
+      salidasDone: salidas.length,
+      ticket: fin.unit.ticket,
+      occupancy: cap ? att / cap : null,
+      cac:
+        fin.paidBookings && fin.costs.pauta
+          ? fin.costs.pauta / fin.paidBookings
+          : null,
+      hours: fin.unit.avgCoordinatorHours,
+      repurchase: fin.unit.repurchaseRate,
+      commission: salidas.length
+        ? (commissions._avg.commissionRate ?? null)
+        : null,
+      kitPerSalida:
+        salidas.length && fin.costs.kit ? fin.costs.kit / salidas.length : null,
+      base: BASE,
+    };
+  }
+
+  // ───────────── Listados ─────────────
+
+  async salidas() {
+    const salidas = await this.prisma.salida.findMany({
+      orderBy: { startsAt: 'desc' },
+      include: {
+        place: { select: { name: true, line: true } },
+        host: { select: { name: true } },
+      },
+    });
+    const counts = await this.prisma.reservation.groupBy({
+      by: ['salidaId', 'status'],
+      _count: { _all: true },
+    });
+    const now = new Date();
+    const holds = await this.prisma.reservation.groupBy({
+      by: ['salidaId'],
+      where: { status: 'requested', holdUntil: { gt: now } },
+      _count: { _all: true },
+    });
+    return salidas.map((s) => {
+      const c = (st: string) =>
+        counts.find((x) => x.salidaId === s.id && x.status === st)?._count
+          ._all ?? 0;
+      const seats =
+        (holds.find((h) => h.salidaId === s.id)?._count._all ?? 0) +
+        c('confirmed') +
+        c('payment_reported') +
+        c('paid') +
+        c('attended');
+      return {
+        ...s,
+        seatsTaken: seats,
+        counts: {
+          requested: c('requested'),
+          confirmed: c('confirmed'),
+          payment_reported: c('payment_reported'),
+          paid: c('paid'),
+          attended: c('attended'),
+          no_show: c('no_show'),
+          cancelled: c('cancelled'),
+          expired: c('expired'),
+        },
+      };
+    });
+  }
+
+  reservationView(
+    r: Reservation & {
+      survey?: unknown;
+      salida?: {
+        title: string;
+        slug: string;
+        startsAt: Date;
+        isSimulacro: boolean;
+      };
+    },
+  ) {
+    const { tokenHash, surveyTokenHash, ...rest } = r;
+    void tokenHash;
+    return {
+      ...rest,
+      code: codeOf(r.number),
+      hasSurveyLink: !!surveyTokenHash,
+      holdExpired: r.status === 'requested' && r.holdUntil <= new Date(),
+      profile: profile(r),
+    };
+  }
+
+  async reservations(filter: {
+    status?: string;
+    salidaId?: string;
+    q?: string;
+  }) {
+    const q = filter.q?.trim();
+    const digits = q?.replace(/\D/g, '');
+    const rows = await this.prisma.reservation.findMany({
+      where: {
+        status: filter.status
+          ? (filter.status as Reservation['status'])
+          : undefined,
+        salidaId: filter.salidaId || undefined,
+        OR: q
+          ? [
+              { name: { contains: q, mode: 'insensitive' } },
+              ...(digits && digits.length >= 4
+                ? [{ phone: { contains: digits } }]
+                : []),
+              ...(/^\d{1,6}$/.test(digits ?? '')
+                ? [{ number: Number(digits) }]
+                : []),
+            ]
+          : undefined,
+      },
       orderBy: { createdAt: 'desc' },
       take: 500,
       include: {
-        user: {
+        survey: true,
+        salida: {
           select: {
-            email: true,
-            firstName: true,
-            lastName: true,
-            isDemo: true,
+            title: true,
+            slug: true,
+            startsAt: true,
+            isSimulacro: true,
           },
         },
-        trip: { select: { id: true, title: true, isDemo: true } },
       },
     });
+    return rows.map((r) => this.reservationView(r));
   }
 
-  feedback() {
-    return this.prisma.feedback.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 300,
-    });
-  }
+  // ───────────── CSV ─────────────
 
-  messages() {
-    return this.prisma.contactMessage.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 300,
-    });
-  }
-
-  // ── Exportaciones CSV (sin contraseñas ni tokens) ─────────────────────
-
-  async exportCsv(entity: string) {
-    if (entity === 'usuarios') {
-      const rows = await this.users();
+  async csv(entity: string): Promise<string | null> {
+    const d = (x: Date | null | undefined) => x ?? '';
+    if (entity === 'reservas') {
+      const rows = await this.prisma.reservation.findMany({
+        orderBy: { number: 'asc' },
+        include: {
+          salida: {
+            select: {
+              title: true,
+              startsAt: true,
+              isSimulacro: true,
+              isDemo: true,
+            },
+          },
+          survey: true,
+        },
+      });
       return toCsv(
         [
-          'id',
-          'nombre',
-          'apellido',
-          'correo',
-          'rol',
-          'demo',
-          'correo_verificado',
-          'fuente',
-          'viajes',
-          'pass_pagados',
-          'creado',
-        ],
-        rows.map((u) => [
-          u.id,
-          u.firstName,
-          u.lastName,
-          u.email,
-          u.role,
-          u.isDemo,
-          u.emailVerifiedAt,
-          u.utmSource,
-          u.trips,
-          u.paidPasses,
-          u.createdAt,
-        ]),
-      );
-    }
-    if (entity === 'viajes') {
-      const rows = await this.trips();
-      return toCsv(
-        [
-          'id',
-          'titulo',
-          'modo',
-          'destino',
+          'codigo',
           'salida',
-          'regreso',
-          'viajeros',
-          'presupuesto',
+          'fecha_salida',
+          'simulacro',
           'demo',
-          'correo',
-          'pass',
-          'ahorro_pct',
-          'reservas',
-          'documentos',
-          'actividades',
-          'creado',
+          'nombre',
+          'whatsapp',
+          'estado',
+          'precio',
+          'v1_mayor',
+          'v2_cali',
+          'v3_no_conoce_equipo',
+          'v4_canal_aitrava',
+          'v5_intencion',
+          'cumple_perfil',
+          'motivacion',
+          'canal_url',
+          'como_nos_conocio',
+          'variante',
+          'viene_solo',
+          'reto_celular',
+          'reto_completado',
+          'creada',
+          'pago_reportado',
+          'pagada',
+          'nps',
+          'contacto_nuevo',
+          'volveria',
         ],
-        rows.map((t) => [
-          t.id,
-          t.title,
-          t.mode,
-          t.destination,
-          t.startDate,
-          t.endDate,
-          t.travelerCount,
-          t.budgetAmount,
-          t.isDemo,
-          t.user.email,
-          t.pass,
-          t.savingsProgress,
-          t.counts.bookings,
-          t.counts.documents,
-          t.counts.items,
-          t.createdAt,
-        ]),
+        rows.map((r) => {
+          const p = profile(r);
+          return [
+            codeOf(r.number),
+            r.salida.title,
+            r.salida.startsAt,
+            r.salida.isSimulacro,
+            r.isDemo || r.salida.isDemo,
+            r.name,
+            r.phone,
+            r.status,
+            r.price,
+            p.v1,
+            p.v2,
+            p.v3,
+            p.v4,
+            p.v5 ?? '',
+            p.qualifies ?? 'por revisar',
+            r.motivation,
+            r.channel ?? '',
+            r.heardFrom,
+            r.variant ?? '',
+            r.comesAlone,
+            r.phoneChallenge,
+            r.challengeCompleted ?? '',
+            r.createdAt,
+            d(r.paymentReportedAt),
+            d(r.paidAt),
+            r.survey?.nps ?? '',
+            r.survey?.newContact ?? '',
+            r.survey?.wouldReturn ?? '',
+          ];
+        }),
       );
     }
-    if (entity === 'pagos') {
-      const rows = await this.payments();
+    if (entity === 'espera') {
+      const rows = await this.prisma.waitlistEntry.findMany({
+        orderBy: { createdAt: 'asc' },
+      });
       return toCsv(
         [
-          'referencia',
-          'estado',
-          'valor',
-          'moneda',
-          'correo',
-          'viaje',
-          'verificado_por',
-          'verificado',
-          'tx_wompi',
-          'creado',
+          'nombre',
+          'whatsapp',
+          'linea',
+          'motivacion',
+          'variante',
+          'canal',
+          'fecha',
         ],
-        rows.map((p) => [
-          p.reference,
-          p.status,
-          p.amount,
-          p.currency,
-          p.user.email,
-          p.trip.title,
-          p.verifiedVia,
-          p.verifiedAt,
-          p.providerTxId,
-          p.createdAt,
+        rows.map((w) => [
+          w.name,
+          w.phone,
+          w.line ?? '',
+          w.motivation ?? '',
+          w.variant ?? '',
+          w.channel ?? '',
+          w.createdAt,
         ]),
       );
     }
-    if (entity === 'finanzas') {
+    if (entity === 'anfitriones') {
+      const rows = await this.prisma.host.findMany({
+        orderBy: { createdAt: 'asc' },
+      });
+      return toCsv(
+        [
+          'nombre',
+          'whatsapp',
+          'correo',
+          'organizacion',
+          'actividad',
+          'zona',
+          'rnt',
+          'estado',
+          'comision_aceptada',
+          'anfitrion_de_prueba',
+          'origen',
+          'notas',
+          'creado',
+        ],
+        rows.map((h) => [
+          h.name,
+          h.phone ?? '',
+          h.email ?? '',
+          h.organization ?? '',
+          h.activity,
+          h.area ?? '',
+          h.rnt ?? '',
+          h.status,
+          h.commissionAccepted ?? '',
+          h.isTestHost,
+          h.source,
+          h.notes ?? '',
+          h.createdAt,
+        ]),
+      );
+    }
+    if (entity === 'encuestas') {
+      const rows = await this.prisma.surveyResponse.findMany({
+        orderBy: { createdAt: 'asc' },
+        include: {
+          reservation: {
+            include: { salida: { select: { title: true, isSimulacro: true } } },
+          },
+        },
+      });
+      return toCsv(
+        [
+          'codigo',
+          'salida',
+          'simulacro',
+          'vino_solo',
+          'contacto_nuevo',
+          'nps',
+          'volveria',
+          'a_donde',
+          'que_cambiaria',
+          'fecha',
+        ],
+        rows.map((s) => [
+          codeOf(s.reservation.number),
+          s.reservation.salida.title,
+          s.reservation.salida.isSimulacro,
+          s.cameAlone,
+          s.newContact,
+          s.nps,
+          s.wouldReturn,
+          s.returnPlace ?? '',
+          s.improve ?? '',
+          s.createdAt,
+        ]),
+      );
+    }
+    if (entity === 'costos') {
       const rows = await this.prisma.adminCost.findMany({
         orderBy: { date: 'asc' },
       });
       return toCsv(
-        ['fecha', 'categoria', 'tipo', 'valor', 'descripcion'],
-        rows.map((c) => [c.date, c.category, c.kind, c.amount, c.description]),
+        ['fecha', 'categoria', 'tipo', 'canal', 'valor', 'descripcion'],
+        rows.map((c) => [
+          c.date,
+          c.category,
+          c.kind,
+          c.channel ?? '',
+          c.amount,
+          c.description ?? '',
+        ]),
       );
     }
-    const events = await this.prisma.event.findMany({
-      orderBy: { createdAt: 'asc' },
-      take: 50_000,
-    });
-    return toCsv(
-      ['fecha', 'evento', 'usuario', 'viaje', 'anonimo', 'demo', 'props'],
-      events.map((e) => [
-        e.createdAt,
-        e.name,
-        e.userId,
-        e.tripId,
-        e.anonId,
-        e.isDemo,
-        e.props,
-      ]),
-    );
+    if (entity === 'salidas') {
+      const rows = await this.salidas();
+      return toCsv(
+        [
+          'salida',
+          'lugar',
+          'fecha',
+          'estado',
+          'simulacro',
+          'demo',
+          'cupos',
+          'ocupados',
+          'pagadas',
+          'asistieron',
+          'precio',
+          'comision',
+          'clientes_nuevos_anfitrion',
+          'horas_equipo',
+          'comision_cobrada',
+        ],
+        rows.map((s) => [
+          s.title,
+          s.place.name,
+          s.startsAt,
+          s.status,
+          s.isSimulacro,
+          s.isDemo,
+          s.capacity,
+          s.seatsTaken,
+          s.counts.paid,
+          s.counts.attended,
+          s.price,
+          s.commissionRate,
+          s.hostNewClients ?? '',
+          s.coordinatorHours ?? '',
+          s.commissionPaidAmount ?? '',
+        ]),
+      );
+    }
+    return null;
   }
 }

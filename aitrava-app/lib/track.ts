@@ -6,36 +6,76 @@ declare global {
   }
 }
 
-const ANON_KEY = 'aitrava_anon';
+const ANON = 'aitrava_anon';
+const VARIANT = 'aitrava_v';
+const CHANNEL = 'aitrava_c';
 
-/** Id anónimo por navegador: permite contar el embudo antes del registro. */
-export function getAnonId() {
-  try {
-    let id = localStorage.getItem(ANON_KEY);
-    if (!id) {
-      id = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      localStorage.setItem(ANON_KEY, id);
+const store = {
+  get: (k: string) => {
+    try {
+      return localStorage.getItem(k);
+    } catch {
+      return null;
     }
-    return id;
-  } catch {
-    return undefined;
-  }
-}
-
-/** Eventos que también se mandan al Meta Pixel con su nombre estándar. */
-const PIXEL_STANDARD: Record<string, string> = {
-  signup_started: 'Lead',
-  checkout_viewed: 'InitiateCheckout',
-  payment_cta_clicked: 'AddPaymentInfo',
+  },
+  set: (k: string, v: string) => {
+    try {
+      localStorage.setItem(k, v);
+    } catch {}
+  },
 };
 
+/** Id anónimo por navegador: permite contar visitantes únicos del embudo. */
+export function getAnonId() {
+  let id = store.get(ANON);
+  if (!id) {
+    id = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    store.set(ANON, id);
+  }
+  return id;
+}
+
 /**
- * Registra un evento propio (y en el Meta Pixel). Nunca se manda información sensible:
- * ni correos, ni documentos, ni datos de pago.
+ * Variante del gancho (TC0). `?v=A` o `?v=B` la fuerza; si no, se sortea 50/50 la primera vez y se recuerda,
+ * así una misma persona siempre ve el mismo mensaje.
  */
-export function track(name: string, props: Record<string, string | number | boolean | null> = {}, tripId?: string) {
+export function getVariant(): 'A' | 'B' {
+  if (typeof window === 'undefined') return 'A';
+  const q = new URLSearchParams(window.location.search).get('v')?.toUpperCase();
+  if (q === 'A' || q === 'B') {
+    store.set(VARIANT, q);
+    return q;
+  }
+  const saved = store.get(VARIANT);
+  if (saved === 'A' || saved === 'B') return saved;
+  const v = Math.random() < 0.5 ? 'A' : 'B';
+  store.set(VARIANT, v);
+  return v;
+}
+
+/** Canal de llegada (`?c=IG`, `?c=GRP` o `utm_source`). Se guarda el primero que llegó. */
+export function captureChannel() {
+  try {
+    const q = new URLSearchParams(window.location.search);
+    const c = (q.get('c') ?? q.get('utm_source'))?.trim().slice(0, 30);
+    if (c && !store.get(CHANNEL)) store.set(CHANNEL, c);
+  } catch {}
+}
+
+export const getChannel = () => store.get(CHANNEL) ?? undefined;
+
+/** Lo que viaja con cada reserva o registro para atribuir canal y variante. */
+export const attribution = () => ({ anonId: getAnonId(), variant: getVariant(), channel: getChannel() });
+
+const PIXEL_STANDARD: Record<string, string> = {
+  reserve_started: 'InitiateCheckout',
+  whatsapp_clicked: 'Contact',
+};
+
+/** Evento propio (y Meta Pixel). Nunca se manda información personal. */
+export function track(name: string, props: Record<string, string | number | boolean | null> = {}, salida?: string) {
   if (typeof window === 'undefined') return;
-  api('/events', { json: { name, anonId: getAnonId(), tripId, props } }).catch(() => {});
+  api('/events', { json: { name, salida, props, ...attribution() } }).catch(() => {});
   try {
     const std = PIXEL_STANDARD[name];
     if (std) window.fbq?.('track', std, props);
@@ -43,25 +83,26 @@ export function track(name: string, props: Record<string, string | number | bool
   } catch {}
 }
 
-/** Guarda utm_source de la URL para usarlo al registrarse. */
-export function captureAttribution() {
-  try {
-    const utm = new URLSearchParams(window.location.search).get('utm_source');
-    if (utm) localStorage.setItem('aitrava_utm', utm.slice(0, 60));
-  } catch {}
-}
-
-export function getUtmSource() {
-  try {
-    return localStorage.getItem('aitrava_utm') ?? undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-/** Solo Meta Pixel (para eventos que el backend ya registra en la BD). */
 export function pixel(standardEvent: string, props: Record<string, unknown> = {}) {
   try {
     window.fbq?.('track', standardEvent, props);
   } catch {}
 }
+
+/** Reservas hechas desde este celular: así la persona vuelve a su reserva sin cuenta. */
+const MINE = 'aitrava_reservas';
+export type SavedReservation = { code: string; token: string; title: string; startsAt: string };
+export const myReservations = {
+  list(): SavedReservation[] {
+    try {
+      const v = JSON.parse(store.get(MINE) ?? '[]');
+      return Array.isArray(v) ? v.slice(0, 10) : [];
+    } catch {
+      return [];
+    }
+  },
+  add(r: SavedReservation) {
+    const rest = myReservations.list().filter((x) => x.code !== r.code);
+    store.set(MINE, JSON.stringify([r, ...rest].slice(0, 10)));
+  },
+};

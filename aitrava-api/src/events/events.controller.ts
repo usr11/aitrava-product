@@ -1,5 +1,6 @@
 import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import {
+  IsIn,
   IsObject,
   IsOptional,
   IsString,
@@ -9,6 +10,7 @@ import {
 import {
   CurrentUser,
   OptionalAuthGuard,
+  clientIp,
   type AuthUser,
 } from '../auth/auth.guard';
 import { rateLimit } from '../common/rate-limit';
@@ -18,25 +20,22 @@ import { EventsService } from './events.service';
 class TrackDto {
   @IsString() @MaxLength(60) @Matches(/^[a-z_]+$/) name: string;
   @IsOptional() @IsString() @MaxLength(80) anonId?: string;
-  @IsOptional() @IsString() @MaxLength(40) tripId?: string;
+  @IsOptional() @IsString() @MaxLength(80) salida?: string; // slug
+  @IsOptional() @IsIn(['A', 'B']) variant?: string;
+  @IsOptional() @IsString() @MaxLength(40) channel?: string;
   @IsOptional() @IsObject() props?: Record<string, unknown>;
 }
 
-/** Eventos que solo registra el servidor (no se aceptan desde el navegador para no inflar el embudo). */
-const SERVER_ONLY = new Set([
-  'signup_completed',
-  'email_verified',
-  'login',
-  'trip_created',
-  'external_booking_added',
-  'document_uploaded',
-  'savings_goal_created',
-  'savings_contribution_added',
-  'wompi_redirected',
-  'payment_pending',
-  'payment_approved',
-  'payment_declined',
-  'receipt_downloaded',
+/** Eventos que el navegador puede mandar. Los de negocio (reservas, pagos, encuestas) solo los registra el servidor. */
+const CLIENT_EVENTS = new Set([
+  'landing_view',
+  'hook_cta_clicked',
+  'salida_viewed',
+  'reserve_started',
+  'whatsapp_clicked',
+  'waitlist_started',
+  'host_page_viewed',
+  'places_viewed',
 ]);
 
 @Controller('events')
@@ -49,23 +48,26 @@ export class EventsController {
   @Post()
   @HttpCode(204)
   @UseGuards(OptionalAuthGuard)
-  async track(@Body() dto: TrackDto, @CurrentUser() user: AuthUser | null) {
-    if (SERVER_ONLY.has(dto.name)) return;
-    rateLimit(`ev:${dto.anonId ?? user?.sub ?? 'x'}`, 120, 60_000);
-    // tripId solo se acepta si el viaje es del usuario con sesión
-    const owns =
-      user && dto.tripId
-        ? !!(await this.prisma.trip.findFirst({
-            where: { id: dto.tripId, userId: user.sub },
-            select: { id: true },
-          }))
-        : false;
-    await this.events.log(
-      dto.name,
-      user?.sub,
-      dto.props,
-      dto.anonId,
-      owns ? dto.tripId : null,
-    );
+  async track(
+    @Body() dto: TrackDto,
+    @CurrentUser() user: AuthUser | null,
+    @clientIp() ip: string,
+  ) {
+    if (!CLIENT_EVENTS.has(dto.name)) return;
+    rateLimit(`ev:${ip}`, 120, 60_000);
+    const salida = dto.salida
+      ? await this.prisma.salida.findUnique({
+          where: { slug: dto.salida },
+          select: { id: true },
+        })
+      : null;
+    await this.events.log(dto.name, {
+      userId: user?.sub,
+      anonId: dto.anonId,
+      salidaId: salida?.id,
+      variant: dto.variant,
+      channel: dto.channel,
+      props: dto.props,
+    });
   }
 }

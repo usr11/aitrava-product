@@ -3,12 +3,8 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
 import type { PublicConfig } from './types';
-import { CONTACT } from './site';
 
-/**
- * Precio del Pass, link de pago y límites: vienen del backend (GET /api/config).
- * Nunca se escriben a mano en los componentes.
- */
+/** Política de reembolso, horas de apartado, canales y líneas: vienen del backend (GET /api/config). */
 let cache: Promise<PublicConfig | null> | null = null;
 
 export function loadConfig() {
@@ -31,17 +27,17 @@ export function useConfig() {
   return config;
 }
 
-export { CONTACT };
+/** Copia local para pintar sin esperar la red (el backend manda; si cambia, se actualiza al cargar). */
+export const LINES = {
+  URBANO: { label: 'Urbano', detail: 'Dentro de Cali', short: 'L1' },
+  NATURALEZA: { label: 'Naturaleza cerca', detail: 'A una hora o menos de Cali', short: 'L2' },
+  ESCAPADA: { label: 'Escapada de un día', detail: 'De 1,5 a 2,5 horas de Cali', short: 'L3' },
+} as const;
 
-/** A dónde seguir después de registrarse o verificar: la página pedida, el borrador del wizard o Mis viajes. */
-export function continueHref() {
-  try {
-    const next = sessionStorage.getItem('aitrava_next');
-    if (next) {
-      sessionStorage.removeItem('aitrava_next');
-      return next;
-    }
-    if (sessionStorage.getItem('aitrava_draft')) return '/planear?continuar=1';
-  } catch {}
-  return '/mis-viajes';
-}
+export const CHANNEL_OPTIONS = [
+  { value: 'GRP', label: 'Un grupo de WhatsApp o Telegram' },
+  { value: 'IG', label: 'Instagram o TikTok' },
+  { value: 'REF', label: 'Me lo recomendó alguien' },
+  { value: 'ALI', label: 'Un anfitrión o aliado' },
+  { value: 'OTRO', label: 'Otro' },
+] as const;

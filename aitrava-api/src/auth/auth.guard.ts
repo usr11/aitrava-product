@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
-import { emailVerificationRequired } from '../common/config';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type AuthUser = { sub: string; role: 'USER' | 'ADMIN' };
@@ -36,37 +35,6 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException(
         'Tu sesión expiró. Inicia sesión de nuevo.',
       );
-    return true;
-  }
-}
-
-/** Exige sesión y, si está activado (EMAIL_VERIFICATION_REQUIRED), correo verificado. El rol se lee de la BD. */
-@Injectable()
-export class VerifiedGuard implements CanActivate {
-  constructor(private prisma: PrismaService) {}
-
-  async canActivate(ctx: ExecutionContext) {
-    const req = ctx.switchToHttp().getRequest<AuthRequest>();
-    const token = readToken(req);
-    if (!token)
-      throw new UnauthorizedException(
-        'Tu sesión expiró. Inicia sesión de nuevo.',
-      );
-    const user = await this.prisma.user.findUnique({
-      where: { id: token.sub },
-      select: { id: true, role: true, emailVerifiedAt: true },
-    });
-    if (!user)
-      throw new UnauthorizedException(
-        'Tu sesión expiró. Inicia sesión de nuevo.',
-      );
-    if (!user.emailVerifiedAt && emailVerificationRequired()) {
-      throw new ForbiddenException({
-        message: 'Verifica tu correo para continuar.',
-        code: 'EMAIL_NOT_VERIFIED',
-      });
-    }
-    req.user = { sub: user.id, role: user.role };
     return true;
   }
 }

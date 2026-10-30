@@ -7,11 +7,11 @@
 - Si algo del roadmap cambia (una decisión, el alcance, el modelo de datos), **edita primero el roadmap** y después el código.
 
 ## Contexto
-- Es un prototipo (PMV) para una materia de innovación. Desde el 2026-10-19 es **AITRAVA 3.0 · "Tu viaje vive aquí"**: centro de control digital del viaje + **plan de ahorro inteligente**. La especificación completa está en `docs/AITRAVA 3.docx`. Lo que importa es que funcione, se vea bien, sea responsive (móvil primero) y cumpla la rúbrica. No lo sobre-ingenierices.
-- **Nunca inventes datos** (ventas, visitas, alianzas, ahorros, reviews). Lo de ejemplo se marca DEMO. AITRAVA **no custodia dinero** y ningún pago simulado cuenta como venta.
+- Es un prototipo (PMV) para una materia de innovación. Desde el 2026-10-29 es la **v4 · "Ve solo, sal acompañado"**: salidas en grupos pequeños (6–10 personas) a la naturaleza y la cultura de Cali, para personas de 20–35 años que no tienen con quién ir. La propuesta completa está en `docs/AiTrava-final.md` y el modelo financiero en `docs/modelo.py`. Lo que importa es que funcione, se vea bien, sea responsive (móvil primero) y cumpla la rúbrica de la junta (C1–C5). No lo sobre-ingenierices.
+- **Nunca inventes datos** (ventas, asistentes, anfitriones, reseñas, fotos). Lo de ejemplo se marca DEMO; los precios sin fuente, "estimado". **AiTrava no custodia dinero**: el viajero le paga al anfitrión. Solo cuentan como venta los pagos verificados de compradores V1–V5 en salidas que no son simulacro.
 - Estructura: `aitrava-app/` (Next.js 16 + Tailwind 4), `aitrava-api/` (NestJS 11 + Prisma). Solo Postgres corre en Docker (`docker-compose.yml`). Se usa pnpm.
-- **Diseño 3.0:** fondo blanco, azul oscuro, azules secundarios y amarillo del logo como acento (tokens en `aitrava-app/app/globals.css`, ver sección 5 del roadmap). `design/` es la referencia de la landing anterior (v2).
+- **Diseño v4:** paleta `#04261E` (pine), `#084A24` (forest), `#F2EDD5` (paper), `#F26716` (ember, acción), `#E7390D` (flare, solo urgencia); tipografía Archivo (ancho variable). Tokens en `aitrava-app/app/globals.css`, ver sección 5 del roadmap.
 - Todo el texto de la interfaz va en español de Colombia.
-- La IA es solo soporte (nada de chat de IA). Usa **Groq** (`groq-sdk`); la clave va solo en `aitrava-api/.env`; nunca la escribas en código ni en docs. Lo mismo para SMTP, Wompi y JWT.
-- Modelo de negocio: **Freemium + AITRAVA Pass de $39.900 por viaje** (pago único por Wompi, configurable en `aitrava-api/src/common/config.ts`). El plan de ahorro es gratis. No agregues planes ni cobros extra sin que el equipo lo decida en el roadmap.
+- **Sin IA en el PMV** (llega en el mes 6+ con volumen). Las claves (SMTP, JWT) van solo en `aitrava-api/.env`; nunca en código ni en docs.
+- Modelo de negocio: **comisión del 20 % (piso 16 %) al anfitrión por cada reserva originada**, configurable por salida; cargo de servicio opcional en `serviceFee` (0 por defecto). No agregues planes ni cobros extra sin que el equipo lo decida en el roadmap.
 - `aitrava-app/AGENTS.md`: Next 16 trae cambios, así que consulta la documentación en `node_modules/next/dist/docs/` antes de usar APIs de Next.

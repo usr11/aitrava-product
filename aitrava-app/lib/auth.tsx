@@ -58,9 +58,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(() => {
     tokenStore.clear();
-    try {
-      localStorage.removeItem('aitrava_last_trip');
-    } catch {}
     setUser(null);
   }, []);
 

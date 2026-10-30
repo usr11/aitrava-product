@@ -5,16 +5,19 @@ import { Icon } from '@/components/Icon';
 
 export default function ErrorPage({ reset }: { error: Error; reset: () => void }) {
   return (
-    <div className="container-app flex min-h-[60dvh] flex-col items-center justify-center py-16 text-center">
-      <span className="grid size-16 place-items-center rounded-3xl bg-bad-bg text-bad">
-        <Icon name="alert" size={30} />
+    <div className="wrap flex min-h-[60dvh] flex-col items-start justify-center py-16">
+      <span className="grid size-14 place-items-center rounded-full bg-flare-bg text-flare-ink">
+        <Icon name="alert" size={28} />
       </span>
-      <p className="eyebrow mt-6 text-bad">Error 500</p>
-      <h1 className="h-display mt-2 text-4xl text-navy">Algo se desvió en el camino</h1>
-      <p className="mt-3 max-w-md text-text-2">Tuvimos un problema mostrando esta pantalla. Intenta de nuevo en un momento.</p>
+      <h1 className="display mt-6 text-[2.4rem]">No pudimos mostrar esta pantalla</h1>
+      <p className="lede mt-3 text-ink-2">Puede ser la conexión. Intenta de nuevo; si sigue pasando, escríbenos por WhatsApp.</p>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-        <button onClick={reset} className="btn btn-navy">Intentar de nuevo</button>
-        <Link href="/" className="btn btn-outline">Ir al inicio</Link>
+        <button onClick={reset} className="btn btn-pine">
+          Intentar de nuevo
+        </button>
+        <Link href="/" className="btn btn-line">
+          Ir al inicio
+        </Link>
       </div>
     </div>
   );

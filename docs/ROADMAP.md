@@ -1,12 +1,12 @@
-# AITRAVA 3.0 · Roadmap del producto
+# AiTrava · Roadmap del producto (v4 · "Ve solo, sal acompañado")
 
 > **Documento vivo.** Lo leen el equipo y el agente (Claude Code) **antes de trabajar, siempre**.
 > El trabajo es **lineal**: se toma el siguiente paso sin marcar del **Plan de trabajo (sección 8)**. Al terminarlo se marca `[x]` con la fecha y quién lo hizo, se actualiza la tabla de progreso (0.1) y se anota en el **Registro de cambios** (sección 11).
 > Si una decisión cambia, se edita aquí primero y después el código.
 
-**Última actualización:** 2026-10-19 · **Paso actual:** 67 (el equipo configura SMTP, `ADMIN_EMAILS` y `APP_URL` en Railway).
+**Última actualización:** 2026-10-29 · **Paso actual:** 92 (el equipo configura Railway y el número real de WhatsApp Business).
 
-> **Cambio total de modelo (2026-10-19).** AiTrava dejó de ser "viajes sorpresa con pistas" y pasa a ser **AITRAVA 3.0: el centro de control digital del viaje, con un plan de ahorro inteligente**. La especificación completa del equipo está en **`docs/AITRAVA 3.docx`** (182 secciones). Este roadmap la resume y la aterriza. El roadmap anterior (pasos 01–47) está archivado tal cual en **`docs/archivo/ROADMAP-v2-viajes-sorpresa.md`**.
+> **Cambio total de modelo (2026-10-29).** La junta del 2026-10-28 evaluó AITRAVA 3.0 (centro de control del viaje + plan de ahorro + Pass de $39.900) con 1.3/5.0: "no tiene valor", no era específico y no sabíamos para quién era. El equipo se definió por un modelo nuevo, descrito en **`docs/AiTrava-final.md`** (propuesta para la junta JD2) y **`docs/modelo.py`** (modelo financiero a 12 meses). Este roadmap los aterriza en el producto. El roadmap 3.0 quedó archivado tal cual en **`docs/archivo/ROADMAP-v3-centro-de-control.md`** y el de la v2 en `docs/archivo/ROADMAP-v2-viajes-sorpresa.md`.
 
 ---
 
@@ -15,163 +15,136 @@
 | Si eres… | Haz esto |
 | :-- | :-- |
 | **Compañero del equipo** | Haz `git pull`, busca en la sección 8 el **primer paso sin marcar** y avisa en el grupo que lo tomas. Al terminar: márcalo `[x]`, rellena `✅ fecha · nombre`, actualiza la tabla 0.1, anota en la sección 11, haz commit y push. |
-| **Agente (Claude Code)** | Lee todo este archivo. Trabaja **solo en el primer paso sin marcar** (o en el que el usuario pida). Al terminar, haz lo mismo que un compañero. Ante la duda sobre un detalle, la fuente es `docs/AITRAVA 3.docx`. No agregues cosas fuera del alcance (sección 3) sin preguntar. |
+| **Agente (Claude Code)** | Lee todo este archivo. Trabaja **solo en el primer paso sin marcar** (o en el que el usuario pida). Al terminar, haz lo mismo que un compañero. Ante la duda, la fuente es `docs/AiTrava-final.md`. No agregues cosas fuera del alcance (sección 3) sin preguntar. |
 
-**Reglas de oro (de la especificación):**
-1. **Nada inventado.** Ni ventas, ni visitas, ni alianzas, ni ahorros comprobados, ni reviews. Si no hay datos se muestra `0` o "Sin datos suficientes". Lo de ejemplo se marca **DEMO**.
-2. **AITRAVA no custodia dinero.** El plan de ahorro es una herramienta de planeación: el usuario guarda la plata en su propia cuenta y registra su avance.
-3. **Ningún pago simulado cuenta como venta.** Solo cuenta un pago con estado `approved`.
-4. **Móvil primero.** En escritorio "organizo mi viaje"; en el celular "estoy viviendo mi viaje".
+**Reglas de oro:**
+1. **Nada inventado.** Ni ventas, ni asistentes, ni anfitriones con convenio, ni reseñas, ni fotos de salidas que no pasaron. Si no hay datos se muestra `0` o "Sin datos suficientes". Precios y supuestos sin fuente llevan la marca **estimado** (`[EST]` del documento); lo que falta verificar, **por verificar** (`[VERIFY]`).
+2. **AiTrava no custodia dinero.** El viajero le paga directo al anfitrión (Nequi, Bre-B o transferencia) con la referencia `AITRAVA-Cxx`. AiTrava cobra al anfitrión una comisión por cada reserva que origina.
+3. **Solo cuentan compradores del perfil (V1–V5).** Las reservas de amigos o familia del equipo y las de simulacros se registran aparte y **no cuentan** como venta.
+4. **Móvil primero.** El viajero llega desde un reel o un grupo de WhatsApp en el celular: en menos de un minuto debe ver la salida, el precio, los cupos y apartar el suyo.
 
 ### 0.1 Progreso
 
 | Etapa | Pasos | Hechos | Estado |
 | :-- | :-: | :-: | :-: |
-| A–G · Versión 2 (viajes sorpresa) — archivada | 01–47 | 37/47 | 🗄️ |
-| H · AITRAVA 3.0: backend | 48–55 | 8/8 | ✅ |
-| I · AITRAVA 3.0: frontend | 56–65 | 10/10 | ✅ |
-| J · Cierre técnico y puesta en producción | 66–69 | 1/4 | 🟡 |
-| K · Validación con usuarios y presentación | 70–76 | 0/7 | ⬜ |
-| **Total 3.0** | 48–76 | **19/29** | |
+| A–G · v2 (viajes sorpresa) — archivada | 01–47 | 37/47 | 🗄️ |
+| H–K · v3 (centro de control) — archivada | 48–76 | 19/29 | 🗄️ |
+| L · v4: producto y plataforma | 77–91 | 15/15 | ✅ |
+| M · v4: puesta en producción | 92–94 | 0/3 | ⬜ |
+| N · v4: campo (TC0, TC1, TC2) y junta | 95–104 | 0/10 | ⬜ |
+| **Total v4** | 77–104 | **15/28** | |
 
 Estados: ⬜ sin empezar · 🟡 en curso · ✅ terminada · 🗄️ archivada
 
 ---
 
-## 1. Qué es AITRAVA 3.0
+## 1. Qué es AiTrava (v4)
 
-**"AITRAVA — Tu viaje vive aquí."** Asistente inteligente de viajes.
+**"Ve solo, sal acompañado."** Salidas en grupos pequeños (6 a 10 personas) a la naturaleza y la cultura de Cali y sus alrededores, para gente que quiere salir de la rutina, no tiene con quién ir y está cansada de las pantallas. AiTrava arma el grupo, cura el plan con un anfitrión local y rompe el hielo. El viajero solo tiene que llegar.
 
-AITRAVA es **el centro de control digital del viaje**: convierte cada viaje en un espacio ("**Mi Viaje**") que acompaña al viajero **antes y durante** la experiencia. Permite planear, centralizar, organizar, guardar, acompañar, guiar y adaptar el viaje desde un mismo producto.
+| | |
+| :-- | :-- |
+| **Cliente** | Personas de 20 a 35 años en Cali que quieren hacer algo distinto el fin de semana y no logran cuadrar plan con sus amigos. |
+| **Problema** | "Quiero salir, pero mis amigos cancelan, no sé qué existe y me da pereza organizar con desconocidos." |
+| **Solución** | Un grupo curado de desconocidos con la misma intención, una experiencia real con un anfitrión local y un ritual que conecta (tarjetas rompehielos y celular en un sobre sellado). |
+| **Diferencial** | ChatGPT te recomienda un plan; AiTrava te arma el grupo y te conecta con quien lo hace posible. El producto es **el grupo curado y el ritual**, no la actividad (ataca la desintermediación). |
+| **Cómo gana dinero** | Comisión del **20 %** (piso 16 %) sobre cada reserva que origina, cobrada al anfitrión hasta 3 días después de la salida. |
+| **Ticket promedio** | $104.000 `[EST]` (mezcla 50/35/15 de 3 líneas). Ingreso por reserva: $20.800. |
 
-- **Problema:** el vuelo está en la app de la aerolínea, el hotel en Booking, el tour en un correo, el seguro en un PDF, el presupuesto en Excel y las direcciones en Maps. El viaje existe, pero está fragmentado. Y antes de eso, **muchos viajes no pasan porque la plata no se planea**.
-- **Diferencial:** "Una plataforma conoce tu vuelo, otra tu hotel, otra un restaurante. **AITRAVA conoce TU VIAJE.**" No nos diferenciamos por tener más componentes, sino por **conectarlos alrededor del viaje del usuario**, incluso si los compró en otro lado.
-- **Pilar principal pedido por el equipo: el ahorro.** El viaje empieza el día que se planea: AITRAVA arma un **plan de ahorro inteligente** desde hoy hasta la fecha del viaje (ver 1.1).
-- **Segmento:** jóvenes nativos digitales (18–30 años) que viajan solos, en pareja, con amigos o en familia, y que necesitan organizar la plata y la logística sin estrés.
-- **La IA no es la protagonista.** No hay chat abierto con IA. Si se usa, es tecnología de soporte (por ejemplo, sugerir un itinerario base).
-- **Ciclo del producto:** ANTES (planear + ahorrar) → DURANTE (Modo Viaje) → DESPUÉS (futuro). El PMV se concentra en **antes + durante**.
+**Los dos ganchos** (se prueban con A/B en la landing; el test TC0 decide cuál lidera):
+- **A · Tribu Cero:** "¿Tus amigos cancelaron otra vez? Ve solo, sal acompañado."
+- **B · Reset 180°:** "3 horas sin celular, en la naturaleza, con personas en tu misma pausa."
 
-### 1.1 Plan de ahorro inteligente (pilar)
+**Rol de la IA (honesto):** hoy la curaduría y el armado de grupos se hacen a mano (concierge por WhatsApp). La IA llega en el mes 6+ cuando haya volumen. **El producto no tiene IA en el PMV**, y no se presenta como si la tuviera.
 
-"Ahorra desde que lo planeas hasta que te subes al avión."
-
-1. **Meta:** el costo del viaje sale del presupuesto (o de lo que ya se cargó en reservas). El usuario dice cuánto tiene ahorrado.
-2. **Hitos de pago:** cada parte del viaje tiene una fecha en la que normalmente hay que pagarla (vuelo ~60 días antes, alojamiento ~30, actividades ~15, seguro ~7, gastos en destino el día del viaje). Si el usuario cargó una reserva con su fecha y costo, se usa ese dato real.
-3. **Cuota inteligente:** con la frecuencia que elija (**semanal, quincenal o mensual**, alineada con el día de pago), el plan calcula la **cuota mínima constante que alcanza para pagar cada cosa a tiempo**, no solo para el total al final. Muestra el calendario: "con tu cuota del 15 de noviembre ya tienes el vuelo".
-4. **Capacidad real:** si el usuario dice cuánto puede ahorrar al mes y no le alcanza, el plan propone opciones concretas: mover el viaje a la fecha más cercana en la que sí alcanza, bajar el presupuesto en X o subir la cuota.
-5. **Seguimiento:** el usuario registra sus aportes (declarados). El plan muestra si va al día, adelantado o atrasado y **recalcula** la cuota que falta.
-6. **Sin custodia:** la plata queda en la cuenta del usuario (por ejemplo, un bolsillo de su banco). AITRAVA nunca dice "tu dinero está guardado aquí".
-
-El plan de ahorro es **gratis**: es lo que trae al usuario desde meses antes del viaje y lo deja listo para activar el Pass cuando se acerca la fecha.
+**Seguridad (no se negocia, se muestra en `/seguridad`):** solo lugares públicos, operadores con RNT o espacios controlados · grupo de WhatsApp moderado 24 h antes · mínimo un integrante del equipo en cada salida · regla de conducta y consentimiento informado al reservar · opción de grupo solo mujeres · canal de reporte de incidentes · en naturaleza, guía con tarjeta profesional y RNT, y póliza diaria incluida en el precio.
 
 ---
 
-## 2. Cómo cumplimos la rúbrica (mapa criterio → qué construimos)
+## 2. Cómo cumplimos la rúbrica de la junta (criterio → qué construimos)
 
-| # | Criterio | Qué lo demuestra en el producto | Evidencia |
+| # | Criterio (peso) | Qué lo demuestra en el producto | Dónde se ve |
 | :-: | :-- | :-- | :-- |
-| 1 | **Diferenciadores difíciles de copiar** | (a) **Mi Viaje** centraliza todo, aunque se haya comprado fuera (reservas externas). (b) **Plan de ahorro inteligente por hitos** que conecta la plata con cada parte del viaje. (c) **Modo Viaje**: "¿qué tengo que hacer ahora, dónde está mi reserva y cómo llego?". (d) Datos propios de cómo planea y gasta el viajero. | Demo en vivo con el caso **España (DEMO)**. |
-| 2 | **Prototipo funcional, iterativo, validado** | Flujo real: registro → verificación de correo → crear viaje → plan de ahorro → reserva externa → documento en la Bóveda → itinerario → presupuesto → checkout → Wompi. Feedback + iteraciones en `/admin`. | `/admin/analytics`, iteraciones y testimonios. |
-| 3 | **Respuesta del público y conversiones** | Eventos propios (sección 6.2) + Meta Pixel. Embudo de validación de 10 etapas en `/admin`. | Gráfica del embudo con datos reales. |
-| 4 | **Modelo innovador** | **Freemium + AITRAVA Pass por viaje ($39.900, sin suscripción)**. El ahorro gratis crea el hábito meses antes; el Pass se ofrece en contexto cuando el viaje se acerca. Pago real por Wompi y finanzas reales (ingresos − costos = margen). | `/admin/finanzas` con ingresos confirmados. |
-| 5 | **Presentación** | Caso demo España marcado DEMO, separado de los datos reales. | Ensayo cronometrado. |
+| C1 | **PMV y entrega de valor (35 %)** | Landing con salidas reales → reserva en < 1 min → WhatsApp con la referencia → la salida (lista de asistentes, ritual, reto del celular) → **encuesta de cierre de 5 preguntas**. Métricas de valor contra metas fijadas antes de salir (§4.3 del documento). Simulacros marcados como tales. | `/admin` (Valor entregado), `/admin/salidas/[id]` |
+| C2 | **Go to market (15 %)** | A/B de ganchos con `?v=A/B`, canal medido en la URL (`?c=GRP`, `?c=IG`, `utm_source`), embudo atraer → persuadir → convertir → retener, **CAC por canal** con la pauta registrada, y el **registro de ajustes** con las reglas de §5.6. | `/admin` (Embudo, A/B, Canales), `/admin/ajustes` |
+| C3 | **Venta o intento real de pago (20 %)** | **Escalera de evidencia** por reserva: interés (lista de espera) → intención + acepta precio y condiciones (reserva) → pago reportado → pago verificado. Validación **V1–V5** por comprador; amigos/familia y simulacros no cuentan. | `/admin/reservas`, `/admin` (Evidencia) |
+| C4 | **Modelo financiero (20 %)** | `modelo.py` portado a TypeScript con pruebas que reproducen las cifras del documento: 3 escenarios, unidad económica, punto de equilibrio y sensibilidad; supuestos editables, **real vs. modelo** con los datos de campo y exportación CSV para Excel. | `/admin/modelo`, `/admin/finanzas` |
+| C5 | **Actividades de clase (10 %)** | "Show me the money" y modelo financiero en la misma pantalla. | `/admin/modelo` |
 
 ---
 
 ## 3. Alcance
 
 ### ✅ Sí entra (PMV)
-- Web app **responsive y móvil primero** (360 → 1440 px), fondo blanco, azul oscuro, azul secundario y amarillo del logo.
-- **Auth real:** registro con nombre, apellido, correo, contraseña, términos y autorización de datos; **verificación de correo real** (SMTP), reenvío con espera de 60 s, inicio de sesión, recuperar contraseña y cerrar sesión. Roles `USER` y `ADMIN` (admin solo por `ADMIN_EMAILS` en el servidor o desde el panel admin).
-- **Crear viaje** en 5 pasos con 3 modos: *Sé a dónde voy*, *Ayúdame a elegir*, *Destino sorpresa* (los dos últimos sugieren destinos del catálogo; no es un chat de IA).
-- **Mi Viaje** (`/viajes/[id]`): cuenta regresiva, % preparado, checklist, próxima actividad y módulos (itinerario, transporte, alojamiento, actividades, restaurantes, presupuesto, Bóveda, meta de ahorro).
-- **Reservas externas** (lo compraste donde lo compraste, agrégalo) e **itinerario** con línea de tiempo.
-- **Bóveda** con archivos privados (PDF/JPG/PNG/WEBP, máx. 5 MB) que solo ve su dueño.
-- **Presupuesto** por categoría (presupuesto / estimado / gastado / disponible) y **registro de gastos**.
-- **Plan de ahorro inteligente** (sección 1.1).
-- **Modo Viaje** (ahora / siguiente / después), **Cómo llegar** (abre Google Maps con la ruta real; no inventamos rutas), **Explora cerca** (lugares reales de OpenStreetMap) y **Cambiar mis planes** (replan determinístico).
-- **AITRAVA Pass** ($39.900 por viaje), checkout con redirección a **Wompi**, estados de pago, verificación (webhook firmado si hay credenciales; si no, verificación manual del admin) y **comprobante PDF** solo si el pago está aprobado.
-- Páginas públicas: inicio, destinos (inspiración), proveedores (con disclaimer), nosotros, contacto (mensajes guardados en la BD), ayuda, términos, privacidad, tratamiento de datos. Footer, WhatsApp flotante e Instagram.
-- **Admin** (`/admin`): dashboard con KPIs reales, embudo, usuarios, viajes, pagos (verificar), finanzas (costos, margen, rangos), analítica, proveedores (CRUD con estados), mensajes, feedback e iteraciones. Exportación CSV.
-- **Caso demo "España"** marcado DEMO y excluido de las métricas.
+- **Landing móvil primero** con dos variantes del gancho (A/B, asignación 50/50 persistente o forzada con `?v=`), canal en la URL, próximas salidas con **cupos en vivo**, cómo funciona, el ritual, seguridad, lugares por línea y preguntas frecuentes.
+- **Salidas** (`/salidas`, `/salidas/[slug]`): lugar, fecha, punto de encuentro, duración, precio, cupos, anfitrión, qué incluye, solo mujeres (opcional).
+- **Reserva sin crear cuenta** (≤ 1 min): nombre, WhatsApp, pregunta filtro ("¿Qué te motivó a buscar esta experiencia?"), ¿estás en Cali?, ¿conoces a alguien del equipo?, ¿vienes solo?, reto del celular (opcional), cómo nos conociste, mayor de edad, regla de conducta + consentimiento + tratamiento de datos, y **aceptación explícita del precio, la fecha y la política de reembolso**. El cupo queda **apartado 48 h** mientras se confirma el pago.
+- **Página privada de la reserva** (`/reserva/[código]` con enlace secreto): estado, botón de WhatsApp con la referencia, datos de pago del anfitrión (solo cuando el equipo confirma el cupo), "Ya pagué", cancelar, política de reembolso.
+- **Lista de espera** (TC0) con la línea preferida, para cuando no hay salida que le sirva.
+- **Postulación de anfitriones** (`/anfitriones`) para el lado oferta (TC1-A).
+- **Encuesta de cierre** (`/encuesta/[código]`, 5 preguntas, una sola vez por asistente).
+- Páginas: seguridad, nosotros, ayuda (preguntas y reembolso), términos, privacidad, tratamiento de datos, 404.
+- **Admin (solo el equipo)**: tablero de evidencia (C1–C3) con metas, embudo, A/B, canales y CAC; salidas (CRUD, lista de asistentes, asistencia, reto completado, enlaces de encuesta, comisión); reservas (estados, V1–V5, escalera de evidencia); anfitriones (TC1-A); lugares; lista de espera; pauta y costos; finanzas reales; **modelo financiero**; registro de ajustes. Exportación CSV.
 
-### ❌ No entra (o queda como FUTURO, sin presentarlo como real)
-- Billetera, recaudo de ahorros o saldos (requiere aliados y análisis legal).
-- Factura electrónica (AITRAVA no está constituida: se usa "Comprobante de pago").
-- Reservas reales con proveedores, precios en vivo, notificaciones push, offline completo, cámara/escáner, app nativa, chat de IA.
-- Conexión con bancos.
-
-### Etiquetas internas
-`IMPLEMENTADO` · `DEMO` · `FUTURO`. Lo FUTURO nunca se muestra como si funcionara.
+### ❌ No entra
+- Cuentas de viajero, pagos en línea o pasarela (el viajero le paga al anfitrión; AiTrava no recauda).
+- Chat o asistente de IA (mes 6+, con volumen).
+- Fotos de salidas que no han pasado o de lugares sin licencia: los lugares se muestran con tipografía y color, sin fotos de stock.
+- PNN Farallones (excluido del lanzamiento, ver documento §3).
 
 ---
 
 ## 4. Stack y estructura
 
-**Decisión (2026-10-19):** se **conserva** el stack actual en vez de migrar a Supabase/Vercel (la especificación lo permite en §89 y §134: "no destruir lo que funciona"). Equivalencias:
-
-| La especificación pide | Lo hacemos con |
-| :-- | :-- |
-| Supabase Auth | JWT + bcrypt en NestJS, verificación y recuperación por correo con **nodemailer (SMTP)** |
-| RLS | Todas las consultas filtran por `userId` del token en el backend; los guards de admin protegen `/api/admin/*` |
-| Supabase Storage privado | Archivos en Postgres (`bytea`), servidos solo por un endpoint autenticado; el frontend los abre como `blob:` (no hay URL pública) |
-| Vercel | App en Cloudflare Workers (OpenNext) y API + Postgres en Railway (ya desplegados, ver `docs/DESPLIEGUE.md`) |
-| Mapas | Google Maps (enlace de direcciones, sin clave), OpenStreetMap/Overpass para "Explora cerca" y Nominatim para ubicar direcciones |
+Se conserva el stack de la v3 (funciona y está desplegado):
 
 | Capa | Tecnología |
 | :-- | :-- |
-| Frontend | Next.js 16 (App Router) + Tailwind 4 + TypeScript → `aitrava-app/` |
-| Backend | NestJS 11 + Prisma 6.19 → `aitrava-api/` |
+| Frontend | Next.js 16 (App Router) + Tailwind 4 + TypeScript → `aitrava-app/` (Cloudflare Workers con OpenNext) |
+| Backend | NestJS 11 + Prisma 6.19 → `aitrava-api/` (Railway) |
 | BD | PostgreSQL 16 (Docker en local, Railway en producción) |
-| Correo | nodemailer (SMTP: Gmail con clave de aplicación de `aitrava.25@gmail.com`, o cualquier proveedor) |
-| PDF | `pdfkit` en el backend |
+| Correo | nodemailer (SMTP), solo para las cuentas del equipo |
 | Gráficas | `recharts` (solo admin) |
-| IA (soporte, opcional) | Groq (`groq-sdk`), clave solo en `aitrava-api/.env` |
+| Pruebas | Jest (unitarias del modelo financiero, cupos, perfil) + e2e con Supertest contra Postgres real (concurrencia de cupos, aislamiento de reservas, validaciones) |
 
 ### Variables de entorno
 ```bash
 # aitrava-api/.env  (solo nombres en git; los valores van en .env o en Railway)
 DATABASE_URL=
 JWT_SECRET=
-APP_URL=                    # URL de la app (enlaces de los correos y CORS)
-ADMIN_EMAILS=               # correos (separados por coma) que reciben rol admin al verificar
-ADMIN_EMAIL= / ADMIN_PASSWORD=  # admin de respaldo creado por el seed (solo local si se dejan vacíos)
+APP_URL=                    # URL de la app (CORS y enlaces de los correos)
+ADMIN_EMAILS=               # correos del equipo: son los únicos que pueden crear cuenta
+ADMIN_EMAIL= / ADMIN_PASSWORD=  # admin de respaldo del seed
 SMTP_HOST= SMTP_PORT= SMTP_USER= SMTP_PASS= MAIL_FROM=
-PASS_PRICE_COP=39900
-PAYMENT_URL=https://checkout.nequi.wompi.co/l/PgimzF
-WOMPI_EVENTS_SECRET=        # para verificar el webhook; vacío = verificación manual
-GROQ_API_KEY= GROQ_MODEL=
+COMMISSION_RATE=0.20        # comisión por defecto de una salida nueva
+HOLD_HOURS=48               # horas que se aparta un cupo sin pago
 
 # aitrava-app/.env.local
 NEXT_PUBLIC_API_URL=
 NEXT_PUBLIC_META_PIXEL_ID=
-NEXT_PUBLIC_WHATSAPP_NUMBER=573117452985
+NEXT_PUBLIC_WHATSAPP_NUMBER=   # WhatsApp Business de AiTrava (pendiente, paso 92)
 NEXT_PUBLIC_CONTACT_EMAIL=aitrava.25@gmail.com
 NEXT_PUBLIC_INSTAGRAM_URL=https://www.instagram.com/aitrava26
 ```
-El precio del Pass, el link de pago y los límites del plan gratis **viven en el backend** (`src/common/config.ts`) y la app los lee de `GET /api/config`: nunca se duplican en componentes.
+La configuración de negocio (comisión, horas de apartado, metas, política de reembolso) **vive en el backend** (`aitrava-api/src/common/config.ts`) y la app la lee de `GET /api/config`.
 
 ---
 
-## 5. Diseño
+## 5. Diseño (v4)
 
-**Dirección visual 3.0:** fondo **blanco**, mucho espacio, fotografía de viaje, **azul oscuro profundo** como color principal, azules secundarios, **amarillo del logo como acento**, grises suaves, cards blancas con sombras suaves y bordes redondeados. Nada de morado ni estética genérica de "AI startup". *(Los dos mockups oficiales que menciona la especificación no venían dentro del .docx; si el equipo los tiene, guardarlos en `design/v3/` y ajustar.)*
+**Dirección:** señalética de sendero y tiquete de salida. Una sola cosa memorable: **el medidor de cupos con puntos** (cada punto es una persona del grupo), que es también el ícono. Todo lo demás es sobrio y legible al sol, en el celular.
 
 | Token (`app/globals.css`) | Valor | Uso |
 | :-- | :-- | :-- |
-| `--color-navy` | `#0B1F3A` | Títulos, header, footer, botón principal oscuro |
-| `--color-blue` | `#1E5BD8` | Enlaces, acciones secundarias, gráficas |
-| `--color-sky` | `#EAF1FF` | Fondos suaves de módulos |
-| `--color-yellow` | `#FFC800` | Acento del logo, CTA "Crear mi viaje", progreso |
-| `--color-bg` / `--color-surface` | `#FFFFFF` / `#F6F8FB` | Fondo / secciones |
-| `--color-text` / `--color-text-2` | `#0B1F3A` / `#5B6B82` | Texto |
-| `--color-ok` / `--color-warn` / `--color-bad` | `#14A06B` / `#E89B0C` / `#D64545` | Estados |
+| `--color-pine` | `#04261E` | Campo dominante: hero, footer, texto principal |
+| `--color-forest` | `#084A24` | Enlaces, estados "confirmado", acentos de datos |
+| `--color-paper` | `#F2EDD5` | Fondo de página (papel) y texto sobre verde |
+| `--color-ember` | `#F26716` | Acción principal (botón con texto `pine`: contraste 5,2:1) |
+| `--color-flare` | `#E7390D` | Solo urgencia y alertas ("quedan 2 cupos"); nunca texto pequeño |
 
-- **Tipografía:** *Plus Jakarta Sans* (títulos 800, cuerpo 400–600). Etiquetas pequeñas en mayúsculas con `letter-spacing`.
-- **Logo:** `public/brand/aitrava-mark.jpg` (el oficial vigente), con `object-contain`, sin recolorear.
-- **Móvil:** header `[logo] … [avatar]`; con sesión, barra inferior `[Inicio] [Mi Viaje] [Explorar] [Bóveda] [Perfil]` con safe-area. Botones ≥ 48 px. Sin scroll horizontal.
-- **Escritorio:** navbar `Inicio · Destinos · Planear viaje · Mis viajes · Proveedores · Nosotros · Ayuda` + `Iniciar sesión / Crear cuenta` o avatar.
-- **Estados:** vacíos ("Tu próximo viaje empieza aquí"), cargando (skeletons), errores (404, sin conexión, sesión expirada, ubicación denegada, archivo inválido, pago desconocido/rechazado, correo sin verificar).
+- **Tipografía:** una sola familia, **Archivo** variable (eje de ancho 62–125, local en `app/fonts/`). Titulares en ancho 125 y peso 800 (letrero de parque), cuerpo en ancho 100, datos en ancho 87 con números tabulares. Sin mayúsculas sostenidas en etiquetas.
+- **Ícono:** ronda de 7 puntos crema alrededor de un sol `ember` sobre `pine` (`app/icon.svg`, `public/brand/*`). Wordmark "aitrava" en minúscula, ancho expandido.
+- **Móvil:** botones ≥ 48 px, la acción principal siempre visible (barra fija con "Reservar mi cupo" en el detalle de la salida), sin scroll horizontal de 360 a 1440 px, foco visible y `prefers-reduced-motion` respetado.
 
 ---
 
@@ -180,45 +153,37 @@ El precio del Pass, el link de pago y los límites del plan gratis **viven en el
 ### 6.1 Rutas de la app
 | Ruta | Qué muestra |
 | :-- | :-- |
-| `/` | Hero "Tu viaje vive aquí", beneficios (todo en un lugar, reservas de otros lados, guía durante el viaje, **ahorra para tu viaje**, tranquilidad), cómo funciona, plan de ahorro, destinos de inspiración, Pass. |
-| `/registro`, `/iniciar-sesion`, `/verificar-correo`, `/recuperar-contrasena`, `/restablecer-contrasena` | Auth real. |
-| `/planear` | Wizard de 5 pasos: modo + destino · fechas · viajeros · presupuesto (y ahorro) · preferencias. |
-| `/destinos` | Destinos de inspiración (sin precios ni disponibilidad inventados). |
-| `/mis-viajes` | Lista de viajes con progreso de preparación y de ahorro. |
-| `/viajes/[id]` | **Mi Viaje** (corazón del producto). |
-| `/viajes/[id]/itinerario` · `/transporte` · `/alojamiento` · `/actividades` · `/restaurantes` | Línea de tiempo y reservas por categoría. |
-| `/viajes/[id]/presupuesto` | Restante, gastado, total, categorías y "+ Registrar gasto". |
-| `/viajes/[id]/boveda` | Documentos y reservas con filtros y búsqueda. |
-| `/viajes/[id]/meta` | **Plan de ahorro inteligente.** |
-| `/viajes/[id]/modo-viaje` | Ahora / siguiente / después, acciones rápidas, cómo llegar, explora cerca, cambiar plan. *(Pass)* |
-| `/checkout/[tripId]`, `/pago/resultado`, `/comprobante/[paymentId]` | Pass, Wompi y comprobante. |
-| `/mi-cuenta` | Datos, pagos, cerrar sesión, eliminar cuenta. |
-| `/proveedores`, `/nosotros`, `/contacto`, `/ayuda`, `/terminos`, `/privacidad`, `/tratamiento-de-datos` | Públicas. |
-| `/admin` + `/usuarios` `/viajes` `/pagos` `/finanzas` `/analytics` `/proveedores` `/mensajes` `/feedback` `/iteraciones` | Panel admin (solo `ADMIN`). |
+| `/` | Hero con el gancho (A/B) y la próxima salida con cupos, salidas, cómo funciona, ritual, seguridad, lugares, preguntas, lista de espera. |
+| `/salidas`, `/salidas/[slug]` | Salidas abiertas y detalle con la reserva. |
+| `/lugares` | Catálogo por línea (Urbano, Naturaleza cerca, Escapada), con precios de referencia estimados. |
+| `/reserva/[código]` | Estado privado de la reserva (enlace con token). |
+| `/encuesta/[código]` | Encuesta de cierre. |
+| `/anfitriones` | Postulación de anfitriones. |
+| `/seguridad`, `/nosotros`, `/ayuda`, `/terminos`, `/privacidad`, `/tratamiento-de-datos` | Públicas. |
+| `/equipo/ingresar` (+ registro, verificar, recuperar, restablecer) | Acceso del equipo. |
+| `/admin` + `/salidas` (`/salidas/[id]`) `/reservas` `/anfitriones` `/espera` `/lugares` `/costos` `/finanzas` `/modelo` `/ajustes` `/equipo` | Panel del equipo. |
 
-### 6.2 Eventos de analítica
-`landing_view, signup_started, signup_completed, email_verified, login, trip_creation_started, trip_created, external_booking_added, vault_opened, document_uploaded, itinerary_viewed, budget_viewed, savings_goal_created, savings_contribution_added, travel_mode_opened, directions_clicked, nearby_explore_opened, checkout_viewed, payment_cta_clicked, wompi_redirected, payment_pending, payment_approved, payment_declined, receipt_downloaded`.
-Se guardan con `name`, `userId?`, `tripId?`, `anonId?`, `props` (sin datos sensibles ni documentos) y fecha. **Los eventos de usuarios o viajes DEMO no cuentan en las métricas.**
+### 6.2 API pública
+`GET /api/health` · `GET /api/config` · `GET /api/places` · `GET /api/salidas` · `GET /api/salidas/:slug` · `POST /api/salidas/:slug/reservations` · `GET /api/reservations/:code?token=` · `POST /api/reservations/:code/payment` · `POST /api/reservations/:code/cancel` · `GET|POST /api/surveys/:code` · `POST /api/waitlist` · `POST /api/hosts/apply` · `POST /api/events`. Panel: `/api/admin/*` (solo rol ADMIN).
 
-**Embudo de validación:** visita → registro iniciado → registrado → correo verificado → viaje creado → reserva/documento agregado → checkout → pago iniciado → pago confirmado → Modo Viaje usado.
+### 6.3 Eventos de analítica
+`landing_view, hook_cta_clicked, salida_viewed, reserve_started, reservation_created (servidor), whatsapp_clicked, payment_reported (servidor), waitlist_joined (servidor), host_applied (servidor), survey_completed (servidor)`. Cada evento guarda la **variante** (A/B) y el **canal**. Lo del equipo y lo DEMO no cuenta.
+
+**Embudo:** visita → clic en el gancho → ve una salida → empieza la reserva → reserva creada → WhatsApp abierto → cupo confirmado → pago reportado → pago verificado → asistió → encuesta.
 
 ---
 
-## 7. Modelo de negocio (criterio 4)
+## 7. Modelo de negocio y financiero (C4)
 
-**Decisión (2026-10-19): FREEMIUM + AITRAVA PASS POR VIAJE.** Reemplaza la tarifa fija de $50.000 y la comisión de aliados de la versión 2.
+**Decisión (2026-10-29): comisión por reserva originada.** Reemplaza el Freemium + Pass de $39.900 de la v3.
 
-| Plan | Precio | Incluye |
-| :-- | :-- | :-- |
-| **AITRAVA Free** | $0 | Crear viajes, Mi Viaje, itinerario, reservas externas, presupuesto y gastos, **plan de ahorro inteligente completo**, Bóveda con hasta **3 documentos** por viaje (límite en `FREE_LIMITS`). |
-| **AITRAVA Pass** | **$39.900 COP por viaje** (pago único, no suscripción) | Bóveda ilimitada, **Modo Viaje**, Cómo llegar, Explora cerca, Cambiar mis planes y las funciones premium futuras de ese viaje. |
-
-- **El precio es una hipótesis** a validar (configurable con `PASS_PRICE_COP`).
-- **Paywall en contexto, nunca de entrada:** "Tu viaje comienza en 12 días. Activa Modo Viaje y lleva contigo rutas, Bóveda completa y acompañamiento."
-- **Pago:** link de Wompi (`PAYMENT_URL`). AITRAVA **no pide datos de tarjeta**. No se muestra el nombre del titular de Nequi Negocios: "Pago seguro procesado mediante Wompi".
-- **Estados:** `created, redirected, pending, pending_verification, approved, declined, cancelled, error, unknown`. Volver a la app **no** significa que pagó. El Pass se activa solo con `approved` (webhook con firma válida o verificación del admin).
-- **Finanzas:** ingreso = Passes aprobados. Margen de contribución = ingresos − costos variables (pasarela…); resultado operativo = margen − costos fijos. El presupuesto del viaje **nunca** es ingreso de AITRAVA.
-- **Futuro (no se presenta como real):** alianzas con proveedores (comisiones), aliado financiero para un ahorro programado real.
+- **Ingreso:** comisión sobre el valor de cada reserva **pagada y realizada** que AiTrava origina. Se pide 20 %; el piso es 16 %. Se configura por salida (`commissionRate`). El anfitrión paga la comisión hasta 3 días después de la salida y el equipo lo marca en `/admin/salidas/[id]`.
+- **Palanca opcional:** cargo de servicio de $5.000 al viajero (se prueba en el mes 3; por defecto `serviceFee = 0`).
+- **Líneas y precios de referencia `[EST]`:** Urbano $65.000 (cupo 8) · Naturaleza cerca $110.000 (cupo 8) · Escapada $220.000 (cupo 10). Mezcla 50/35/15 → ticket $104.000.
+- **Política de reembolso** (se acepta al reservar): 100 % si cancelas con ≥ 72 h; 50 % entre 72 y 24 h; o cedes el cupo sin costo. 100 % si la salida no se realiza.
+- **Modelo financiero:** `aitrava-api/src/model/model.ts` reproduce `docs/modelo.py` (12 meses, Pesimista/Base/Optimista, unidad económica, punto de equilibrio ≈ 42 reservas/mes, sensibilidad). Las pruebas comprueban las cifras del documento (resultado base a 12 meses $2.383.915, caja mínima −$1.049.758 en el mes 4, etc.).
+- **Real vs. modelo:** `/admin/finanzas` calcula con datos reales: reservas pagadas, valor reservado, comisión causada y cobrada, pauta por canal (CAC real), costos y resultado.
+- **Decisión de viabilidad (fijada):** se sigue si después de 4 salidas reales: (1) contribución por reserva ≥ $0, (2) CAC ≤ $10.400 y (3) recompra o intención de volver ≥ 25 %. Falla una → se pivota esa palanca; fallan dos → se replantea el modelo. El tablero lo muestra.
 
 ---
 
@@ -226,105 +191,98 @@ Se guardan con `name`, `userId?`, `tripId?`, `anonId?`, `props` (sin datos sensi
 
 > Siempre se hace el **primer paso sin marcar**. Al terminarlo: `- [ ]` → `- [x]` y `✅ fecha · nombre`. Si un paso se bloquea: `⛔ motivo`.
 
-### Versión 2 (archivada)
-Pasos 01–47 en `docs/archivo/ROADMAP-v2-viajes-sorpresa.md`. Se conservan de esa versión: el stack, el despliegue (Railway + Cloudflare), el tracking de eventos, feedback, iteraciones, el botón de WhatsApp y el panel admin como base. Se retiran: pistas, adivinanzas, sobre digital, modo regalo, links para compartir, factura y la tarifa de $50.000. Los pasos abiertos de la v2 (30, 32–37, 39–41) se reemplazan por la etapa K.
+### v2 y v3 (archivadas)
+Pasos 01–76 en `docs/archivo/`. De la v3 se conservan: el stack, el despliegue (Railway + Cloudflare), la autenticación (ahora solo para el equipo), el tracking de eventos, el botón de WhatsApp y el panel admin como base. Se retiran: viajes, itinerario, reservas externas, Bóveda, presupuesto, plan de ahorro, Modo Viaje, AITRAVA Pass, Wompi, comprobante PDF, proveedores, destinos y cuentas de viajero. Los pasos abiertos de la v3 (67–76) se reemplazan por las etapas M y N.
 
-### Etapa H · AITRAVA 3.0: backend
-- [x] **48** · Roadmap 3.0, `CLAUDE.md` y archivo del roadmap anterior — ✅ 2026-10-19 · Claude (agente)
-- [x] **49** · Nuevo modelo de datos (Prisma) y migración: `User` (nombre, apellido, verificación, recuperación, consentimientos, `isDemo`), `Trip`, `ItineraryItem`, `Booking` (reservas externas), `VaultDocument`, `Expense`, `SavingsPlan`, `SavingsContribution`, `Payment`, `Pass`, `Provider`, `AdminCost`, `ContactMessage`, `Event` (con `tripId`). Seed: destinos de inspiración, proveedores DEMO y el caso **España (DEMO)** — ✅ 2026-10-19 · Claude (agente)
-- [x] **50** · Auth real: registro con consentimientos, correo de verificación (nodemailer), reenvío con espera de 60 s, recuperar/restablecer contraseña, límite de intentos, `ADMIN_EMAILS`, eliminar cuenta — ✅ 2026-10-19 · Claude (agente)
-- [x] **51** · API de viajes: CRUD, resumen de Mi Viaje (% preparado, checklist, próxima actividad), itinerario (con replan), reservas externas, presupuesto por categoría y gastos, sugerencias de destino (*Ayúdame a elegir* / *Sorpresa*) — ✅ 2026-10-19 · Claude (agente)
-- [x] **52** · Bóveda: subir, listar, descargar y borrar archivos privados (tipo y tamaño validados, límite Free) — ✅ 2026-10-19 · Claude (agente)
-- [x] **53** · **Plan de ahorro inteligente:** cálculo por hitos, frecuencia, capacidad mensual, sugerencias, aportes y recálculo — ✅ 2026-10-19 · Claude (agente)
-- [x] **54** · AITRAVA Pass: `GET /api/config`, pagos y estados, redirección a Wompi, webhook firmado, verificación manual, activación del Pass y comprobante PDF — ✅ 2026-10-19 · Claude (agente)
-- [x] **55** · Analítica y API admin: eventos 3.0, KPIs reales, embudo, usuarios (cambiar rol), viajes, pagos, finanzas (costos y margen por rango), proveedores CRUD, mensajes de contacto y exportación CSV — ✅ 2026-10-19 · Claude (agente)
+### Etapa L · v4: producto y plataforma
+- [x] **77** · Roadmap v4, `CLAUDE.md` y archivo del roadmap 3.0 — ✅ 2026-10-29 · Claude (agente)
+- [x] **78** · Modelo de datos y migración: `Place`, `Host`, `Salida`, `Reservation`, `SurveyResponse`, `WaitlistEntry`, `AdminCost` (con canal), `Iteration` (ajustes), `Event` (variante y canal), `User` (equipo). Seed con los 14 lugares del documento y un caso **DEMO** marcado — ✅ 2026-10-29 · Claude (agente)
+- [x] **79** · API pública: salidas con cupos en vivo, reserva **atómica** (bloqueo de fila, sin sobreventa), apartado de 48 h con vencimiento, idempotencia por WhatsApp, página privada con token, "ya pagué", cancelar, lista de espera, postulación de anfitriones y encuesta — ✅ 2026-10-29 · Claude (agente)
+- [x] **80** · API admin: salidas, reservas (estados, V1–V5, escalera), anfitriones, lugares, lista de espera, costos y pauta, ajustes, métricas (embudo, A/B, canales, valor entregado, viabilidad), finanzas reales y CSV — ✅ 2026-10-29 · Claude (agente)
+- [x] **81** · Modelo financiero en TypeScript (escenarios, unidad económica, equilibrio, sensibilidad) con pruebas contra las cifras de `docs/modelo.py` — ✅ 2026-10-29 · Claude (agente)
+- [x] **82** · Robustez: filtro global de errores (sin trazas al cliente, errores de Prisma traducidos), apagado ordenado, healthcheck, límites de intentos, honeypot anti-spam, validación estricta, tiempos de espera de transacción — ✅ 2026-10-29 · Claude (agente)
+- [x] **83** · Pruebas: unitarias + e2e contra Postgres (concurrencia de cupos, idempotencia, aislamiento por token, admin protegido, validaciones, vencimiento) — ✅ 2026-10-29 · Claude (agente)
+- [x] **84** · Sistema de diseño v4 (paleta, Archivo, ícono, medidor de cupos), shell, navbar, footer, WhatsApp flotante y estados — ✅ 2026-10-29 · Claude (agente)
+- [x] **85** · Landing con A/B y canal, salidas y detalle con reserva — ✅ 2026-10-29 · Claude (agente)
+- [x] **86** · Página privada de la reserva, encuesta, lista de espera y anfitriones — ✅ 2026-10-29 · Claude (agente)
+- [x] **87** · Páginas públicas: lugares, seguridad, nosotros, ayuda, legales, 404 — ✅ 2026-10-29 · Claude (agente)
+- [x] **88** · Acceso del equipo (solo correos de `ADMIN_EMAILS`) — ✅ 2026-10-29 · Claude (agente)
+- [x] **89** · Admin: tablero de evidencia, salidas, reservas, anfitriones, lugares, espera, costos, finanzas, ajustes, usuarios — ✅ 2026-10-29 · Claude (agente)
+- [x] **90** · Admin: modelo financiero interactivo y exportación — ✅ 2026-10-29 · Claude (agente)
+- [x] **91** · QA: builds (Next y Cloudflare/OpenNext), lint, 14 pruebas unitarias + 31 e2e, recorrido en el navegador a 360, 375 y ~1024 px sin scroll horizontal, README, `.env.example` y `docs/DESPLIEGUE.md` — ✅ 2026-10-29 · Claude (agente)
 
-✔ **Chequeo H:** con curl se puede registrar, verificar, crear un viaje con plan de ahorro, subir un archivo, pedir checkout y ver el pago en admin; un usuario no puede leer nada de otro.
+### Etapa M · Puesta en producción
+- [ ] **92** · **(Equipo)** Crear el WhatsApp Business y poner el número en `NEXT_PUBLIC_WHATSAPP_NUMBER` (Cloudflare). Configurar en Railway `ADMIN_EMAILS`, `APP_URL`, `SMTP_*` — ✅ ___
+- [ ] **93** · **(Equipo)** Confirmar D5 (borrar los datos de la v3 en producción) y desplegar la v4 — ✅ ___
+- [ ] **94** · Crear en `/admin/salidas` la primera salida real (lugar, anfitrión, fecha, precio, cupos y datos de pago del anfitrión) — ✅ ___
 
-### Etapa I · AITRAVA 3.0: frontend (móvil primero)
-- [x] **56** · Sistema de diseño claro (tokens, tipografía, botones, cards, inputs) + Navbar, MobileNavbar, Footer, WhatsApp flotante, estados (vacío, cargando, error) — ✅ 2026-10-19 · Claude (agente)
-- [x] **57** · Inicio + páginas públicas: destinos, proveedores (con disclaimer), nosotros, contacto, ayuda, términos, privacidad, tratamiento de datos, 404 — ✅ 2026-10-19 · Claude (agente)
-- [x] **58** · Auth: registro, iniciar sesión, verificar correo, recuperar y restablecer contraseña, mi cuenta — ✅ 2026-10-19 · Claude (agente)
-- [x] **59** · `/planear` (5 pasos, 3 modos) y `/mis-viajes` — ✅ 2026-10-19 · Claude (agente)
-- [x] **60** · Mi Viaje y módulos: itinerario, transporte, alojamiento, actividades, restaurantes, reservas externas, presupuesto y gastos — ✅ 2026-10-19 · Claude (agente)
-- [x] **61** · Bóveda (filtros, búsqueda, visor de PDF/imagen, QR grande) — ✅ 2026-10-19 · Claude (agente)
-- [x] **62** · Meta de viaje: **plan de ahorro inteligente** (calendario de cuotas, hitos, capacidad, aportes, estado) — ✅ 2026-10-19 · Claude (agente)
-- [x] **63** · Modo Viaje: ahora/siguiente/después, acciones rápidas, Cómo llegar, Explora cerca, Cambiar mis planes, permiso de ubicación — ✅ 2026-10-19 · Claude (agente)
-- [x] **64** · Pass: paywall en contexto, `/checkout/[tripId]`, `/pago/resultado`, `/comprobante/[paymentId]` — ✅ 2026-10-19 · Claude (agente)
-- [x] **65** · Admin: dashboard, usuarios, viajes, pagos, finanzas, analítica, proveedores, mensajes, feedback, iteraciones (responsive, menú en drawer en móvil) — ✅ 2026-10-19 · Claude (agente)
+### Etapa N · Campo y junta
+- [ ] **95** · TC0: 2 anuncios de $20.000 + reparto en grupos con `?v=A` / `?v=B` y `?c=IG` / `?c=GRP`; registrar la pauta en `/admin/costos` — ✅ ___
+- [ ] **96** · TC1-A: contactar 15 anfitriones y registrarlos en `/admin/anfitriones` (meta ≥ 3 aceptan ≥ 16 %) — ✅ ___
+- [ ] **97** · Simulacro del PMV (salida marcada como simulacro, 4–6 personas, ritual y encuesta) — ✅ ___
+- [ ] **98** · TC2: preventa de la primera salida (meta ≥ 5 pagos V1–V5, conversión ≥ 25 %, CAC ≤ $10.400) — ✅ ___
+- [ ] **99** · TC1-B: salida real + encuesta + entrevista al anfitrión (clientes nuevos confirmados) — ✅ ___
+- [ ] **100** · Ronda 2: segunda salida con los cambios de la encuesta, anotados en `/admin/ajustes` — ✅ ___
+- [ ] **101** · Recalcular el modelo con los datos reales de las primeras salidas (`/admin/modelo` → "Usar datos reales") — ✅ ___
+- [ ] **102** · Exportar el modelo a Excel para la entrega de clase (C5) — ✅ ___
+- [ ] **103** · Actualizar `docs/PRESENTACION.md` y `docs/PRUEBAS-USUARIOS.md` al modelo v4 — ✅ ___
+- [ ] **104** · Ensayo cronometrado ×2 y video de respaldo — ✅ ___
 
-✔ **Chequeo I:** una persona hace desde su celular el caso de uso real (§124 de la especificación): se registra, verifica, crea un viaje, arma su plan de ahorro, agrega una reserva, sube un documento, arma el itinerario, mira el presupuesto, llega al checkout y abre Wompi; y todo queda en `/admin`.
-
-### Etapa J · Cierre técnico y producción
-- [x] **66** · QA: build y lint de ambos proyectos, recorrido a 360/390/430/768/1024/1440 px, README, `.env.example` y `docs/DESPLIEGUE.md` actualizados — ✅ 2026-10-19 · Claude (agente)
-- [ ] **67** · **(Equipo)** Configurar en Railway: `SMTP_*` y `MAIL_FROM` (clave de aplicación de Gmail de `aitrava.25@gmail.com`), `ADMIN_EMAILS` con los 4 correos del equipo, `APP_URL` con la URL de Cloudflare, `PASS_PRICE_COP` y `PAYMENT_URL` — ✅ ___
-- [ ] **68** · **(Equipo)** Wompi: configurar la URL de eventos `…/api/payments/wompi/events` y `WOMPI_EVENTS_SECRET`; mientras tanto, verificar pagos a mano desde `/admin/pagos` — ✅ ___
-- [ ] **69** · Antes de abrir a usuarios reales: conectar los CTA de la landing con `utm_source=landing` — ✅ ___
-
-### Etapa K · Validación con usuarios y presentación
-- [ ] **70** · Iteración v1: 5–8 pruebas guiadas (actualizar `docs/PRUEBAS-USUARIOS.md` al modelo 3.0) y registrarlas en `/admin/iteraciones` — ✅ ___
-- [ ] **71** · Aplicar 2–3 cambios de la v1 con base en datos — ✅ ___
-- [ ] **72** · Campaña (Instagram + grupos universitarios) hacia la app desplegada — ✅ ___
-- [ ] **73** · Iteraciones v2 y v3 con el embudo y el precio del Pass como hipótesis — ✅ ___
-- [ ] **74** · Testimonios, capturas y tabla de métricas final — ✅ ___
-- [ ] **75** · Actualizar `docs/PRESENTACION.md` al modelo 3.0 y armar las diapositivas — ✅ ___
-- [ ] **76** · Video de la demo (plan B) y ensayo cronometrado ×2 — ✅ ___
-
-**Metas de validación (ajustar con datos):**
+**Metas de validación (del documento, fijadas antes de salir):**
 
 | Métrica | Meta | Real |
 | :-- | :-: | :-: |
-| Visitas | 300 | |
-| Registros / correos verificados | 80 / 60 | |
-| Viajes creados | 50 | |
-| Planes de ahorro creados | 30 | |
-| Reservas o documentos agregados | 30 | |
-| Checkouts / clics a Wompi | 15 / 8 | |
-| Pagos aprobados (Pass) | 3 | |
-| Iteraciones documentadas | 3 | |
+| TC0: clics por variante / diferencia | ≥ 60 / ≥ 5 pp | |
+| TC1-A: anfitriones que aceptan ≥ 16 % | ≥ 3 de 15 | |
+| TC2: pagos de compradores V1–V5 | ≥ 5 | |
+| Conversión conversación → pago | ≥ 25 % | |
+| CAC | ≤ $10.400 | |
+| Llegaron solos y salieron con ≥ 1 contacto | ≥ 70 % | |
+| "¿Volverías?" (sí) | ≥ 60 % | |
+| NPS | ≥ 40 | |
+| Reto del celular completado | ≥ 50 % | |
+| Anfitrión confirma clientes nuevos | ≥ 4 de 5 | |
 
-### 8.1 Notas de implementación (lo que ya existe)
+### 8.1 Notas de implementación
 
-- **Migración `20261019153600_aitrava_3`:** borra viajes, pistas, apuestas y el catálogo de la v2; **conserva los usuarios** (el nombre se parte en nombre/apellido, quedan sin verificar), eventos, feedback e iteraciones. Corre sola al desplegar (`pnpm start` → `db:deploy`). Probada sobre una BD con usuarios de la v2.
-- **Configuración de negocio:** `aitrava-api/src/common/config.ts` (precio del Pass, link de pago, límite Free de 3 documentos, tipos y tamaño de archivo). La app la lee de `GET /api/config`.
-- **Plan de ahorro inteligente:** `aitrava-api/src/savings/plan.ts` (funciones puras). Hitos: transporte 60 días antes, alojamiento 30, actividades 15, seguro 7, gastos en destino 1 día antes; si hay una reserva con costo, ese hito se necesita desde ya. Días de pago: viernes (semanal), 15 y fin de mes (quincenal), fin de mes (mensual). Cuota por tramos no crecientes; estado al día/adelantado/atrasado contra el plan original; si no cabe en la capacidad mensual propone: fecha más cercana en que sí cabe, presupuesto máximo con las fechas actuales y cuánto más ahorrar al mes.
-- **Auth:** JWT + bcrypt; `VerifiedGuard` exige correo verificado para viajes y pagos; `AdminGuard` confirma el rol en la BD. Correos con nodemailer (`src/mail/mail.service.ts`): sin SMTP no finge el envío y, solo fuera de producción, devuelve el enlace para probar. Los admins pueden verificar a mano en `/admin/usuarios`.
-- **Bóveda:** archivos en Postgres (`bytea`), máx. 5 MB, tipo comprobado por los primeros bytes; descarga solo con sesión (`GET /api/trips/:id/documents/:docId/file`) y la app los abre como `blob:`.
-- **Pagos:** estados de la especificación + `pending_verification`. Al volver de Wompi el usuario dice qué pasó ("ya pagué" → en verificación); el Pass se activa solo con el webhook firmado (`POST /api/payments/wompi/events`, se asocia por id de transacción, referencia o correo + valor) o con la aprobación de un admin en `/admin/pagos`. Comprobante PDF con `pdfkit` solo si está aprobado.
-- **Mapas:** "Cómo llegar" abre Google Maps con la ruta (a pie, transporte público, carro). "Explora cerca" usa `GET /api/nearby` (Overpass y, si falla, Photon; ambos OpenStreetMap, con caché de 10 min) y un mapa Leaflet que se carga solo al elegir "Mapa". Las direcciones se ubican con Nominatim al guardar una actividad. Distancias y tiempos a pie son aproximados y se dice.
-- **Demo:** `pnpm db:demo` crea para `demo@aitrava.co` el viaje **España (DEMO)** en curso (día 3 de 7, con reservas, QR, PDFs de ejemplo, gastos y plan cumplido) y **Japón (DEMO)** con la meta al 35 % y atrasada (muestra el recálculo). Lo DEMO tiene el Pass incluido sin pago y se excluye de métricas. Las cuentas y eventos del equipo (admins) también se excluyen.
-- **Fotos:** `aitrava-app/public/img/` (Wikimedia Commons, créditos en `img/destinos/creditos.json`). Los mockups oficiales no venían en el .docx (D4).
-- **Probado (2026-10-19):** 45 chequeos del API con curl (registro, verificación, aislamiento entre usuarios, límites de la Bóveda, archivo falso rechazado, checkout, aprobación, comprobante, webhook con firma buena y mala, métricas, CSV, recuperación de contraseña). En Chrome: wizard → viaje con plan de ahorro → aporte → reserva externa → documento en la Bóveda y visor; registro anónimo → verificación → retoma el borrador; Modo Viaje con lugares cercanos; sin scroll horizontal a 360, 390, 430, 768, 1024 y 1440 px. Builds y lint de ambos proyectos pasan.
+- **Migración `20261029000000_aitrava_4`:** borra las tablas de la v3 (viajes, Bóveda, ahorro, pagos, Pass, proveedores, destinos, mensajes, feedback) y **conserva** usuarios, eventos e iteraciones. Corre sola al desplegar (`pnpm start` → `db:deploy`).
+- **Cupos sin sobreventa:** `POST /api/salidas/:slug/reservations` corre en una transacción que bloquea la fila de la salida (`SELECT … FOR UPDATE`), cuenta los cupos ocupados y recién ahí inserta. Ocupan cupo: `requested` (si no venció el apartado), `confirmed`, `payment_reported`, `paid`, `attended`. Un apartado vencido libera el cupo en el acto (el conteo lo ignora) y un barrido cada 10 min lo pasa a `expired`. Probado con 30 reservas simultáneas sobre 8 cupos.
+- **Idempotencia:** si el mismo WhatsApp ya tiene una reserva activa en esa salida, se devuelve esa misma (no se duplica ni se cobra dos veces el cupo).
+- **Reserva privada:** el enlace lleva un token aleatorio de 32 bytes; en la BD solo se guarda su hash. Sin token válido la API responde 404.
+- **Código de referencia:** `AITRAVA-C01`, `C02`… sale de una secuencia de la BD (seguro con concurrencia).
+- **Perfil V1–V5:** V1 mayor de edad · V2 está en Cali · V3 no es amigo ni familia del equipo · V4 llegó por un canal de AiTrava · V5 su respuesta al filtro muestra intención (lo marca el equipo). Solo los V1–V5 de salidas que no son simulacro cuentan en la evidencia de venta.
+- **A/B:** la app asigna A o B al azar la primera vez y lo recuerda; `?v=A` o `?v=B` lo fuerza. El canal sale de `?c=` o `utm_source`. Ambos viajan con cada evento y con la reserva.
+- **Fechas:** se guardan en UTC y se muestran en `America/Bogota`.
+- **Pruebas:** `pnpm test` (modelo financiero contra las cifras de `modelo.py` y reglas puras) y `pnpm test:e2e` (Postgres real, esquema efímero `e2e_<timestamp>` en la BD `aitrava_test`, se borra al terminar). Se retiraron `@nestjs/config` (ESM, rompía Jest; ahora `process.loadEnvFile`), `groq-sdk`, `pdfkit`, `qrcode` y `zod`; `@nestjs/jwt` quedó en v11 (CommonJS).
+- **Probado en el navegador (2026-10-29):** landing A y B, detalle de salida, validaciones del formulario, reserva completa en móvil hasta la página privada, confirmación desde el panel y datos de pago visibles para el viajero, tablero y modelo financiero (las cifras coinciden con el documento).
 
 ---
 
 ## 9. Guion de la presentación (borrador)
-1. **Problema** (30 s): el viaje está regado en 10 apps y la plata no se planea.
-2. **Solución** (30 s): "Tu viaje vive aquí" + plan de ahorro inteligente.
-3. **Demo** (2–3 min, celular): caso **España (DEMO)** → plan de ahorro por hitos → Mi Viaje → Bóveda con QR → Modo Viaje (cómo llegar, explora cerca) → Pass y Wompi.
-4. **Diferencial** (45 s): conectamos el viaje alrededor del usuario, aunque compre fuera.
-5. **Evidencia** (1 min): embudo real de `/admin`.
-6. **Iteraciones** (45 s).
-7. **Modelo** (45 s): freemium + Pass por viaje, finanzas reales.
-8. **Cierre** (15 s): "AITRAVA — Tu viaje vive aquí."
+1. **Lo que aprendimos** (30 s): la junta nos dijo que la v3 no tenía valor. Planificar viajes ya lo hace ChatGPT gratis.
+2. **Para quién** (30 s): 20–35 años en Cali, sin con quién ir, cansados de pantallas.
+3. **Demo en el celular** (2 min): reel → landing (A/B) → salida con cupos → reserva en 1 min → WhatsApp con la referencia → encuesta.
+4. **Evidencia** (1 min): tablero de `/admin` con la escalera de evidencia y las metas.
+5. **Modelo** (1 min): comisión del 20 %, unidad económica, equilibrio en el mes 5, sensibilidad.
+6. **Decisión** (30 s): las tres condiciones de viabilidad y qué hacemos si fallan.
+7. **Cierre** (15 s): "Ve solo, sal acompañado."
 
 ---
 
 ## 10. Decisiones
 
 ### Tomadas
-- **(2026-10-19) Cambio total al modelo AITRAVA 3.0** según `docs/AITRAVA 3.docx`, con el **ahorro como pilar** (plan de ahorro inteligente gratis, sección 1.1).
-- **(2026-10-19) Se conserva el stack** Next + Nest + Prisma + Postgres, Railway + Cloudflare (equivalencias en la sección 4).
-- **(2026-10-19) Modelo:** Free + Pass de $39.900 por viaje. Sin suscripción, sin otros cobros.
-- **(2026-10-19) Sin custodia de dinero** y sin facturación electrónica.
-- **(2026-10-19) Fase de prueba: verificar el correo es opcional.** Con `EMAIL_VERIFICATION_REQUIRED=false` (valor por defecto) el usuario entra y usa la app sin verificar; el correo se sigue enviando si hay SMTP y la verificación se puede hacer después. Para operación real se pone en `true`. El rol admin **siempre** exige correo verificado.
-- La IA queda como soporte opcional (Groq), nunca como chat.
-- Los proveedores que se muestran son **DEMO** (sin convenio) y llevan el disclaimer de la especificación.
+- **(2026-10-29) Cambio total al modelo v4** según `docs/AiTrava-final.md` y `docs/modelo.py`.
+- **(2026-10-29) Comisión al anfitrión (20 %, piso 16 %)**; sin Pass, sin suscripciones, sin pasarela. AiTrava no recauda dinero del viajero.
+- **(2026-10-29) Reserva sin cuenta:** el viajero no crea usuario (fricción mínima); entra a su reserva con un enlace privado. Las cuentas quedan solo para el equipo.
+- **(2026-10-29) Sin IA en el PMV** (se retira la dependencia de Groq).
+- **(2026-10-29) Nueva identidad visual** (paleta del equipo, Archivo, ícono de la ronda).
+- Se conserva el stack Next + Nest + Prisma + Postgres, Railway + Cloudflare.
 
 ### Pendientes (responder aquí)
-- **D2 · Fecha de entrega y duración de la presentación.** → ___
-- **D4 · Mockups oficiales y logo PNG** de la especificación: no venían dentro del .docx. Si existen, guardarlos en `design/v3/`. → ___
-- **D5 · Datos de la v2 en producción.** ⚠️ Al desplegar la 3.0, la migración `aitrava_3` **borra los viajes sorpresa de la v2** (no tienen equivalente en el modelo nuevo) y conserva las cuentas. Confirmar en el equipo antes del `git push`; si quieren guardar algo, exportar antes desde el `/admin` de la v2. → ___
+- **D2 · Fecha de la próxima junta y duración.** → ___
+- **D5 · Datos de la v3 en producción.** ⚠️ La migración `aitrava_4` borra viajes, Bóveda, planes de ahorro y pagos de la v3 (conserva cuentas y eventos). Confirmar en el equipo antes del despliegue; si quieren algo, exportarlo antes desde el `/admin` de la v3. → ___
+- **D6 · Número de WhatsApp Business.** Mientras no exista, la app usa `NEXT_PUBLIC_WHATSAPP_NUMBER` o el número de la v3. → ___
 
 ---
 
@@ -332,7 +290,8 @@ Pasos 01–47 en `docs/archivo/ROADMAP-v2-viajes-sorpresa.md`. Se conservan de e
 
 | Fecha | Quién | Qué |
 | :-- | :-- | :-- |
-| 2026-09-21 → 2026-10-15 | Equipo + Claude | Versión 2 (viajes sorpresa): ver el registro en `docs/archivo/ROADMAP-v2-viajes-sorpresa.md`. |
-| 2026-10-19 | Juan Pablo + Claude (agente) | **Cambio total a AITRAVA 3.0** ("Tu viaje vive aquí") según `docs/AITRAVA 3.docx`, con el **plan de ahorro inteligente** como pilar. Roadmap reescrito; el anterior se archivó. |
-| 2026-10-19 | Claude (agente) | Pasos 48–66: nuevo modelo de datos y migración (conserva usuarios), auth real con verificación de correo, Mi Viaje con itinerario, reservas externas, presupuesto y gastos, Bóveda privada, plan de ahorro inteligente por hitos, Modo Viaje (cómo llegar, explora cerca, cambiar planes), AITRAVA Pass con Wompi y comprobante PDF, panel admin completo con finanzas y exportación, páginas públicas y legales, diseño claro móvil primero. README, `.env.example` y `docs/DESPLIEGUE.md` actualizados. Se quitó la v2 (pistas, sobre, regalo, factura, tarifa de $50.000). |
-| 2026-10-19 | Claude (agente) | Verificación de correo opcional en fase de prueba (`EMAIL_VERIFICATION_REQUIRED`), arreglos de scroll en celulares, guía PDF de pruebas (`docs/AITRAVA-guia-de-pruebas.pdf`) y revisión de despliegue. |
+| 2026-09-21 → 2026-10-15 | Equipo + Claude | v2 (viajes sorpresa): ver `docs/archivo/ROADMAP-v2-viajes-sorpresa.md`. |
+| 2026-10-19 | Equipo + Claude | v3 (centro de control + ahorro): ver `docs/archivo/ROADMAP-v3-centro-de-control.md`. |
+| 2026-10-28 | Junta | Evaluación de la v3: 1.3/5.0 ("no tiene valor", no es específico). |
+| 2026-10-29 | Juan Pablo + Claude (agente) | **Cambio total a la v4 "Ve solo, sal acompañado"** según `docs/AiTrava-final.md` y `docs/modelo.py`. Roadmap reescrito; el 3.0 se archivó. |
+| 2026-10-29 | Claude (agente) | Pasos 78–91: nuevo modelo de datos y migración, reservas atómicas sin cuenta con apartado de 48 h, lista de espera, anfitriones, encuesta, panel de evidencia (embudo, A/B, canales, CAC, V1–V5, escalera, valor entregado, viabilidad), modelo financiero portado con pruebas, nueva identidad visual (paleta del equipo, Archivo, ícono), pruebas unitarias y e2e (concurrencia), robustez de producción. Se retiró todo lo de la v3. |

@@ -34,6 +34,9 @@ const authHeader = (): Record<string, string> => {
 
 async function fail(res: Response): Promise<never> {
   const data = await res.json().catch(() => null);
+  if (res.status === 429) {
+    throw new ApiError(data?.message ?? 'Demasiados intentos. Espera unos minutos.', 429, 'RATE_LIMIT');
+  }
   const msg = Array.isArray(data?.message) ? data.message[0] : data?.message;
   if (res.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new Event('aitrava:unauthorized'));
   throw new ApiError(
@@ -44,13 +47,19 @@ async function fail(res: Response): Promise<never> {
   );
 }
 
-/** fetch al backend con el token de sesión. Lanza ApiError con el mensaje del servidor. */
+/**
+ * fetch al backend (con el token del equipo si hay sesión). Lanza ApiError con el mensaje del servidor.
+ * Corta a los 15 s para que una red lenta no deje la pantalla colgada.
+ */
 export async function api<T = unknown>(path: string, init: RequestInit & { json?: unknown } = {}): Promise<T> {
   const { json, headers, ...rest } = init;
   let res: Response;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15_000);
   try {
     res = await fetch(`${API_URL}/api${path}`, {
       ...rest,
+      signal: rest.signal ?? ctrl.signal,
       method: rest.method ?? (json !== undefined ? 'POST' : 'GET'),
       headers: {
         ...(json !== undefined ? { 'Content-Type': 'application/json' } : {}),
@@ -61,47 +70,11 @@ export async function api<T = unknown>(path: string, init: RequestInit & { json?
     });
   } catch {
     throw new ApiError('No hay conexión. Revisa tu internet e intenta de nuevo.', 0, 'OFFLINE');
+  } finally {
+    clearTimeout(timer);
   }
   if (!res.ok) return fail(res);
   if (res.status === 204) return undefined as T;
   const text = await res.text();
   return (text ? JSON.parse(text) : undefined) as T;
-}
-
-/** Sube un archivo (multipart). */
-export async function upload<T = unknown>(path: string, form: FormData): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_URL}/api${path}`, { method: 'POST', headers: authHeader(), body: form });
-  } catch {
-    throw new ApiError('No hay conexión. Revisa tu internet e intenta de nuevo.', 0, 'OFFLINE');
-  }
-  if (!res.ok) return fail(res);
-  return res.json() as Promise<T>;
-}
-
-/**
- * Descarga un archivo privado con la sesión y lo devuelve como blob.
- * Así los documentos de la Bóveda nunca tienen una URL pública.
- */
-export async function apiBlob(path: string): Promise<Blob> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_URL}/api${path}`, { headers: authHeader() });
-  } catch {
-    throw new ApiError('No hay conexión. Revisa tu internet e intenta de nuevo.', 0, 'OFFLINE');
-  }
-  if (!res.ok) return fail(res);
-  return res.blob();
-}
-
-export function saveBlob(blob: Blob, fileName: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

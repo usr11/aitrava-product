@@ -26,8 +26,6 @@ export class RegisterDto {
     message: 'Debes autorizar el tratamiento de tus datos personales',
   })
   acceptData: boolean;
-  @IsOptional() @IsString() @MaxLength(60) utmSource?: string;
-  @IsOptional() @IsString() @MaxLength(80) anonId?: string;
 }
 
 export class LoginDto {

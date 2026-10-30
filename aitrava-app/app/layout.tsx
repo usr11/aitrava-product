@@ -5,35 +5,33 @@ import { AppShell } from '@/components/AppShell';
 import { AuthProvider } from '@/lib/auth';
 import './globals.css';
 
-// Fuente incluida en el repo (no se descarga al compilar: el build de Cloudflare no siempre llega a Google Fonts).
-const jakarta = localFont({
-  src: './fonts/PlusJakartaSans-latin.woff2',
-  weight: '400 800',
+// Archivo variable (ejes de peso y ancho), incluida en el repo: el build de Cloudflare no siempre llega a Google Fonts.
+const archivo = localFont({
+  src: './fonts/Archivo-latin-wdth.woff2',
+  weight: '100 900',
   display: 'swap',
-  variable: '--font-jakarta',
+  variable: '--font-archivo',
+  declarations: [{ prop: 'font-stretch', value: '62% 125%' }],
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
 export const metadata: Metadata = {
   metadataBase: SITE_URL ? new URL(SITE_URL) : undefined,
-  title: { default: 'AITRAVA | Tu viaje vive aquí', template: '%s | AITRAVA' },
+  title: { default: 'AiTrava · Ve solo, sal acompañado', template: '%s · AiTrava' },
   description:
-    'Planea, ahorra, organiza y lleva contigo todo tu viaje en un solo lugar: itinerario, reservas, documentos, presupuesto y un plan de ahorro inteligente hasta el día del viaje.',
-  icons: { icon: '/brand/favicon.png', apple: '/brand/apple-touch-icon.png' },
+    'Salidas en grupos pequeños a la naturaleza y la cultura de Cali. Llegas solo, te armamos el grupo con un anfitrión local y sales con gente nueva.',
   openGraph: {
-    title: 'AITRAVA | Tu viaje vive aquí',
-    description: 'Planea, ahorra y lleva contigo todo tu viaje en un solo lugar.',
-    images: ['/brand/og-image.jpg'],
+    title: 'AiTrava · Ve solo, sal acompañado',
+    description: 'Salidas de 6 a 10 personas a la naturaleza y la cultura de Cali. Tú solo tienes que llegar.',
     locale: 'es_CO',
-    siteName: 'AITRAVA',
+    siteName: 'AiTrava',
     type: 'website',
   },
-  manifest: '/manifest.webmanifest',
 };
 
 export const viewport: Viewport = {
-  themeColor: '#ffffff',
+  themeColor: '#04261e',
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
@@ -41,7 +39,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es-CO" className={jakarta.variable}>
+    <html lang="es-CO" className={archivo.variable}>
       <body>
         <AuthProvider>
           <AppShell>{children}</AppShell>

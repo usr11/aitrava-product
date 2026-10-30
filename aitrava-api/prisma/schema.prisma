@@ -1,6 +1,6 @@
-// AITRAVA 3.0 · "Tu viaje vive aquí". Modelo en docs/ROADMAP.md (sección 8, paso 49).
-// Fechas de actividades y reservas: se guardan como "hora local del destino" en UTC
-// (2026-12-15T10:30 se guarda como 2026-12-15T10:30Z) y se muestran con timeZone UTC.
+// AiTrava v4 · "Ve solo, sal acompañado". Modelo en docs/ROADMAP.md (sección 8, paso 78).
+// Fechas en UTC; la app las muestra en America/Bogota.
+// Dinero en pesos colombianos (enteros). AiTrava no recauda: el viajero le paga al anfitrión.
 
 generator client {
   provider = "prisma-client-js"
@@ -16,307 +16,252 @@ enum Role {
   ADMIN
 }
 
-enum TripMode {
-  KNOWN // Sé a dónde voy
-  HELP // Ayúdame a elegir
-  SURPRISE // Destino sorpresa
+enum PlaceLine {
+  URBANO // Línea 1 · dentro de Cali
+  NATURALEZA // Línea 2 · ≤ 1 h de Cali
+  ESCAPADA // Línea 3 · escapada de un día
 }
 
-enum SavingsFrequency {
-  WEEKLY
-  BIWEEKLY
-  MONTHLY
-}
-
-enum PaymentStatus {
-  created
-  redirected
-  pending
-  pending_verification
-  approved
-  declined
-  cancelled
-  error
-  unknown
-}
-
-enum ProviderStatus {
-  demo
-  prospect
+enum PlaceStatus {
   active
-  inactive
+  verify // pendiente de verificar accesos, seguridad o tarifas
+  excluded
 }
 
+enum HostStatus {
+  prospect // por contactar
+  contacted
+  interested
+  accepted // aceptó por escrito la comisión
+  declined
+  active // ya operó al menos una salida
+}
+
+enum SalidaStatus {
+  draft
+  open
+  closed // no recibe más reservas
+  done
+  cancelled
+}
+
+enum ReservationStatus {
+  requested // apartó el cupo y aceptó precio y condiciones (escalera nivel 4)
+  confirmed // el equipo confirmó el cupo y envió los datos de pago
+  payment_reported // el viajero dice que pagó (pago iniciado, nivel 5 sin verificar)
+  paid // el equipo vio el comprobante (nivel 5 verificado)
+  attended
+  no_show
+  cancelled
+  expired // venció el apartado sin pago
+}
+
+/// Equipo de AiTrava (los viajeros no crean cuenta).
 model User {
-  id                 String    @id @default(cuid())
-  email              String    @unique
-  firstName          String
-  lastName           String
-  passwordHash       String
-  role               Role      @default(USER)
-  emailVerifiedAt    DateTime?
-  verifyTokenHash    String?
-  verifySentAt       DateTime?
-  resetTokenHash     String?
-  resetExpiresAt     DateTime?
-  termsAcceptedAt    DateTime
-  dataConsentAt      DateTime
-  utmSource          String?
-  isDemo             Boolean   @default(false) // cuenta de demostración: no cuenta en métricas
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  trips              Trip[]
-  payments           Payment[]
-  passes             Pass[]
-  documents          VaultDocument[]
+  id              String    @id @default(cuid())
+  email           String    @unique
+  firstName       String
+  lastName        String
+  passwordHash    String
+  role            Role      @default(USER)
+  emailVerifiedAt DateTime?
+  verifyTokenHash String?
+  verifySentAt    DateTime?
+  resetTokenHash  String?
+  resetExpiresAt  DateTime?
+  termsAcceptedAt DateTime
+  dataConsentAt   DateTime
+  isDemo          Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
-/// Destinos de inspiración / sugerencias (no son productos a la venta ni tienen precios en vivo).
-model Destination {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  name        String
-  country     String
-  region      String
-  tags        String[]
-  avoidTags   String[]
-  minBudgetPP Int // referencia aproximada por persona (COP), solo para sugerir
-  imageUrl    String
-  description String
-  itinerary   Json // [{ day, title, items[] }] → base sugerida
-  featured    Boolean  @default(false)
+/// Catálogo de lugares (documento §3). Los precios son de referencia y estimados.
+model Place {
+  id         String      @id @default(cuid())
+  slug       String      @unique
+  line       PlaceLine
+  name       String
+  area       String // zona o municipio
+  experience String
+  duration   String
+  distance   String? // desde Cali
+  refPrice   Int // precio de referencia por persona (estimado)
+  note       String?
+  status     PlaceStatus @default(active)
+  sortOrder  Int         @default(0)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  salidas    Salida[]
 }
 
-model Trip {
-  id                 String    @id @default(cuid())
-  userId             String
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title              String
-  mode               TripMode  @default(KNOWN)
-  destinationCity    String
-  destinationCountry String
-  originCity         String
-  startDate          DateTime
-  endDate            DateTime
-  travelerCount      Int
-  budgetAmount       Int
-  currency           String    @default("COP")
-  budgetByCategory   Json? // { transporte, alojamiento, actividades, comida, seguros, otros }
-  preferences        Json? // { likes[], avoid[], style }
-  isDemo             Boolean   @default(false)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  items              ItineraryItem[]
-  bookings           Booking[]
-  documents          VaultDocument[]
-  expenses           Expense[]
-  savingsPlan        SavingsPlan?
-  payments           Payment[]
-  pass               Pass?
+/// Anfitrión o guía local (lado oferta, TC1-A).
+model Host {
+  id                 String     @id @default(cuid())
+  name               String
+  phone              String?
+  email              String?
+  organization       String?
+  activity           String
+  area               String?
+  rnt                String? // Registro Nacional de Turismo
+  status             HostStatus @default(prospect)
+  commissionAccepted Float? // p. ej. 0.20 si aceptó el 20 %
+  acceptedAt         DateTime?
+  isTestHost         Boolean    @default(false) // anfitrión de prueba: no suma a la meta 3/15
+  source             String     @default("admin") // admin | form
+  notes              String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  salidas            Salida[]
 
-  @@index([userId])
+  @@index([status])
 }
 
-model ItineraryItem {
-  id            String    @id @default(cuid())
-  tripId        String
-  trip          Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  type          String // actividad | restaurante | transporte | alojamiento | comida | libre | otro
-  title         String
-  description   String?
-  startAt       DateTime
-  endAt         DateTime?
-  locationName  String?
-  address       String?
-  latitude      Float?
-  longitude     Float?
-  estimatedCost Int?
-  status        String    @default("planned") // planned | done | cancelled
-  bookingId     String?
-  booking       Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
-  createdAt     DateTime  @default(now())
+model Salida {
+  id                   String        @id @default(cuid())
+  slug                 String        @unique
+  placeId              String
+  place                Place         @relation(fields: [placeId], references: [id], onDelete: Restrict)
+  hostId               String?
+  host                 Host?         @relation(fields: [hostId], references: [id], onDelete: SetNull)
+  title                String
+  summary              String
+  startsAt             DateTime
+  durationMin          Int
+  meetingPoint         String
+  capacity             Int
+  minToRun             Int           @default(5) // si no se llega, se cancela y se devuelve el 100 %
+  price                Int // por persona, se le paga al anfitrión
+  serviceFee           Int           @default(0) // cargo opcional al viajero (palanca del modelo)
+  commissionRate       Float         @default(0.2)
+  includes             String[]
+  womenOnly            Boolean       @default(false)
+  paymentInstructions  String? // datos de pago del anfitrión: solo se muestran con el cupo confirmado
+  status               SalidaStatus  @default(draft)
+  isSimulacro          Boolean       @default(false) // prueba del PMV: no cuenta como venta
+  isDemo               Boolean       @default(false)
+  hostNewClients       Int? // clientes nuevos que el anfitrión confirma en la entrevista
+  coordinatorHours     Float? // horas reales del equipo (para el modelo)
+  commissionPaidAt     DateTime?
+  commissionPaidAmount Int?
+  notes                String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  reservations         Reservation[]
+  costs                AdminCost[]
 
-  @@index([tripId, startAt])
+  @@index([status, startsAt])
 }
 
-/// Reserva o componente del viaje. `source = externa` si se compró fuera de AITRAVA.
-model Booking {
-  id          String          @id @default(cuid())
-  tripId      String
-  trip        Trip            @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  category    String // vuelo | alojamiento | actividad | transporte | seguro | restaurante | otro
-  title       String
-  provider    String?
-  reference   String?
-  startAt     DateTime?
-  endAt       DateTime?
-  cost        Int?
-  currency    String          @default("COP")
-  isPaid      Boolean         @default(false)
-  address     String?
-  notes       String?
-  source      String          @default("externa")
-  createdAt   DateTime        @default(now())
-  items       ItineraryItem[]
-  documents   VaultDocument[]
+model Reservation {
+  id                 String            @id @default(cuid())
+  number             Int               @unique @default(autoincrement()) // AITRAVA-C01, C02…
+  tokenHash          String            @unique
+  surveyTokenHash    String?           @unique // enlace de la encuesta que envía el equipo
+  salidaId           String
+  salida             Salida            @relation(fields: [salidaId], references: [id], onDelete: Restrict)
+  name               String
+  phone              String // normalizado: 57XXXXXXXXXX
+  email              String?
+  isAdult            Boolean // V1
+  inCali             Boolean // V2
+  knowsTeam          Boolean // V3 (true = amigo o familia del equipo: no cuenta)
+  heardFrom          String // GRP | IG | REF | ALI | OTRO (lo que responde)
+  channel            String? // de la URL (?c= o utm_source)
+  variant            String? // A | B
+  motivation         String // pregunta filtro (V5)
+  intentValid        Boolean? // V5: lo marca el equipo
+  comesAlone         Boolean
+  phoneChallenge     Boolean           @default(false) // aceptó el reto del celular sellado
+  challengeCompleted Boolean?
+  price              Int
+  serviceFee         Int               @default(0)
+  status             ReservationStatus @default(requested)
+  holdUntil          DateTime
+  acceptedAt         DateTime // aceptó precio, fecha, reembolso, conducta y consentimiento
+  confirmedAt        DateTime?
+  paymentReportedAt  DateTime?
+  paymentNote        String?
+  paidAt             DateTime?
+  attendedAt         DateTime?
+  cancelledAt        DateTime?
+  cancelReason       String?
+  refundNote         String?
+  adminNotes         String?
+  anonId             String?
+  isDemo             Boolean           @default(false)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  survey             SurveyResponse?
 
-  @@index([tripId])
+  @@index([salidaId, status])
+  @@index([phone])
+  @@index([status, holdUntil])
 }
 
-/// Archivo privado de la Bóveda. Se guarda en la BD y solo lo descarga su dueño.
-model VaultDocument {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tripId    String
-  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  bookingId String?
-  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
-  category  String
-  title     String
-  fileName  String
-  mimeType  String
-  size      Int
-  data      Bytes
-  createdAt DateTime @default(now())
-
-  @@index([tripId])
+/// Encuesta de cierre (documento §4.4). Una por asistente.
+model SurveyResponse {
+  id            String      @id @default(cuid())
+  reservationId String      @unique
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  cameAlone     Boolean
+  newContact    Boolean
+  nps           Int
+  wouldReturn   Boolean
+  returnPlace   String?
+  improve       String?
+  createdAt     DateTime    @default(now())
 }
 
-model Expense {
-  id          String   @id @default(cuid())
-  tripId      String
-  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  amount      Int
-  category    String
-  description String?
-  date        DateTime
-  createdAt   DateTime @default(now())
-
-  @@index([tripId])
+/// Lista de espera (TC0: interés, nivel 2 de la escalera).
+model WaitlistEntry {
+  id         String     @id @default(cuid())
+  name       String
+  phone      String     @unique
+  line       PlaceLine?
+  motivation String?
+  variant    String?
+  channel    String?
+  anonId     String?
+  consentAt  DateTime
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 }
 
-/// Plan de ahorro inteligente. AITRAVA NO custodia el dinero: los aportes son declarados por el usuario.
-model SavingsPlan {
-  id               String                @id @default(cuid())
-  tripId           String                @unique
-  trip             Trip                  @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  targetAmount     Int
-  initialSaved     Int                   @default(0)
-  frequency        SavingsFrequency      @default(BIWEEKLY)
-  monthlyCapacity  Int? // cuánto dice que puede ahorrar al mes
-  startDate        DateTime
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
-  contributions    SavingsContribution[]
-}
-
-model SavingsContribution {
-  id        String      @id @default(cuid())
-  planId    String
-  plan      SavingsPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  amount    Int // negativo = retiro
-  date      DateTime
-  note      String?
-  createdAt DateTime    @default(now())
-
-  @@index([planId])
-}
-
-model Payment {
-  id            String        @id @default(cuid())
-  reference     String        @unique
-  userId        String
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tripId        String
-  trip          Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  product       String        @default("AITRAVA_PASS")
-  amount        Int
-  currency      String        @default("COP")
-  status        PaymentStatus @default(created)
-  provider      String        @default("wompi")
-  providerTxId  String?
-  verifiedVia   String? // webhook | admin
-  verifiedBy    String?
-  verifiedAt    DateTime?
-  userNote      String? // lo que el usuario escribe al volver (p. ej. el id de la transacción)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  pass          Pass?
-
-  @@index([status, createdAt])
-}
-
-model Pass {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tripId      String    @unique
-  trip        Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  paymentId   String    @unique
-  payment     Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  status      String    @default("active") // active | revoked
-  activatedAt DateTime  @default(now())
-  expiresAt   DateTime?
-}
-
-model Provider {
-  id          String         @id @default(cuid())
-  name        String
-  category    String // aerolineas | hoteles | restaurantes | experiencias | transporte | seguros | otros
-  country     String
-  logoUrl     String?
-  websiteUrl  String?
-  description String
-  status      ProviderStatus @default(demo)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-}
-
+/// Costos reales: pauta por canal (CAC), kit, horas, fijos, formalización…
 model AdminCost {
   id          String   @id @default(cuid())
-  category    String // pasarela | tecnologia | hosting | herramientas | marketing | operacion | otros
+  category    String // pauta | kit | horas | fijos | formalizacion | otros
   kind        String // fijo | variable
+  channel     String? // para pauta: IG | GRP | …
+  salidaId    String?
+  salida      Salida?  @relation(fields: [salidaId], references: [id], onDelete: SetNull)
   amount      Int
   description String?
   date        DateTime
   createdAt   DateTime @default(now())
-}
 
-model ContactMessage {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  subject   String
-  message   String
-  handled   Boolean  @default(false)
-  createdAt DateTime @default(now())
+  @@index([date])
 }
 
 model Event {
   id        String   @id @default(cuid())
   name      String
   userId    String?
-  tripId    String?
   anonId    String?
+  salidaId  String?
+  variant   String?
+  channel   String?
   props     Json?
   isDemo    Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([name, createdAt])
+  @@index([anonId])
 }
 
-model Feedback {
-  id        String   @id @default(cuid())
-  userId    String?
-  tripId    String?
-  kind      String // widget | nps
-  score     Int?
-  comment   String?
-  page      String?
-  createdAt DateTime @default(now())
-}
-
+/// Registro de ajustes (nivel 5): qué dato lo provocó, qué se cambió y qué pasó.
 model Iteration {
   id         String   @id @default(cuid())
   version    String

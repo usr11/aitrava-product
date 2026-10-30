@@ -3,22 +3,20 @@
 import { usePathname } from 'next/navigation';
 import Script from 'next/script';
 import { useEffect } from 'react';
-import { captureAttribution, track } from '@/lib/track';
+import { captureChannel, track } from '@/lib/track';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
-/** Meta Pixel + page_view propio en cada cambio de ruta (y landing_view en el inicio). */
+/** Canal de llegada + vista de la landing (con su variante) + Meta Pixel. El panel del equipo no se mide. */
 export function Analytics() {
   const pathname = usePathname();
 
   useEffect(() => {
-    captureAttribution();
+    captureChannel();
   }, []);
 
   useEffect(() => {
-    // No se mide el panel admin (son visitas del equipo)
-    if (pathname.startsWith('/admin')) return;
-    track('page_view', { path: pathname.replace(/\/viajes\/[^/]+/, '/viajes/:id').replace(/\/(checkout|comprobante)\/[^/]+/, '/$1/:id') });
+    if (pathname.startsWith('/admin') || pathname.startsWith('/equipo')) return;
     if (pathname === '/') track('landing_view');
   }, [pathname]);
 

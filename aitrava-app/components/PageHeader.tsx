@@ -1,10 +1,9 @@
-export function PageHeader({ eyebrow, title, text, children }: { eyebrow?: string; title: string; text?: string; children?: React.ReactNode }) {
+export function PageHeader({ title, text, children }: { title: string; text?: string; children?: React.ReactNode }) {
   return (
-    <section className="border-b border-line bg-surface">
-      <div className="container-app py-10 lg:py-14">
-        {eyebrow && <p className="eyebrow text-blue">{eyebrow}</p>}
-        <h1 className="h-display mt-2 text-4xl text-navy sm:text-5xl">{title}</h1>
-        {text && <p className="mt-3 max-w-2xl text-lg text-text-2">{text}</p>}
+    <section className="border-b border-line">
+      <div className="wrap py-10 lg:py-14">
+        <h1 className="display text-[clamp(2rem,9vw,3.6rem)]">{title}</h1>
+        {text && <p className="lede mt-4 text-ink-2">{text}</p>}
         {children}
       </div>
     </section>

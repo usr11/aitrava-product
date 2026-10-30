@@ -8,24 +8,24 @@ const esc = (s: string) =>
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!,
   );
 
-/** Correo con la marca: fondo blanco, azul oscuro y un botón amarillo. */
+/** Correo con la marca v4: papel, verde pino y botón naranja. */
 const layout = (
   title: string,
   body: string,
   cta?: { label: string; url: string },
 ) => `
-<div style="background:#F6F8FB;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;color:#0B1F3A">
-  <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid #E3E8F0">
-    <p style="margin:0 0 24px;font-weight:800;font-size:20px;letter-spacing:.5px">AITRAVA</p>
+<div style="background:#F2EDD5;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;color:#04261E">
+  <div style="max-width:520px;margin:0 auto;background:#FBF8EC;border-radius:16px;padding:32px;border:1px solid #DCD4B4">
+    <p style="margin:0 0 24px;font-weight:800;font-size:20px">aitrava</p>
     <h1 style="margin:0 0 12px;font-size:22px">${esc(title)}</h1>
-    <div style="font-size:15px;line-height:1.6;color:#33475B">${body}</div>
+    <div style="font-size:15px;line-height:1.6;color:#2B4038">${body}</div>
     ${
       cta
-        ? `<p style="margin:28px 0"><a href="${cta.url}" style="background:#FFC800;color:#0B1F3A;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:999px;display:inline-block">${esc(cta.label)}</a></p>
-    <p style="font-size:12px;color:#5B6B82">Si el botón no funciona, copia este enlace:<br><span style="word-break:break-all">${cta.url}</span></p>`
+        ? `<p style="margin:28px 0"><a href="${cta.url}" style="background:#F26716;color:#04261E;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:999px;display:inline-block">${esc(cta.label)}</a></p>
+    <p style="font-size:12px;color:#4A5D52">Si el botón no funciona, copia este enlace:<br><span style="word-break:break-all">${cta.url}</span></p>`
         : ''
     }
-    <p style="font-size:12px;color:#8A97AB;margin-top:28px">AITRAVA · Tu viaje vive aquí. Proyecto universitario en desarrollo.</p>
+    <p style="font-size:12px;color:#6B7B70;margin-top:28px">AiTrava · Ve solo, sal acompañado. Proyecto universitario en Cali.</p>
   </div>
 </div>`;
 
@@ -86,13 +86,13 @@ export class MailService {
   }
 
   sendVerification(to: string, firstName: string, token: string) {
-    const url = `${appUrl()}/verificar-correo?token=${token}`;
+    const url = `${appUrl()}/equipo/verificar?token=${token}`;
     return this.send(
       to,
-      'Confirma tu correo en AITRAVA',
+      'Confirma tu correo del equipo AiTrava',
       layout(
         `¡Hola, ${firstName}!`,
-        'Confirma tu correo para activar tu cuenta y empezar a organizar tu viaje. El enlace vence en 24 horas.',
+        'Confirma tu correo para entrar al panel del equipo. El enlace vence en 24 horas.',
         { label: 'Confirmar mi correo', url },
       ),
       url,
@@ -100,10 +100,10 @@ export class MailService {
   }
 
   sendReset(to: string, firstName: string, token: string) {
-    const url = `${appUrl()}/restablecer-contrasena?token=${token}`;
+    const url = `${appUrl()}/equipo/restablecer?token=${token}`;
     return this.send(
       to,
-      'Restablece tu contraseña de AITRAVA',
+      'Restablece tu contraseña de AiTrava',
       layout(
         `Hola, ${firstName}`,
         'Recibimos una solicitud para cambiar tu contraseña. El enlace vence en 1 hora. Si no fuiste tú, ignora este correo.',

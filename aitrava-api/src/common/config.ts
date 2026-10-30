@@ -1,14 +1,7 @@
 /**
- * Configuración de negocio en UN solo lugar. La app la lee de GET /api/config,
- * así que el precio, el link de pago y los límites nunca se duplican en componentes.
+ * Configuración de negocio en UN solo lugar (roadmap §4 y §7). La app la lee de GET /api/config,
+ * así que la comisión, el apartado, las metas y la política de reembolso nunca se duplican.
  */
-
-/** Precio del AITRAVA Pass por viaje (hipótesis a validar, no es un precio "científico"). */
-export const passPrice = () => Number(process.env.PASS_PRICE_COP ?? 39_900);
-
-/** Link de pago de Wompi (checkout externo). AITRAVA nunca pide datos de tarjeta. */
-export const paymentUrl = () =>
-  process.env.PAYMENT_URL ?? 'https://checkout.nequi.wompi.co/l/PgimzF';
 
 export const appUrl = () =>
   (process.env.APP_URL ?? 'http://localhost:3000')
@@ -19,47 +12,78 @@ export const appUrl = () =>
 export const isProduction = () =>
   process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
 
-/** Correos del equipo que reciben rol admin al verificar su correo (separados por coma). */
+/** Correos del equipo: son los únicos que pueden crear cuenta y reciben rol admin al verificar. */
 export const adminEmails = () =>
   (process.env.ADMIN_EMAILS ?? '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
 
-/**
- * Fase de prueba: verificar el correo es opcional (por defecto). Para operación real: EMAIL_VERIFICATION_REQUIRED=true.
- * El rol admin siempre exige correo verificado, esté como esté esta opción.
- */
-export const emailVerificationRequired = () =>
-  process.env.EMAIL_VERIFICATION_REQUIRED === 'true';
-
-/** Límites del plan gratis. */
-export const FREE_LIMITS = {
-  vaultDocumentsPerTrip: 3,
+const num = (v: string | undefined, fallback: number) => {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
 };
 
-/** Archivos de la Bóveda. */
-export const UPLOAD = {
-  maxBytes: 5 * 1024 * 1024,
-  mimeTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
-};
+/** Comisión por defecto de una salida nueva (se pide 20 %, el piso es 16 %). */
+export const defaultCommission = () => num(process.env.COMMISSION_RATE, 0.2);
+export const COMMISSION_FLOOR = 0.16;
 
-/** Qué desbloquea el Pass (también se muestra en el paywall). */
-export const PASS_FEATURES = [
-  'Bóveda completa (documentos ilimitados)',
-  'Modo Viaje',
-  'Cómo llegar a cada actividad',
-  'Explora cerca de ti',
-  'Cambiar mis planes',
-  'Funciones premium futuras de este viaje',
+/** Horas que se aparta un cupo mientras el viajero paga. */
+export const holdHours = () => num(process.env.HOLD_HOURS, 48);
+
+/** Canales de AiTrava (V4 del perfil). */
+export const CHANNELS = {
+  GRP: 'Grupo de WhatsApp o Telegram',
+  IG: 'Instagram o TikTok',
+  REF: 'Me lo recomendó alguien',
+  ALI: 'Un anfitrión o aliado',
+  OTRO: 'Otro',
+} as const;
+export type Channel = keyof typeof CHANNELS;
+export const AITRAVA_CHANNELS: Channel[] = ['GRP', 'IG', 'REF', 'ALI'];
+
+export const LINES = {
+  URBANO: { label: 'Urbano', detail: 'Dentro de Cali', refTicket: 65_000 },
+  NATURALEZA: {
+    label: 'Naturaleza cerca',
+    detail: 'A una hora o menos de Cali',
+    refTicket: 110_000,
+  },
+  ESCAPADA: {
+    label: 'Escapada de un día',
+    detail: 'De 1,5 a 2,5 horas de Cali',
+    refTicket: 220_000,
+  },
+} as const;
+
+/** Política de reembolso (documento §6.1). Se acepta al reservar. */
+export const REFUND_POLICY = [
+  'Te devolvemos el 100 % si cancelas con 72 horas o más de anticipación.',
+  'Te devolvemos el 50 % si cancelas entre 72 y 24 horas antes.',
+  'Puedes ceder tu cupo a otra persona sin costo hasta el día de la salida.',
+  'Si la salida no se realiza, te devolvemos el 100 %.',
 ];
 
+/** Metas fijadas antes de salir (documento §4.3, §5.1, §6.3 y §6.4). */
+export const TARGETS = {
+  tc0ClicksPerVariant: 60,
+  tc0DiffPp: 5,
+  hostsAccepted: 3,
+  hostsContacted: 15,
+  paidBuyers: 5,
+  conversionToPay: 0.25,
+  cacMax: 10_400,
+  newContactRate: 0.7,
+  wouldReturnRate: 0.6,
+  nps: 40,
+  challengeRate: 0.5,
+  hostConfirmsRate: 0.8, // 4 de 5
+  repurchaseMin: 0.25,
+};
+
 export const publicConfig = () => ({
-  passPriceCop: passPrice(),
-  paymentUrl: paymentUrl(),
-  freeLimits: FREE_LIMITS,
-  upload: UPLOAD,
-  passFeatures: PASS_FEATURES,
-  mailEnabled: !!process.env.SMTP_HOST,
-  emailVerificationRequired: emailVerificationRequired(),
+  holdHours: holdHours(),
+  refundPolicy: REFUND_POLICY,
+  channels: CHANNELS,
+  lines: LINES,
 });

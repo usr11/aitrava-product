@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -70,6 +71,12 @@ export class AuthService {
   async register(dto: RegisterDto, ip: string) {
     rateLimit(`register:${ip}`, 10, 3600_000);
     const email = dto.email.toLowerCase().trim();
+    // Los viajeros no crean cuenta: solo el equipo (ADMIN_EMAILS) puede registrarse.
+    if (!adminEmails().includes(email)) {
+      throw new ForbiddenException(
+        'Las cuentas son solo para el equipo de AiTrava. Para reservar una salida no necesitas cuenta.',
+      );
+    }
     if (await this.prisma.user.findUnique({ where: { email } })) {
       throw new ConflictException(
         'Ya existe una cuenta con ese correo. Inicia sesión.',
@@ -84,13 +91,9 @@ export class AuthService {
         passwordHash: await bcrypt.hash(dto.password, 10),
         termsAcceptedAt: now,
         dataConsentAt: now,
-        utmSource: dto.utmSource,
       },
     });
-    await this.events.linkAnon(dto.anonId, user.id);
-    await this.events.log('signup_completed', user.id, {
-      utmSource: dto.utmSource ?? null,
-    });
+    await this.events.log('team_signup', { userId: user.id });
     const mail = await this.issueVerification(user);
     return { ...this.session(user), mail };
   }
@@ -103,8 +106,7 @@ export class AuthService {
       throw new UnauthorizedException('Correo o contraseña incorrectos');
     }
     const promoted = await this.promoteIfTeam(user);
-    await this.events.linkAnon(dto.anonId, user.id);
-    await this.events.log('login', user.id);
+    await this.events.log('team_login', { userId: user.id });
     return this.session(promoted);
   }
 
@@ -144,7 +146,7 @@ export class AuthService {
         verifyTokenHash: null,
       },
     });
-    await this.events.log('email_verified', user.id);
+    await this.events.log('team_email_verified', { userId: user.id });
     return this.session(await this.promoteIfTeam(verified));
   }
 
@@ -232,21 +234,13 @@ export class AuthService {
     return publicUser(user);
   }
 
-  /** Elimina la cuenta y todo lo suyo (viajes, Bóveda, pagos). Los eventos quedan anónimos. */
+  /** Elimina la cuenta. Los eventos quedan anónimos. */
   async deleteMe(userId: string, dto: DeleteMeDto) {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
     });
     if (!(await bcrypt.compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException('La contraseña no coincide');
-    }
-    if (
-      await this.prisma.payment.count({ where: { userId, status: 'approved' } })
-    ) {
-      // Los pagos aprobados son registros contables: se conservan sin datos personales.
-      throw new BadRequestException(
-        'Tienes pagos aprobados. Escríbenos a aitrava.25@gmail.com y eliminamos tu cuenta conservando solo el registro contable.',
-      );
     }
     await this.prisma.event.updateMany({
       where: { userId },

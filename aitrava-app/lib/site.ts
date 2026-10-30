@@ -1,21 +1,17 @@
-/** Datos públicos oficiales (especificación §60, §62, §100). Se pueden cambiar por variables de entorno. */
+/** Datos públicos. Se cambian por variables de entorno (el WhatsApp Business está pendiente, roadmap D6). */
 export const CONTACT = {
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? 'aitrava.25@gmail.com',
   whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '573117452985',
-  whatsappDisplay: '+57 311 745 2985',
   instagram: process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://www.instagram.com/aitrava26',
 };
 
-export const whatsappLink = (text = 'Hola, vengo desde AITRAVA y quisiera recibir información.') =>
-  `https://wa.me/${CONTACT.whatsappNumber}?text=${encodeURIComponent(text)}`;
+export const whatsappDisplay = () => {
+  const d = CONTACT.whatsappNumber.replace(/\D/g, '');
+  return d.length === 12 ? `+${d.slice(0, 2)} ${d.slice(2, 5)} ${d.slice(5, 8)} ${d.slice(8)}` : `+${d}`;
+};
 
-/** Redes futuras: se muestran solo si tienen URL (no inventamos redes). */
-export const FUTURE_SOCIAL: { name: string; url?: string }[] = [
-  { name: 'TikTok', url: process.env.NEXT_PUBLIC_TIKTOK_URL },
-  { name: 'Facebook', url: process.env.NEXT_PUBLIC_FACEBOOK_URL },
-  { name: 'YouTube', url: process.env.NEXT_PUBLIC_YOUTUBE_URL },
-  { name: 'LinkedIn', url: process.env.NEXT_PUBLIC_LINKEDIN_URL },
-];
+export const whatsappLink = (text = 'Hola, vengo de la página de AiTrava y quiero saber de las próximas salidas.') =>
+  `https://wa.me/${CONTACT.whatsappNumber}?text=${encodeURIComponent(text)}`;
 
 export const TEAM = [
   { name: 'Sebastián Jiménez', area: 'Ingeniería de Sistemas' },

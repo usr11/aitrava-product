@@ -1,62 +1,56 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { LegalPage } from '@/components/LegalPage';
 
 export const metadata: Metadata = { title: 'Términos y condiciones' };
 
 export default function TerminosPage() {
   return (
-    <LegalPage title="Términos y condiciones" updated="19 de octubre de 2026">
-      <h2>1. Qué es AITRAVA</h2>
+    <LegalPage title="Términos y condiciones" updated="29 de octubre de 2026">
+      <h2>1. Qué es AiTrava</h2>
       <p>
-        AITRAVA es un prototipo (producto mínimo viable) desarrollado por un equipo de estudiantes universitarios. Permite organizar viajes:
-        planear, llevar un plan de ahorro, registrar reservas propias, guardar documentos, consultar el itinerario y usar herramientas durante el
-        viaje. <strong>[Revisión jurídica pendiente: identificación del responsable cuando exista una persona jurídica.]</strong>
+        AiTrava es un proyecto universitario en etapa de prueba que organiza salidas en grupos pequeños a lugares de naturaleza y cultura en Cali y sus
+        alrededores. AiTrava arma el grupo, cura el plan con un anfitrión local y coordina la salida.{' '}
+        <strong>[Revisión jurídica pendiente: identificación del responsable cuando exista una persona jurídica.]</strong>
       </p>
-      <h2>2. Cuenta</h2>
+      <h2>2. Cómo funciona una reserva</h2>
       <ul>
-        <li>Para usar las funciones de viaje debes crear una cuenta con datos verdaderos y verificar tu correo.</li>
-        <li>Eres responsable de mantener tu contraseña en secreto. No compartas tu cuenta.</li>
-        <li>Puedes eliminar tu cuenta en cualquier momento desde “Mi cuenta”.</li>
+        <li>Apartas un cupo con tu nombre y tu WhatsApp, sin crear cuenta. El cupo queda apartado hasta 48 horas mientras se confirma el pago.</li>
+        <li>Al apartar aceptas el precio, la fecha, la política de reembolso, la regla de convivencia y el consentimiento informado.</li>
+        <li>El equipo te confirma el cupo por WhatsApp y te comparte los datos de pago del anfitrión. Pagas directo al anfitrión con tu referencia AITRAVA-C.</li>
+        <li>Tu reserva se ve en un enlace privado. No lo compartas: quien lo tenga puede ver y cancelar tu reserva.</li>
       </ul>
-      <h2>3. Lo que AITRAVA no hace</h2>
+      <h2>3. Pagos</h2>
       <ul>
         <li>
-          <strong>No vende vuelos, hoteles ni servicios turísticos.</strong> Las reservas que agregas son tuyas y las gestionas con cada
-          proveedor.
+          <strong>AiTrava no recibe ni custodia tu dinero.</strong> El servicio lo presta y lo cobra el anfitrión. AiTrava cobra una comisión al anfitrión
+          por cada reserva que origina.
         </li>
-        <li>
-          <strong>No custodia dinero.</strong> El plan de ahorro es una herramienta de planeación: tus ahorros quedan en tu propia cuenta y los
-          aportes que registras son declarados por ti.
-        </li>
-        <li>No garantiza precios, disponibilidad ni ahorros. Las fechas sugeridas de pago son referencias generales.</li>
-        <li>
-          Las rutas de “Cómo llegar” las calcula un proveedor externo de mapas (Google Maps). Los tiempos y distancias que mostramos en la app son
-          aproximados.
-        </li>
+        <li>AiTrava nunca te pedirá datos de tarjetas ni claves bancarias.</li>
       </ul>
-      <h2>4. AITRAVA Pass</h2>
+      <h2>4. Cancelaciones y reembolsos</h2>
       <ul>
-        <li>Es un pago único por un viaje específico que activa funciones adicionales para ese viaje. No es una suscripción.</li>
-        <li>El pago se procesa en el checkout externo de Wompi. AITRAVA no recibe ni guarda datos de tarjetas ni claves bancarias.</li>
-        <li>El Pass se activa solo cuando el pago está confirmado. El comprobante corresponde únicamente al Pass y no es una factura electrónica.</li>
-        <li>
-          <strong>[Revisión jurídica pendiente: política de retracto, reembolsos y garantías conforme al Estatuto del Consumidor.]</strong>
-        </li>
+        <li>100 % si cancelas con 72 horas o más de anticipación; 50 % entre 72 y 24 horas; sin devolución con menos de 24 horas, pero puedes ceder tu cupo sin costo.</li>
+        <li>100 % si la salida no se realiza (clima, seguridad o no se llega al mínimo de personas).</li>
+        <li>El reembolso lo hace el anfitrión al mismo medio de pago, con el acompañamiento de AiTrava.</li>
       </ul>
-      <h2>5. Contenido que subes</h2>
+      <h2>5. Seguridad y conducta</h2>
       <p>
-        Los documentos de tu Bóveda son tuyos. Nos autorizas a almacenarlos solo para mostrártelos. No subas documentos que no necesites para tu
-        viaje ni datos financieros (claves, números de tarjeta).
+        Aplican las reglas de{' '}
+        <Link href="/seguridad" className="link">
+          seguridad y convivencia
+        </Link>
+        . El equipo o el anfitrión pueden pedir que se retire a quien las incumpla, sin reembolso.
       </p>
-      <h2>6. Proveedores mostrados</h2>
-      <p>
-        Las marcas que aparecen en “Proveedores” se muestran con fines demostrativos. Su aparición no implica una alianza, convenio o relación
-        comercial vigente con AITRAVA.
-      </p>
-      <h2>7. Disponibilidad</h2>
-      <p>Al ser un prototipo, el servicio puede cambiar, tener fallas o interrumpirse. Haremos lo posible por avisar los cambios importantes.</p>
+      <h2>6. Responsabilidad</h2>
+      <ul>
+        <li>La actividad la presta el anfitrión. En salidas de naturaleza se exige guía con tarjeta profesional y RNT, y póliza de accidentes por día.</li>
+        <li>Debes informar condiciones de salud relevantes antes de la salida y seguir las indicaciones del guía.</li>
+      </ul>
+      <h2>7. Precios publicados</h2>
+      <p>Los precios del catálogo de lugares son de referencia y estimados. El precio que aplica es el de la salida que reservas.</p>
       <h2>8. Contacto</h2>
-      <p>Escríbenos a aitrava.25@gmail.com.</p>
+      <p>Para cualquier duda o reclamo escríbenos por WhatsApp o a aitrava.25@gmail.com.</p>
     </LegalPage>
   );
 }
