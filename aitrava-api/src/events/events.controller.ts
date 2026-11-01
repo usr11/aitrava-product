@@ -33,6 +33,7 @@ const CLIENT_EVENTS = new Set([
   'salida_viewed',
   'reserve_started',
   'whatsapp_clicked',
+  'payment_link_clicked',
   'waitlist_started',
   'host_page_viewed',
   'places_viewed',

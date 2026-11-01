@@ -100,9 +100,9 @@ describe('salud y datos públicos', () => {
       .expect(200, { ok: true, name: 'AiTrava API' });
   });
 
-  it('lugares: 14 visibles, el excluido no sale', async () => {
+  it('lugares: los 14 del documento (más los pilotos), el excluido no sale', async () => {
     const res = await http().get('/api/places').expect(200);
-    expect(res.body).toHaveLength(14);
+    expect(res.body.length).toBeGreaterThanOrEqual(14);
     expect(
       res.body.find((p: { slug: string }) => p.slug === 'farallones'),
     ).toBeUndefined();
@@ -326,6 +326,41 @@ describe('ciclo de una reserva', () => {
       .set(admin())
       .send({ status: 'attended' })
       .expect(400);
+  });
+});
+
+describe('pago en línea (piloto Savoraa)', () => {
+  it('la salida con link de pago lo muestra y la reserva lo conserva', async () => {
+    const url = 'https://checkout.nequi.wompi.co/l/prueba';
+    const { slug, id } = await createSalida(4, { paymentUrl: url });
+    const pub = await http().get(`/api/salidas/${slug}`).expect(200);
+    expect(pub.body.paymentUrl).toBe(url);
+    const res = await http()
+      .post(`/api/salidas/${slug}/reservations`)
+      .set('X-Forwarded-For', ip())
+      .send(reserveBody(960, { channel: 'grp' }))
+      .expect(201);
+    expect(res.body.reservation.paymentUrl).toBe(url);
+    expect(res.body.reservation.can.reportPayment).toBe(true);
+    const r = await prisma.reservation.findFirstOrThrow({
+      where: { salidaId: id },
+    });
+    expect(r.channel).toBe('GRP');
+  });
+
+  it('rechaza links de pago sin https', async () => {
+    const { id } = await createSalida(4);
+    const res = await http()
+      .patch(`/api/admin/salidas/${id}`)
+      .set(admin())
+      .send({ paymentUrl: 'http://pago.com' })
+      .expect(400);
+    expect(JSON.stringify(res.body.message)).toMatch(/https/);
+    await http()
+      .patch(`/api/admin/salidas/${id}`)
+      .set(admin())
+      .send({ paymentUrl: '' })
+      .expect(200);
   });
 });
 

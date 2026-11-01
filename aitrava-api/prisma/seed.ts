@@ -72,6 +72,53 @@ async function main() {
     });
   }
 
+  // Piloto Savoraa (roadmap paso 94, decisión del 2026-11-01). Se crea en TODOS los entornos, una sola vez
+  // y solo si la fecha no ha pasado: lo que el equipo edite en /admin no se vuelve a pisar.
+  const savoraaStart = new Date('2026-11-01T21:00:00.000Z'); // domingo 1 de noviembre, 4:00 p. m. en Colombia
+  const savoraaExists = await prisma.salida.findUnique({ where: { slug: 'duelo-de-sabores-savoraa' }, select: { id: true } });
+  if (!savoraaExists && savoraaStart > now) {
+    const place = await prisma.place.upsert({
+      where: { slug: 'savoraa-miranda' },
+      update: {},
+      create: {
+        slug: 'savoraa-miranda',
+        line: 'URBANO',
+        name: 'Savoraa, Miranda',
+        area: 'Miranda, Cauca',
+        experience: 'Degustación a ciegas de yogur artesanal y votación en grupo.',
+        duration: '45–60 min',
+        refPrice: 10_000,
+        note: 'Piloto con un negocio local.',
+        status: 'active',
+        sortOrder: 100,
+      },
+    });
+    const host =
+      (await prisma.host.findFirst({ where: { name: 'Savoraa' } })) ??
+      (await prisma.host.create({
+        data: { name: 'Savoraa', activity: 'Yogur artesanal: degustación a ciegas', area: 'Miranda, Cauca', status: 'active', source: 'admin' },
+      }));
+    await prisma.salida.create({
+      data: {
+        slug: 'duelo-de-sabores-savoraa',
+        placeId: place.id,
+        hostId: host.id,
+        title: 'Duelo de Sabores — Savoraa x AITRAVA',
+        summary:
+          'Una experiencia de degustación a ciegas en la que probarás dos sabores de yogur Savoraa, intentarás descubrir cuáles son y votarás junto al grupo por el ganador. No necesitas tener el parche antes de hacer el plan. Reserva tu cupo y AITRAVA arma el grupo.',
+        startsAt: savoraaStart,
+        durationMin: 60,
+        meetingPoint: 'Miranda, Cauca. Te enviamos el punto exacto por WhatsApp al confirmar tu cupo.',
+        capacity: 4,
+        minToRun: 1,
+        price: 10_000,
+        includes: ['250 ml de degustación de yogur Savoraa', 'Dos sabores sorpresa', 'Cata y votación a ciegas', 'Dinámica grupal AITRAVA'],
+        paymentUrl: 'https://checkout.nequi.wompi.co/l/jv4Sbh',
+        status: 'open',
+      },
+    });
+  }
+
   // Salida DEMO para mostrar el flujo en la presentación. Nunca en producción salvo SEED_DEMO=true.
   if (!isProd || process.env.SEED_DEMO === 'true') {
     const place = await prisma.place.findUniqueOrThrow({ where: { slug: 'lago-de-las-garzas' } });

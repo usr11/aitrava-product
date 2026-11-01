@@ -11,6 +11,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
   Length,
   Max,
   MaxLength,
@@ -68,6 +69,16 @@ export class SalidaDto {
   @IsString()
   @MaxLength(1000)
   paymentInstructions?: string | null;
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' && value.trim() === '' ? null : value,
+  )
+  @IsUrl(
+    { protocols: ['https'], require_protocol: true },
+    { message: 'El link de pago debe empezar por https://' },
+  )
+  @MaxLength(300)
+  paymentUrl?: string | null;
   @IsOptional() @IsIn(SALIDA_STATUS) status?: (typeof SALIDA_STATUS)[number];
   @IsOptional() @IsBoolean() isSimulacro?: boolean;
   @IsOptional() @IsBoolean() isDemo?: boolean;

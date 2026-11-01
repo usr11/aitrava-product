@@ -176,6 +176,7 @@ export class SalidasService implements OnModuleInit, OnModuleDestroy {
       meetingPoint: s.meetingPoint,
       capacity: s.capacity,
       minToRun: s.minToRun,
+      paymentUrl: s.paymentUrl,
       seatsTaken: Math.min(taken, s.capacity),
       seatsLeft,
       price: s.price,
@@ -380,6 +381,8 @@ export class SalidasService implements OnModuleInit, OnModuleDestroy {
       },
       // Los datos de pago del anfitrión solo se muestran con el cupo confirmado por el equipo.
       paymentInstructions: confirmedLike ? r.salida.paymentInstructions : null,
+      // El link de Wompi es público (está en la salida): se muestra mientras la reserva espera el pago.
+      paymentUrl: r.salida.paymentUrl,
       refund: refundFor(r.salida.startsAt, now),
       refundPolicy: REFUND_POLICY,
       can: {

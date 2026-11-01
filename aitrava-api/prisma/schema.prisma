@@ -138,6 +138,7 @@ model Salida {
   includes             String[]
   womenOnly            Boolean       @default(false)
   paymentInstructions  String? // datos de pago del anfitrión: solo se muestran con el cupo confirmado
+  paymentUrl           String? // link de pago (Wompi). Si existe, el CTA es "Comprar mi cupo" y se paga en línea
   status               SalidaStatus  @default(draft)
   isSimulacro          Boolean       @default(false) // prueba del PMV: no cuenta como venta
   isDemo               Boolean       @default(false)
