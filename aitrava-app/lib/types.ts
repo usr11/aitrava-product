@@ -22,6 +22,8 @@ export type Salida = {
   meetingPoint: string;
   capacity: number;
   minToRun: number;
+  /** Link de pago (Wompi). Si existe, se compra en línea. */
+  paymentUrl: string | null;
   seatsTaken: number;
   seatsLeft: number;
   price: number;
@@ -72,6 +74,7 @@ export type ReservationView = {
     place: { name: string; area: string; line: Line };
   };
   paymentInstructions: string | null;
+  paymentUrl: string | null;
   refund: { percent: number; text: string };
   refundPolicy: string[];
   can: { reportPayment: boolean; cancel: boolean; survey: boolean };

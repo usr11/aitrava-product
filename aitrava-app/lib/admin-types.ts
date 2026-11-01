@@ -98,6 +98,7 @@ export type AdminSalida = {
   includes: string[];
   womenOnly: boolean;
   paymentInstructions: string | null;
+  paymentUrl: string | null;
   status: 'draft' | 'open' | 'closed' | 'done' | 'cancelled';
   isSimulacro: boolean;
   isDemo: boolean;

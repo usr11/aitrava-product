@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 const POINTS = [
   { title: 'Clientes que no habrías conseguido', text: 'Personas que querían salir pero no tenían con quién. Nosotros armamos el grupo y lo llevamos a tu experiencia.' },
   { title: 'Pagas solo cuando hay reserva', text: 'Una comisión del 20 % sobre cada reserva que AiTrava te trae, hasta 3 días después de la salida. Sin mensualidad ni costo de entrada.' },
-  { title: 'El cliente te paga a ti', text: 'El viajero te paga directo (Nequi, Bre-B o transferencia). AiTrava no recibe ni retiene el dinero.' },
+  { title: 'Cada reserva con nombre y referencia', text: 'Sabes quién va, por qué canal llegó y si ya pagó. El cobro se acuerda contigo antes de publicar la experiencia.' },
   { title: 'Nosotros ponemos el ritual', text: 'Tarjetas rompehielos, el sobre para el celular y una persona del equipo en las primeras salidas.' },
 ];
 

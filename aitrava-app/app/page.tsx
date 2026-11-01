@@ -6,12 +6,14 @@ import { LinesPreview } from '@/components/landing/LinesPreview';
 import { Upcoming } from '@/components/landing/Upcoming';
 import { WaitlistForm } from '@/components/salidas/WaitlistForm';
 import { SectionHeading } from '@/components/ui';
-import { FAQ, SAFETY } from '@/lib/content';
+import { About } from '@/components/landing/About';
+import { FAQ, HOST_WHATSAPP_TEXT, SAFETY } from '@/lib/content';
+import { whatsappLink } from '@/lib/site';
 
 /** Lo que pasa desde que apartas hasta que sales con gente nueva (sí es una secuencia: va numerada). */
 const STEPS = [
   { title: 'Apartas tu cupo en un minuto', text: 'Eliges la salida y respondes cuatro preguntas. Sin crear cuenta. Tu cupo queda apartado 48 horas.' },
-  { title: 'Te escribimos por WhatsApp', text: 'Confirmamos tu cupo y te pasamos los datos del anfitrión. Le pagas directo a él con tu referencia.' },
+  { title: 'Pagas y te confirmamos', text: 'Pagas en línea con Wompi o con los datos del anfitrión, según la salida, y te confirmamos por WhatsApp.' },
   { title: 'Conoces al grupo el día antes', text: 'Te agregamos a un grupo de WhatsApp con los demás asistentes, moderado por nosotros.' },
   { title: 'Llegas solo, sales acompañado', text: 'Tarjetas para romper el hielo, la experiencia con el anfitrión y, si quieres, el reto del celular.' },
 ];
@@ -22,9 +24,15 @@ export default function Home() {
       <Hero />
 
       <section className="wrap py-16 lg:py-24" aria-labelledby="salidas-titulo">
-        <SectionHeading id="salidas-titulo" title="Próximas salidas" text="Grupos de 6 a 10 personas. Los puntos son los cupos: cada uno es alguien que también va solo." />
+        <SectionHeading id="salidas-titulo" title="Próximas salidas" text="Grupos pequeños con anfitriones locales. Los puntos son los cupos: cada uno es alguien que también va a vivir el plan." />
         <div className="mt-8">
           <Upcoming limit={6} />
+        </div>
+      </section>
+
+      <section id="quienes-somos" className="border-t border-line" aria-labelledby="quienes-titulo">
+        <div className="wrap py-16 lg:py-24">
+          <About />
         </div>
       </section>
 
@@ -121,14 +129,17 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="wrap flex flex-col items-start justify-between gap-6 py-14 sm:flex-row sm:items-center">
+      <section className="wrap flex flex-col items-start justify-between gap-6 py-14 sm:flex-row sm:items-center" aria-labelledby="anfitrion-titulo">
         <div>
-          <h2 className="title text-[1.5rem]">¿Eres guía o anfitrión en Cali?</h2>
-          <p className="mt-1 text-ink-2">Te llevamos grupos nuevos. Solo pagas comisión por las reservas que te traemos.</p>
+          <h2 id="anfitrion-titulo" className="title text-[1.5rem]">
+            ¿Tienes una experiencia o negocio?
+          </h2>
+          <p className="mt-1 max-w-2xl text-ink-2">AITRAVA también trabaja con anfitriones y negocios locales que quieren llegar a nuevos clientes.</p>
+          <p className="mt-1 font-semibold">Tú aportas la experiencia. Nosotros ayudamos a encontrar las personas.</p>
         </div>
-        <Link href="/anfitriones" className="btn btn-pine shrink-0">
-          Quiero ser anfitrión
-        </Link>
+        <a href={whatsappLink(HOST_WHATSAPP_TEXT)} target="_blank" rel="noopener noreferrer" className="btn btn-pine shrink-0">
+          <Icon name="whatsapp" /> Quiero ser anfitrión
+        </a>
       </section>
     </>
   );

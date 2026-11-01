@@ -67,7 +67,7 @@ export function Footer() {
       </div>
       <div className="border-t border-pine-3">
         <p className="wrap py-5 text-sm text-on-pine-2">
-          Proyecto universitario en Cali, en etapa de prueba. AiTrava no recibe el dinero de las salidas: le pagas directo al anfitrión.
+          Proyecto universitario en Cali, en etapa de prueba.
         </p>
       </div>
     </footer>

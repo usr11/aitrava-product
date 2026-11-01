@@ -215,9 +215,13 @@ export function ReserveForm({ salida, refundPolicy }: { salida: Salida; refundPo
       )}
 
       <button type="submit" disabled={busy} className="btn btn-ember btn-block">
-        {busy ? 'Apartando tu cupo…' : 'Apartar mi cupo'}
+        {busy ? 'Guardando tu cupo…' : salida.paymentUrl ? 'Continuar al pago' : 'Apartar mi cupo'}
       </button>
-      <p className="-mt-2 text-center text-sm text-ink-3">No pagas nada todavía. Te escribimos por WhatsApp para confirmar.</p>
+      <p className="-mt-2 text-center text-sm text-ink-3">
+        {salida.paymentUrl
+          ? 'Guardamos tu cupo y te llevamos al pago seguro de Wompi (desde tu banco o con tarjeta).'
+          : 'No pagas nada todavía. Te escribimos por WhatsApp para confirmar.'}
+      </p>
     </form>
   );
 }

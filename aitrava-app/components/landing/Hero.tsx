@@ -13,7 +13,7 @@ import { DemoBadge, SeatMeter } from '../ui';
 const HOOKS = {
   A: {
     title: ['Ve solo.', 'Sal acompañado.'],
-    text: '¿Tus amigos cancelaron otra vez? Salidas de 6 a 10 personas a la naturaleza y la cultura de Cali. Nosotros armamos el grupo con un anfitrión local; tú solo llegas.',
+    text: '¿Tus amigos cancelaron otra vez? No necesitas tener el parche antes de hacer el plan: reservas tu cupo en una experiencia con un anfitrión local y AITRAVA arma el grupo.',
   },
   B: {
     title: ['Tres horas', 'sin celular.'],
@@ -71,7 +71,7 @@ function NextTicket({ s, variant }: { s: Salida; variant: 'A' | 'B' }) {
           onClick={() => track('hook_cta_clicked', { to: 'salida', variant }, s.slug)}
           className="btn btn-ember shrink-0"
         >
-          {s.bookable ? 'Reservar mi cupo' : 'Ver la salida'}
+          {s.bookable ? (s.paymentUrl ? `Comprar mi cupo — ${formatCOP(s.price + s.serviceFee)}` : 'Reservar mi cupo') : 'Ver la salida'}
         </Link>
       </div>
     </div>

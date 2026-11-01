@@ -17,16 +17,14 @@ export default function TerminosPage() {
       <ul>
         <li>Apartas un cupo con tu nombre y tu WhatsApp, sin crear cuenta. El cupo queda apartado hasta 48 horas mientras se confirma el pago.</li>
         <li>Al apartar aceptas el precio, la fecha, la política de reembolso, la regla de convivencia y el consentimiento informado.</li>
-        <li>El equipo te confirma el cupo por WhatsApp y te comparte los datos de pago del anfitrión. Pagas directo al anfitrión con tu referencia AITRAVA-C.</li>
+        <li>Según la salida, pagas en línea con Wompi al comprar tu cupo, o el equipo te confirma por WhatsApp y te comparte los datos de pago del anfitrión. En ambos casos tu pago queda asociado a tu referencia AITRAVA-C.</li>
         <li>Tu reserva se ve en un enlace privado. No lo compartas: quien lo tenga puede ver y cancelar tu reserva.</li>
       </ul>
       <h2>3. Pagos</h2>
       <ul>
         <li>
-          <strong>AiTrava no recibe ni custodia tu dinero.</strong> El servicio lo presta y lo cobra el anfitrión. AiTrava cobra una comisión al anfitrión
-          por cada reserva que origina.
+          <strong>Siempre ves cómo pagas antes de hacerlo.</strong> Los pagos en línea los procesa Wompi; AiTrava nunca te pide datos de tarjeta ni claves bancarias en esta página. <strong>[Pendiente del equipo: quién recibe los pagos en línea y cómo se liquida con el anfitrión (roadmap D7).]</strong>
         </li>
-        <li>AiTrava nunca te pedirá datos de tarjetas ni claves bancarias.</li>
       </ul>
       <h2>4. Cancelaciones y reembolsos</h2>
       <ul>

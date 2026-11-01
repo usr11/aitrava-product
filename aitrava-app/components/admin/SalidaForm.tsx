@@ -35,6 +35,7 @@ export function SalidaForm({ salida, onSaved }: { salida?: AdminSalida; onSaved:
     commission: String(Math.round((salida?.commissionRate ?? 0.2) * 100)),
     includes: (salida?.includes ?? []).join('\n'),
     paymentInstructions: salida?.paymentInstructions ?? '',
+    paymentUrl: salida?.paymentUrl ?? '',
     status: salida?.status ?? 'draft',
     womenOnly: salida?.womenOnly ?? false,
     isSimulacro: salida?.isSimulacro ?? false,
@@ -80,6 +81,7 @@ export function SalidaForm({ salida, onSaved }: { salida?: AdminSalida; onSaved:
         commissionRate: commission,
         includes: f.includes.split('\n').map((s) => s.trim()).filter(Boolean),
         paymentInstructions: f.paymentInstructions || null,
+        paymentUrl: f.paymentUrl.trim() || null,
         status,
         womenOnly: f.womenOnly,
         isSimulacro: f.isSimulacro,
@@ -169,6 +171,9 @@ export function SalidaForm({ salida, onSaved }: { salida?: AdminSalida; onSaved:
       </div>
       <Field label="Qué incluye" htmlFor="s-inc" hint="Una cosa por línea." optional>
         <textarea id="s-inc" className="input" rows={3} value={f.includes} onChange={set('includes')} />
+      </Field>
+      <Field label="Link de pago (Wompi)" htmlFor="s-url" hint="Si lo pones, el botón dice “Comprar mi cupo” y lleva a este pago. Vacío = se paga al anfitrión." optional>
+        <input id="s-url" className="input" type="url" inputMode="url" placeholder="https://checkout.nequi.wompi.co/l/…" value={f.paymentUrl} onChange={set('paymentUrl')} maxLength={300} />
       </Field>
       <Field label="Datos de pago del anfitrión" htmlFor="s-pay" hint="El viajero los ve solo cuando el equipo confirma su cupo." optional>
         <textarea id="s-pay" className="input" rows={2} value={f.paymentInstructions} onChange={set('paymentInstructions')} maxLength={1000} />

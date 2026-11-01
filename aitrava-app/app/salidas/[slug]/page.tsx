@@ -59,7 +59,8 @@ export default function SalidaPage() {
     );
 
   const past = new Date(s.startsAt) <= new Date();
-  const cta = s.bookable ? 'Reservar mi cupo' : null;
+  // Con link de pago (piloto Savoraa) se compra en línea; sin él, se aparta y se paga al anfitrión.
+  const cta = s.bookable ? (s.paymentUrl ? `Comprar mi cupo — ${formatCOP(s.price + s.serviceFee)}` : 'Reservar mi cupo') : null;
   const why = !s.bookable && (past ? 'Esta salida ya pasó.' : s.seatsLeft === 0 ? 'Se acabaron los cupos.' : 'Esta salida ya no recibe reservas.');
 
   return (
@@ -104,7 +105,7 @@ export default function SalidaPage() {
                 <div>
                   <dt className="sr-only">Grupo</dt>
                   <dd className="font-bold">Grupo de hasta {s.capacity} personas</dd>
-                  <dd className="text-ink-2">Sale con mínimo {s.minToRun}. Si no se llega, te devolvemos todo.</dd>
+                  {s.minToRun > 1 && <dd className="text-ink-2">Sale con mínimo {s.minToRun}. Si no se llega, te devolvemos todo.</dd>}
                 </div>
               </div>
               {s.host && (
@@ -205,7 +206,7 @@ export default function SalidaPage() {
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-paper/95 pb-[var(--safe-bottom)] backdrop-blur lg:hidden">
         <div className="wrap flex items-center justify-between gap-4 py-3">
           <div className="min-w-0">
-            <p className="display tnum text-[1.4rem] leading-none">{formatCOP(s.price + s.serviceFee)}</p>
+            {!s.paymentUrl && <p className="display tnum text-[1.4rem] leading-none">{formatCOP(s.price + s.serviceFee)}</p>}
             <p className={`narrow mt-1 truncate text-sm font-semibold ${s.seatsLeft <= 2 ? 'text-flare-ink' : 'text-ink-2'}`}>
               {s.seatsLeft === 0 ? 'Cupos agotados' : `Quedan ${s.seatsLeft} de ${s.capacity}`}
             </p>
@@ -226,7 +227,7 @@ export default function SalidaPage() {
         </div>
       </div>
 
-      <Sheet open={open} onClose={close} title="Aparta tu cupo" wide>
+      <Sheet open={open} onClose={close} title={s.paymentUrl ? 'Compra tu cupo' : 'Aparta tu cupo'} wide>
         <p className="mb-5 text-ink-2">
           {s.title} · <span>{formatLongDate(s.startsAt)}</span>
         </p>

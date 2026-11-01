@@ -118,9 +118,9 @@ function Reserva() {
 
   const date = `${formatLongDate(r.salida.startsAt).toLowerCase()} a las ${formatTime(r.salida.startsAt)}`;
   const waText =
-    r.status === 'requested'
+    r.status === 'requested' && !r.paymentUrl
       ? `Hola, soy ${r.name}. Aparté el cupo ${r.code} para "${r.salida.title}" el ${date}. ¿Me confirman?`
-      : r.status === 'confirmed' || r.status === 'payment_reported'
+      : ['requested', 'confirmed', 'payment_reported'].includes(r.status)
         ? `Hola, soy ${r.name}. Te envío el comprobante de pago de mi reserva ${r.code} ("${r.salida.title}").`
         : `Hola, soy ${r.name}, tengo la reserva ${r.code} ("${r.salida.title}").`;
   const wa = (
@@ -132,7 +132,11 @@ function Reserva() {
       className="btn btn-ember btn-block sm:w-auto"
     >
       <Icon name="whatsapp" />
-      {r.status === 'requested' ? 'Confirmar por WhatsApp' : r.status === 'confirmed' || r.status === 'payment_reported' ? 'Enviar el comprobante' : 'Escribirnos por WhatsApp'}
+      {r.status === 'requested' && !r.paymentUrl
+        ? 'Confirmar por WhatsApp'
+        : ['requested', 'confirmed', 'payment_reported'].includes(r.status)
+          ? 'Enviar el comprobante'
+          : 'Escribirnos por WhatsApp'}
     </a>
   );
   const active = !['cancelled', 'expired', 'no_show'].includes(r.status);
@@ -142,7 +146,8 @@ function Reserva() {
     <div className="wrap max-w-3xl py-8 lg:py-12">
       {isNew && r.status === 'requested' && (
         <Alert tone="ok">
-          <strong>Listo, apartaste tu cupo.</strong> Guarda esta página: es tu enlace privado a la reserva.
+          <strong>{r.paymentUrl ? 'Listo, guardamos tu cupo.' : 'Listo, apartaste tu cupo.'}</strong>{' '}
+          {r.paymentUrl ? 'Ahora paga con Wompi para asegurarlo. ' : ''}Guarda esta página: es tu enlace privado a la reserva.
         </Alert>
       )}
 
@@ -178,7 +183,31 @@ function Reserva() {
 
       {/* Qué hacer ahora: una sola acción principal por estado */}
       <section className="panel mt-8 space-y-4 p-5 sm:p-6">
-        {r.status === 'requested' && (
+        {r.paymentUrl && (r.status === 'requested' || r.status === 'confirmed') && (
+          <>
+            <p>
+              Paga <strong className="tnum">{formatCOP(r.price + r.serviceFee)}</strong> en línea con Wompi, desde tu banco o con tarjeta. Después toca
+              “Ya pagué” y envíanos el comprobante por WhatsApp con tu referencia <strong className="tnum">{r.code}</strong>.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <a
+                href={r.paymentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => track('payment_link_clicked', { status: r.status })}
+                className="btn btn-ember"
+              >
+                Pagar {formatCOP(r.price + r.serviceFee)} con Wompi
+              </a>
+              <button onClick={() => setPayOpen(true)} className="btn btn-pine">
+                Ya pagué
+              </button>
+              {wa}
+            </div>
+            <p className="text-sm text-ink-3">Te guardamos el cupo hasta el {formatLongDate(r.holdUntil).toLowerCase()} a las {formatTime(r.holdUntil)}.</p>
+          </>
+        )}
+        {!r.paymentUrl && r.status === 'requested' && (
           <>
             <p>
               Escríbenos por WhatsApp para confirmar tu cupo y te pasamos los datos de pago del anfitrión. Te lo guardamos hasta el{' '}
@@ -187,7 +216,7 @@ function Reserva() {
             {wa}
           </>
         )}
-        {r.status === 'confirmed' && (
+        {!r.paymentUrl && r.status === 'confirmed' && (
           <>
             <p>
               Paga <strong className="tnum">{formatCOP(r.price + r.serviceFee)}</strong> directo al anfitrión y pon tu referencia{' '}

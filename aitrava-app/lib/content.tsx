@@ -19,7 +19,7 @@ export const FAQ: QA[] = [
   },
   {
     q: '¿Cómo pago?',
-    a: 'Apartas tu cupo en la página y te escribimos por WhatsApp. Cuando confirmamos el cupo te pasamos los datos de pago del anfitrión (Nequi, Bre-B o transferencia) y pagas directo a él con tu referencia AITRAVA-C. AiTrava no recibe tu dinero.',
+    a: 'Depende de la salida y siempre te lo mostramos antes de pagar. Si tiene pago en línea, al comprar tu cupo pagas con Wompi, desde tu banco o con tarjeta. Si no, te escribimos por WhatsApp con los datos de pago del anfitrión. En esta página nunca te pedimos datos de tarjeta.',
   },
   {
     q: '¿Y si no puedo ir?',
@@ -55,3 +55,30 @@ export const FAQ: QA[] = [
     ),
   },
 ];
+
+/** Quiénes somos, qué hacemos, diferenciador, misión y visión (texto del equipo, 2026-11-01). */
+export const ABOUT = {
+  who: [
+    'AITRAVA es una plataforma que conecta personas que quieren vivir nuevas experiencias con anfitriones y negocios que tienen algo diferente por ofrecer.',
+    'Ayudamos a las personas a descubrir y reservar planes sin depender de tener un grupo previamente organizado, mientras ayudamos a anfitriones locales a atraer nuevos clientes y comercializar sus experiencias.',
+  ],
+  what: {
+    title: 'Descubre. Reserva. Vive.',
+    text: [
+      'En AITRAVA reunimos experiencias de anfitriones locales, facilitamos su descubrimiento y reserva y ayudamos a formar grupos de personas interesadas en vivirlas.',
+      'Empezamos con experiencias locales sencillas para validar el modelo y progresivamente incorporaremos experiencias de naturaleza, cultura y turismo en diferentes regiones de Colombia.',
+    ],
+  },
+  difference: {
+    title: 'No necesitas tener el parche antes de hacer el plan.',
+    text: 'AITRAVA no solo muestra lugares o recomienda qué hacer. Conecta la oferta de anfitriones con personas interesadas, facilita la reserva y ayuda a convertir una intención de hacer un plan en una experiencia que realmente sucede.',
+  },
+  mission:
+    'Facilitar que más personas descubran y vivan experiencias memorables, conectándolas con anfitriones locales y simplificando el proceso de encontrar, reservar y compartir nuevos planes.',
+  vision: [
+    'Construir un ecosistema colombiano de experiencias y viajes que comience conectando personas con anfitriones y actividades locales y evolucione hacia una plataforma nacional desde la cual sea posible descubrir, planificar y comprar los diferentes componentes de un viaje en un solo lugar.',
+    'A largo plazo, AITRAVA busca integrar experiencias de naturaleza y cultura en todo Colombia y, mediante alianzas comerciales con proveedores de transporte, alojamiento, gastronomía, actividades y otros servicios turísticos, facilitar que el viajero pueda construir y comprar su viaje directamente desde AITRAVA.',
+  ],
+};
+
+export const HOST_WHATSAPP_TEXT = 'Hola, tengo una experiencia o negocio y quiero ser anfitrión en AITRAVA.';
