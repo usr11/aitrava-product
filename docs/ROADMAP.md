@@ -4,7 +4,7 @@
 > El trabajo es **lineal**: se toma el siguiente paso sin marcar del **Plan de trabajo (sección 8)**. Al terminarlo se marca `[x]` con la fecha y quién lo hizo, se actualiza la tabla de progreso (0.1) y se anota en el **Registro de cambios** (sección 11).
 > Si una decisión cambia, se edita aquí primero y después el código.
 
-**Última actualización:** 2026-10-29 · **Paso actual:** 92 (el equipo configura Railway y el número real de WhatsApp Business).
+**Última actualización:** 2026-11-01 · **Paso actual:** 95 (TC0). El piloto Savoraa (paso 94) queda publicado al desplegar.
 
 > **Cambio total de modelo (2026-10-29).** La junta del 2026-10-28 evaluó AITRAVA 3.0 (centro de control del viaje + plan de ahorro + Pass de $39.900) con 1.3/5.0: "no tiene valor", no era específico y no sabíamos para quién era. El equipo se definió por un modelo nuevo, descrito en **`docs/AiTrava-final.md`** (propuesta para la junta JD2) y **`docs/modelo.py`** (modelo financiero a 12 meses). Este roadmap los aterriza en el producto. El roadmap 3.0 quedó archivado tal cual en **`docs/archivo/ROADMAP-v3-centro-de-control.md`** y el de la v2 en `docs/archivo/ROADMAP-v2-viajes-sorpresa.md`.
 
@@ -30,9 +30,9 @@
 | A–G · v2 (viajes sorpresa) — archivada | 01–47 | 37/47 | 🗄️ |
 | H–K · v3 (centro de control) — archivada | 48–76 | 19/29 | 🗄️ |
 | L · v4: producto y plataforma | 77–91 | 15/15 | ✅ |
-| M · v4: puesta en producción | 92–94 | 0/3 | ⬜ |
+| M · v4: puesta en producción | 92–94 | 1/3 | 🟡 |
 | N · v4: campo (TC0, TC1, TC2) y junta | 95–104 | 0/10 | ⬜ |
-| **Total v4** | 77–104 | **15/28** | |
+| **Total v4** | 77–104 | **16/28** | |
 
 Estados: ⬜ sin empezar · 🟡 en curso · ✅ terminada · 🗄️ archivada
 
@@ -214,7 +214,7 @@ Pasos 01–76 en `docs/archivo/`. De la v3 se conservan: el stack, el despliegue
 ### Etapa M · Puesta en producción
 - [ ] **92** · **(Equipo)** Crear el WhatsApp Business y poner el número en `NEXT_PUBLIC_WHATSAPP_NUMBER` (Cloudflare). Configurar en Railway `ADMIN_EMAILS`, `APP_URL`, `SMTP_*` — ✅ ___
 - [ ] **93** · **(Equipo)** Confirmar D5 (borrar los datos de la v3 en producción) y desplegar la v4 — ✅ ___
-- [ ] **94** · Crear en `/admin/salidas` la primera salida real (lugar, anfitrión, fecha, precio, cupos y datos de pago del anfitrión) — ✅ ___
+- [x] **94** · Primera salida real: **piloto Savoraa** — "Duelo de Sabores — Savoraa x AITRAVA" (Miranda, Cauca · domingo 1 de noviembre, 4:00 p. m. · 45–60 min · 4 cupos · $10.000). La crea el seed al desplegar (solo si no existe y si la fecha no pasó; lo editado en `/admin` no se pisa). CTA "Comprar mi cupo — $10.000": registra la reserva y el canal y lleva al pago por el link de Wompi de la salida. Secciones "Quiénes somos", "Qué hacemos", diferenciador, misión, visión y bloque de anfitriones con WhatsApp — ✅ 2026-11-01 · Claude (agente)
 
 ### Etapa N · Campo y junta
 - [ ] **95** · TC0: 2 anuncios de $20.000 + reparto en grupos con `?v=A` / `?v=B` y `?c=IG` / `?c=GRP`; registrar la pauta en `/admin/costos` — ✅ ___
@@ -279,9 +279,12 @@ Pasos 01–76 en `docs/archivo/`. De la v3 se conservan: el stack, el despliegue
 - **(2026-10-29) Nueva identidad visual** (paleta del equipo, Archivo, ícono de la ronda).
 - Se conserva el stack Next + Nest + Prisma + Postgres, Railway + Cloudflare.
 
+- **(2026-11-01) Piloto Savoraa y pago por Wompi** (decisión del equipo, `1.docx`): para vender la primera experiencia real, una salida puede tener un **link de pago** (`paymentUrl`, Wompi). Si lo tiene, el botón dice "Comprar mi cupo — $precio", se registra la reserva (con canal y variante) y la página de la reserva lleva al checkout de Wompi; el equipo verifica el pago y lo marca como Pagada. Esto reemplaza, solo para las salidas con link, el "le pagas directo al anfitrión": **quién recibe el dinero y cómo se liquida con el anfitrión lo define el equipo (D7)**. No se cambia el modelo de comisión ni se agregan funciones.
+
 ### Pendientes (responder aquí)
 - **D2 · Fecha de la próxima junta y duración.** → ___
 - **D5 · Datos de la v3 en producción.** ⚠️ La migración `aitrava_4` borra viajes, Bóveda, planes de ahorro y pagos de la v3 (conserva cuentas y eventos). Confirmar en el equipo antes del despliegue; si quieren algo, exportarlo antes desde el `/admin` de la v3. → ___
+- **D7 · Pagos por Wompi en el piloto.** ¿De quién es la cuenta del link de Wompi, cómo se le liquida a Savoraa y cómo queda la comisión? Los textos públicos dicen "pagas en línea con Wompi" sin afirmar quién recibe. → ___
 - **D6 · Número de WhatsApp Business.** Mientras no exista, la app usa `NEXT_PUBLIC_WHATSAPP_NUMBER` o el número de la v3. → ___
 
 ---
@@ -294,4 +297,5 @@ Pasos 01–76 en `docs/archivo/`. De la v3 se conservan: el stack, el despliegue
 | 2026-10-19 | Equipo + Claude | v3 (centro de control + ahorro): ver `docs/archivo/ROADMAP-v3-centro-de-control.md`. |
 | 2026-10-28 | Junta | Evaluación de la v3: 1.3/5.0 ("no tiene valor", no es específico). |
 | 2026-10-29 | Juan Pablo + Claude (agente) | **Cambio total a la v4 "Ve solo, sal acompañado"** según `docs/AiTrava-final.md` y `docs/modelo.py`. Roadmap reescrito; el 3.0 se archivó. |
+| 2026-11-01 | Claude (agente) | Paso 94: piloto Savoraa (seed), link de pago por salida (`paymentUrl`, Wompi) con el CTA "Comprar mi cupo — $10.000", secciones Quiénes somos / Qué hacemos / Misión / Visión / anfitriones según `1.docx`; textos de pago neutros. |
 | 2026-10-29 | Claude (agente) | Pasos 78–91: nuevo modelo de datos y migración, reservas atómicas sin cuenta con apartado de 48 h, lista de espera, anfitriones, encuesta, panel de evidencia (embudo, A/B, canales, CAC, V1–V5, escalera, valor entregado, viabilidad), modelo financiero portado con pruebas, nueva identidad visual (paleta del equipo, Archivo, ícono), pruebas unitarias y e2e (concurrencia), robustez de producción. Se retiró todo lo de la v3. |
